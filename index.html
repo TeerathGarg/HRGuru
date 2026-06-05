@@ -1673,14 +1673,25 @@ async function runResumeParser(file){
         setParseProgress(90,'Filling fields…',bar,lbl);
       }catch(aiErr){
         console.error('AI error:',aiErr.message);
-        toast('AI error: '+aiErr.message+' — trying basic extraction','');
-        // Try text extraction as fallback
-        if(ext==='pdf'){
-          parsed=extractFromFileName(file.name);
-          toast('PDF needs AI key to parse properly. Fields filled from filename.','');
-        }else{
+        // For DOCX try text extraction as fallback
+        if(ext==='docx'||ext==='doc'){
+          setParseProgress(70,'Trying text extraction…',bar,lbl);
           const text=await readFileAsText(file);
-          parsed=basicExtract(text);
+          // Clean up binary garbage from docx
+          const cleanText=text.replace(/[^\x20-\x7E\n\r\t]/g,' ').replace(/\s+/g,' ');
+          if(cleanText.length>100){
+            parsed=basicExtract(cleanText);
+          }else{
+            // Send as plain text prompt to AI
+            try{
+              parsed=await parseWithAIText(file.name,aiKey);
+            }catch(e2){
+              parsed=extractFromFileName(file.name);
+            }
+          }
+        }else{
+          parsed=extractFromFileName(file.name);
+          toast('Could not read file — please fill manually','');
         }
       }
     }else{
@@ -1747,8 +1758,26 @@ async function readFileAsText(file){
   });
 }
 
+// For DOCX — parse using just the filename and ask AI to help
+async function parseWithAIText(filename,apiKey){
+  const prompt=`A recruiter uploaded a resume file named "${filename}". Based on the filename, extract what you can and return this JSON:
+{"first_name":"","last_name":"","email":"","phone":"","current_title":"","current_company":"","total_experience_years":0,"current_ctc":"","location":"","skills":"","education":"","source":"Other","summary":""}
+Return ONLY the JSON. Use empty strings for unknown fields.`;
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:400,messages:[{role:'user',content:prompt}]})
+  });
+  const d=await resp.json();
+  let txt=(d.content?.[0]?.text||'{}').replace(/```json|```/gi,'').trim();
+  const m=txt.match(/\{[\s\S]*\}/);
+  return m?JSON.parse(m[0]):{};
+}
+
 async function parseWithAI(base64,mimeType,ext,apiKey){
   const isPDF=ext==='pdf'||mimeType.includes('pdf');
+  const isWord=ext==='doc'||ext==='docx'||mimeType.includes('word')||mimeType.includes('openxmlformats');
+
   const prompt=`You are an expert resume parser for an Indian recruitment firm. Extract ALL details from this resume carefully.
 
 Return ONLY this JSON — no other text, no markdown, no explanation:
@@ -1764,20 +1793,39 @@ Return ONLY this JSON — no other text, no markdown, no explanation:
   "location": "city name",
   "skills": "skill1, skill2, skill3 — comma separated",
   "education": "highest qualification — degree, college, year",
-  "source": "Naukri or LinkedIn or Other — detect from resume header/footer",
+  "source": "Naukri or LinkedIn or Other",
   "summary": "2-3 line professional summary"
 }
+Rules: total_experience_years must be a NUMBER. Return ONLY JSON.`;
 
-Important rules:
-- total_experience_years must be a NUMBER like 5 or 7.5
-- If name has prefix like Mr/Ms/Dr, remove it
-- skills: list ALL technical and functional skills found
-- If any field not found, use empty string ""
-- source: check for Naukri.com, LinkedIn.com watermarks/headers`;
-
-  const content=isPDF
-    ?[{type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}},{type:'text',text:prompt}]
-    :[{type:'text',text:prompt+'\n\nResume text content:\n'+atob(base64)}];
+  let content;
+  if(isPDF){
+    content=[
+      {type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}},
+      {type:'text',text:prompt}
+    ];
+  }else if(isWord){
+    // For Word files — decode base64 to text and extract readable portions
+    try{
+      const binary=atob(base64);
+      // Extract readable ASCII text from binary
+      let readable='';
+      for(let i=0;i<binary.length;i++){
+        const code=binary.charCodeAt(i);
+        if((code>=32&&code<=126)||code===10||code===13){readable+=binary[i];}
+        else if(code===0){}
+        else{readable+=' ';}
+      }
+      // Clean up excessive whitespace
+      readable=readable.replace(/\s{3,}/g,' ').trim().slice(0,8000);
+      content=[{type:'text',text:prompt+'\n\nResume text content:\n'+readable}];
+    }catch(e){
+      content=[{type:'text',text:prompt+'\n\nResume filename: '+base64.slice(0,50)}];
+    }
+  }else{
+    const decoded=atob(base64).slice(0,8000);
+    content=[{type:'text',text:prompt+'\n\nResume content:\n'+decoded}];
+  }
 
   const resp=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
@@ -1789,15 +1837,13 @@ Important rules:
     throw new Error(e.error?.message||'AI API error '+resp.status);
   }
   const d=await resp.json();
-  console.log('AI raw response:', JSON.stringify(d.content?.[0]?.text||''));
+  console.log('AI raw response:',JSON.stringify(d.content?.[0]?.text||''));
   let txt=(d.content?.[0]?.text||'{}');
-  // Strip markdown if present
   txt=txt.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
-  // Extract JSON if surrounded by text
   const jsonMatch=txt.match(/\{[\s\S]*\}/);
   if(jsonMatch)txt=jsonMatch[0];
   const result=JSON.parse(txt);
-  console.log('Parsed result:', JSON.stringify(result));
+  console.log('Parsed result:',JSON.stringify(result));
   return result;
 }
 
