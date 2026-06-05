@@ -1117,31 +1117,30 @@ async function doLogin(){
   const err=document.getElementById('login-err');
   err.style.display='none';
   if(!email||!pass){showErr('Please enter email and password.');return;}
+  const teamMember=TEAM.find(t=>t.email===email);
+  if(!teamMember){showErr('This email is not registered. Contact your admin.');return;}
   btn.disabled=true;btn.textContent='Signing in…';
   try{
+    // Try sign in first
     const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error){
-      // User doesn't exist yet — sign them up (first time login creates account)
-      if(error.message.includes('Invalid login')||error.message.includes('invalid_credentials')||error.message.includes('Email not confirmed')){
-        const teamMember=TEAM.find(t=>t.email===email);
-        if(!teamMember){showErr('This email is not registered in HRGURU. Contact your admin.');return;}
-        const {data:sd,error:se}=await sb.auth.signUp({email,password:pass,options:{data:{name:teamMember.name,role:teamMember.role}}});
-        if(se){showErr(se.message);return;}
-        // Immediately try to sign in after signup
-        const {data:sd2,error:se2}=await sb.auth.signInWithPassword({email,password:pass});
-        if(sd2?.user){
-          await afterLogin(sd2.user,teamMember);
-        }else if(sd?.session){
-          await afterLogin(sd.user,teamMember);
-        }else{
-          showErr('Account created! Please click Sign In again.');
-        }
-      }else{showErr(error.message);}
-    }else if(data.user){
-      const teamMember=TEAM.find(t=>t.email===email);
-      await afterLogin(data.user,teamMember||{name:email,role:'recruiter',initials:email[0].toUpperCase(),color:'#3b82f6'});
+    if(!error&&data.user){
+      await afterLogin(data.user,teamMember);
+      return;
     }
-  }catch(e){showErr('Connection error. Please check your internet.');}
+    // If sign in failed — try creating account first
+    if(error){
+      const isNewUser=error.message.includes('Invalid')||error.message.includes('invalid_credentials')||error.message.includes('not found')||error.message.includes('Email not confirmed');
+      if(isNewUser){
+        // Create account
+        const {data:sd,error:se}=await sb.auth.signUp({email,password:pass,options:{data:{name:teamMember.name,role:teamMember.role}}});
+        if(se&&!se.message.includes('already registered')){showErr('Error: '+se.message);return;}
+        // Confirm email via SQL is needed — show helpful message
+        showErr('Account created! Go to Supabase SQL Editor and run: UPDATE auth.users SET email_confirmed_at=now() WHERE email=\''+email+'\'; Then click Sign In again.');
+        return;
+      }
+      showErr(error.message);
+    }
+  }catch(e){showErr('Connection error: '+e.message);}
   finally{btn.disabled=false;btn.textContent='Sign In';}
 }
 
@@ -1783,20 +1782,23 @@ Important rules:
   const resp=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content}]})
+    body:JSON.stringify({model:'claude-opus-4-5',max_tokens:1200,messages:[{role:'user',content}]})
   });
   if(!resp.ok){
     const e=await resp.json().catch(()=>({}));
     throw new Error(e.error?.message||'AI API error '+resp.status);
   }
   const d=await resp.json();
+  console.log('AI raw response:', JSON.stringify(d.content?.[0]?.text||''));
   let txt=(d.content?.[0]?.text||'{}');
   // Strip markdown if present
   txt=txt.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
   // Extract JSON if surrounded by text
   const jsonMatch=txt.match(/\{[\s\S]*\}/);
   if(jsonMatch)txt=jsonMatch[0];
-  return JSON.parse(txt);
+  const result=JSON.parse(txt);
+  console.log('Parsed result:', JSON.stringify(result));
+  return result;
 }
 
 function basicExtract(text){
@@ -1881,6 +1883,8 @@ function basicExtract(text){
 }
 
 function fillParsedFields(d,file){
+  console.log('Filling fields with parsed data:', JSON.stringify(d));
+
   // Hide upload zone, show filled form
   const s1=document.getElementById('parse-step1');
   const s2=document.getElementById('parse-step2');
@@ -1889,26 +1893,31 @@ function fillParsedFields(d,file){
   if(s2)s2.style.display='block';
   if(prog)prog.style.display='none';
 
-  // Fill each field
-  const set=(id,val)=>{const el=document.getElementById(id);if(el&&val)el.value=val;};
-  set('pf-fn',d.first_name||'');
-  set('pf-ln',d.last_name||'');
-  set('pf-em',d.email||'');
-  set('pf-ph',d.phone||'');
-  set('pf-title',d.current_title||'');
-  set('pf-co',d.current_company||'');
-  set('pf-exp',d.total_experience_years||'');
-  set('pf-ctc',d.current_ctc||'');
-  set('pf-loc',d.location||'');
-  set('pf-skills',d.skills||'');
-  set('pf-edu',d.education||'');
-  set('pf-notes',d.summary||'');
+  // Fill each field — set even if empty so fields are visible
+  const set=(id,val)=>{
+    const el=document.getElementById(id);
+    if(el){el.value=val||'';}
+  };
+
+  set('pf-fn', d.first_name||d.firstName||d.name?.split(' ')[0]||'');
+  set('pf-ln', d.last_name||d.lastName||d.surname||d.name?.split(' ').slice(1).join(' ')||'');
+  set('pf-em', d.email||d.email_address||'');
+  set('pf-ph', d.phone||d.mobile||d.phone_number||d.contact||'');
+  set('pf-title', d.current_title||d.title||d.designation||d.position||d.job_title||'');
+  set('pf-co', d.current_company||d.company||d.employer||d.organization||'');
+  set('pf-exp', d.total_experience_years||d.experience||d.experience_years||d.years_of_experience||'');
+  set('pf-ctc', d.current_ctc||d.ctc||d.salary||d.current_salary||'');
+  set('pf-loc', d.location||d.city||d.address||'');
+  set('pf-skills', Array.isArray(d.skills)?d.skills.join(', '):(d.skills||d.key_skills||''));
+  set('pf-edu', d.education||d.qualification||d.degree||'');
+  set('pf-notes', d.summary||d.objective||d.profile||d.about||'');
 
   // Source dropdown
   const src=document.getElementById('pf-src');
-  if(src&&d.source){
-    const opt=[...src.options].find(o=>o.value===d.source);
-    if(opt)src.value=d.source;
+  if(src){
+    const sourceVal=d.source||'Other';
+    const opt=[...src.options].find(o=>o.text===sourceVal||o.value===sourceVal);
+    if(opt)src.value=opt.value;
   }
 
   // Show file info
@@ -1919,14 +1928,31 @@ function fillParsedFields(d,file){
   if(pfsize)pfsize.textContent=fsz(file.size)+' — will upload on save';
   if(pfn)pfn.textContent=file.name;
 
-  // Highlight auto-filled fields briefly
+  // Count filled fields
+  const filled=['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp','pf-ctc','pf-loc','pf-skills'].filter(id=>{
+    const el=document.getElementById(id);return el&&el.value.trim()!=='';
+  }).length;
+
+  // Update success banner
+  const banner=document.querySelector('#parse-step2 .info-box, #parse-step2 div[style*="grn2"]');
+
+  // Highlight filled fields
   ['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp','pf-ctc','pf-loc','pf-skills'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el&&el.value){
-      el.style.background='#f0fdf4';el.style.borderColor='var(--grn)';
-      setTimeout(()=>{el.style.background='';el.style.borderColor='';},2500);
+    if(el){
+      if(el.value.trim()){
+        el.style.background='#f0fdf4';
+        el.style.borderColor='#10b981';
+        setTimeout(()=>{el.style.background='';el.style.borderColor='';},3000);
+      }
     }
   });
+
+  if(filled===0){
+    toast('Resume uploaded. Fields could not be auto-filled — please fill manually.','');
+  }else{
+    toast(filled+' fields auto-filled from resume! ✓','success');
+  }
 }
 
 function resetParser(){
@@ -2235,7 +2261,7 @@ async function aiMatch(job,cands){
   const prompt=`You are a recruiter AI. Score each candidate 0-99 for the job "${job.title}" requiring skills: ${(job.skills||[]).join(', ')}.
 Candidates: ${cands.slice(0,30).map((c,i)=>`[${i}] ${c.first_name} ${c.last_name} | ${c.title||''} @ ${c.company||''} | ${c.experience_years||0}yr | Skills: ${(c.skills||[]).join(', ')}`).join('\n')}
 Return ONLY JSON array: [{"index":0,"score":87,"reason":"brief reason max 8 words"}]`;
-  const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':localStorage.getItem('hg_ai'),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:prompt}]})});
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':localStorage.getItem('hg_ai'),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-opus-4-5',max_tokens:800,messages:[{role:'user',content:prompt}]})});
   if(!resp.ok)throw new Error('AI error');
   const d=await resp.json();
   const txt=(d.content?.[0]?.text||'[]').replace(/```json|```/gi,'').trim();
