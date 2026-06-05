@@ -1127,14 +1127,14 @@ async function doLogin(){
         if(!teamMember){showErr('This email is not registered in HRGURU. Contact your admin.');return;}
         const {data:sd,error:se}=await sb.auth.signUp({email,password:pass,options:{data:{name:teamMember.name,role:teamMember.role}}});
         if(se){showErr(se.message);return;}
-        if(sd.session){
-          // Signed up and logged in immediately
+        // Immediately try to sign in after signup
+        const {data:sd2,error:se2}=await sb.auth.signInWithPassword({email,password:pass});
+        if(sd2?.user){
+          await afterLogin(sd2.user,teamMember);
+        }else if(sd?.session){
           await afterLogin(sd.user,teamMember);
-        }else if(sd.user){
-          // Try signing in immediately after signup
-          const {data:sd2,error:se2}=await sb.auth.signInWithPassword({email,password:pass});
-          if(sd2?.user){await afterLogin(sd2.user,teamMember);}
-          else{showErr('Account created! Please sign in again with the same password.');}
+        }else{
+          showErr('Account created! Please click Sign In again.');
         }
       }else{showErr(error.message);}
     }else if(data.user){
