@@ -881,6 +881,41 @@ button,input,select,textarea{font-family:var(--f)}
               </select>
             </div>
           </div>
+
+          <!-- Job, Industry, Functional Area -->
+          <div class="field">
+            <label>Apply for Job <span style="font-size:10px;color:var(--ink5);font-weight:400;text-transform:none">(select which job this candidate is for)</span></label>
+            <select id="pf-job" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none;background:#fff">
+              <option value="">-- Select Job (Optional) --</option>
+            </select>
+          </div>
+          <div class="fr">
+            <div class="field">
+              <label>Industry</label>
+              <select id="pf-industry">
+                <option value="">-- Select Industry --</option>
+                <option>Technology / IT</option><option>FMCG</option><option>Healthcare / Pharma</option>
+                <option>Manufacturing</option><option>Retail / Fashion</option><option>Finance / BFSI</option>
+                <option>Consulting</option><option>Education</option><option>Hospitality / Hotels</option>
+                <option>Logistics / Supply Chain</option><option>Real Estate</option><option>Media / Advertising</option>
+                <option>Automobile</option><option>Telecom</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Functional Area</label>
+              <select id="pf-funcarea">
+                <option value="">-- Select Area --</option>
+                <option>Sales & Business Development</option><option>Marketing & Communications</option>
+                <option>Human Resources</option><option>Finance & Accounts</option>
+                <option>Operations & Supply Chain</option><option>IT & Software</option>
+                <option>Customer Service</option><option>Production & Manufacturing</option>
+                <option>Retail & Store Management</option><option>Admin & Back Office</option>
+                <option>Legal & Compliance</option><option>Design & Creative</option>
+                <option>Top Management</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+
           <div class="field">
             <label>Skills (detected from resume)</label>
             <input id="pf-skills" type="text">
@@ -916,6 +951,37 @@ button,input,select,textarea{font-family:var(--f)}
         <div class="fr"><div class="field"><label>Location</label><input id="af-loc" type="text" placeholder="City, State - Pincode"></div><div class="field"><label>Source</label><select id="af-src"><option>Naukri</option><option>LinkedIn</option><option>Indeed</option><option>Referral</option><option>Career Website</option><option>Other</option></select></div></div>
         <div class="field"><label>Skills (comma separated)</label><input id="af-skills" type="text" placeholder="Sales, B2B, CRM, FMCG"></div>
         <div class="field"><label>Notes</label><textarea id="af-notes" rows="2" placeholder="Initial recruiter notes…"></textarea></div>
+        <!-- Job, Industry, Functional Area -->
+        <div class="field">
+          <label>Apply for Job <span style="font-size:10px;color:var(--ink5);font-weight:400;text-transform:none">(select which job this candidate is for)</span></label>
+          <select id="af-job" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none;background:#fff">
+            <option value="">-- Select Job (Optional) --</option>
+          </select>
+        </div>
+        <div class="fr">
+          <div class="field">
+            <label>Industry</label>
+            <select id="af-industry">
+              <option value="">-- Select Industry --</option>
+              <option>Technology / IT</option><option>FMCG</option><option>Healthcare / Pharma</option>
+              <option>Manufacturing</option><option>Retail / Fashion</option><option>Finance / BFSI</option>
+              <option>Consulting</option><option>Education</option><option>Hospitality / Hotels</option>
+              <option>Logistics / Supply Chain</option><option>Real Estate</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Functional Area</label>
+            <select id="af-funcarea">
+              <option value="">-- Select Area --</option>
+              <option>Sales & Business Development</option><option>Marketing & Communications</option>
+              <option>Human Resources</option><option>Finance & Accounts</option>
+              <option>Operations & Supply Chain</option><option>IT & Software</option>
+              <option>Customer Service</option><option>Production & Manufacturing</option>
+              <option>Retail & Store Management</option><option>Admin & Back Office</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
         <!-- Resume attach for manual -->
         <div class="field"><label>Attach Resume (optional)</label>
           <div id="resume-dz" onclick="document.getElementById('af-resume').click()" ondragover="rzDrag(event)" ondragleave="rzOff()" ondrop="rzDrop(event)"
@@ -2103,6 +2169,9 @@ async function saveCandidate(){
     source:isResume?(document.getElementById('pf-src')?.value||'Other'):(document.getElementById('af-src')?.value||'Other'),
     skills,
     notes:isResume?(g('pf-notes')+(g('pf-edu')?'\nEducation: '+g('pf-edu'):'')):g('af-notes'),
+    industry:isResume?(document.getElementById('pf-industry')?.value||''):(document.getElementById('af-industry')?.value||''),
+    functional_area:isResume?(document.getElementById('pf-funcarea')?.value||''):(document.getElementById('af-funcarea')?.value||''),
+    applied_job:isResume?(document.getElementById('pf-job')?.value||''):(document.getElementById('af-job')?.value||''),
     status:'Sourced',
     created_by:currentUser?.name||'Admin',
   };
@@ -2224,6 +2293,20 @@ async function saveCompany(){
     await loadCompaniesIntoJobDropdown();
   }catch(e){alert('Error: '+e.message);}
   finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i>Save Company';}
+}
+
+async function loadJobsIntoCandDropdown(){
+  try{
+    const{data}=await sb.from('hp_jobs').select('id,job_num,title,company').eq('status','Open').order('created_at',{ascending:false});
+    const jobs=data||[];
+    const opts='<option value="">-- Select Job (Optional) --</option>'+
+      jobs.map(j=>`<option value="${j.id}">${j.job_num?j.job_num+' - ':''}${j.title} @ ${j.company||'—'}</option>`).join('');
+    // Set both resume and manual tab dropdowns
+    const pfJob=document.getElementById('pf-job');
+    const afJob=document.getElementById('af-job');
+    if(pfJob)pfJob.innerHTML=opts;
+    if(afJob)afJob.innerHTML=opts;
+  }catch(e){console.warn('Could not load jobs for candidate modal:',e);}
 }
 
 async function loadCompaniesIntoJobDropdown(){
@@ -2463,6 +2546,8 @@ function openModal(type){
       switchCandTab('resume');resetParser();clearResume();
       const warn=document.getElementById('parse-nokey-warn');
       if(warn)warn.style.display=localStorage.getItem('hg_ai')?'none':'block';
+      // Load jobs into dropdowns
+      loadJobsIntoCandDropdown();
     },10);
   }
   if(type==='addjob'){
