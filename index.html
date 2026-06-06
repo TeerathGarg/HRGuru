@@ -1663,53 +1663,42 @@ async function runResumeParser(file){
   try{
     let parsed=null;
 
-    if(aiKey){
-      // ── WITH AI KEY — send file directly to Claude ──
-      setParseProgress(40,'Sending to AI…',bar,lbl);
-      const base64=await fileToBase64(file);
-      setParseProgress(60,'AI reading resume…',bar,lbl);
-      try{
-        parsed=await parseWithAI(base64,file.type,ext,aiKey);
-        setParseProgress(90,'Filling fields…',bar,lbl);
-      }catch(aiErr){
-        console.error('AI error:',aiErr.message);
-        // For DOCX try text extraction as fallback
-        if(ext==='docx'||ext==='doc'){
-          setParseProgress(70,'Trying text extraction…',bar,lbl);
-          const text=await readFileAsText(file);
-          // Clean up binary garbage from docx
-          const cleanText=text.replace(/[^\x20-\x7E\n\r\t]/g,' ').replace(/\s+/g,' ');
-          if(cleanText.length>100){
-            parsed=basicExtract(cleanText);
-          }else{
-            // Send as plain text prompt to AI
-            try{
-              parsed=await parseWithAIText(file.name,aiKey);
-            }catch(e2){
-              parsed=extractFromFileName(file.name);
-            }
-          }
-        }else{
-          parsed=extractFromFileName(file.name);
-          toast('Could not read file — please fill manually','');
-        }
+    if(ext==='pdf'){
+      // PDF — send as base64 document to Claude
+      if(aiKey){
+        setParseProgress(40,'Sending PDF to AI…',bar,lbl);
+        const base64=await fileToBase64(file);
+        setParseProgress(65,'AI reading PDF…',bar,lbl);
+        try{parsed=await parseWithAI(base64,file.type,ext,aiKey);}
+        catch(e){console.error('PDF AI error:',e);parsed=extractFromFileName(file.name);}
+      }else{
+        parsed=extractFromFileName(file.name);
+        toast('Add AI key in Settings for PDF auto-fill','');
       }
     }else{
-      // ── NO AI KEY ──
-      setParseProgress(40,'Extracting text…',bar,lbl);
-      if(ext==='pdf'){
-        // PDF binary can't be read as text — extract what we can from filename
-        // and show message to add API key
-        parsed=extractFromFileName(file.name);
-        await new Promise(r=>setTimeout(r,600));
-        setParseProgress(90,'Done (limited — add AI key for full parsing)…',bar,lbl);
-        setTimeout(()=>toast('⚠️ For full auto-fill add your API key in Settings → AI Candidate Matching',''),1000);
-      }else{
-        // DOC/DOCX — can read as text
-        const text=await readFileAsText(file);
+      // DOCX/DOC — use mammoth to extract clean text, then send to AI
+      setParseProgress(30,'Extracting text from Word file…',bar,lbl);
+      let text='';
+      try{
+        await loadMammoth();
+        const ab=await file.arrayBuffer();
+        const r=await mammoth.extractRawText({arrayBuffer:ab});
+        text=r.value||'';
+        console.log('Extracted text length:',text.length,'preview:',text.slice(0,200));
+      }catch(e){
+        console.warn('Mammoth error:',e.message);
+        text=await readFileAsText(file);
+        text=text.split('').filter(function(c){var n=c.charCodeAt(0);return n>=32&&n<=126||n===10||n===13||n===9;}).join('').replace(/  +/g,' ').trim();
+      }
+      setParseProgress(60,'Sending to AI…',bar,lbl);
+      if(aiKey&&text.length>30){
+        try{parsed=await parseTextWithAI(text.slice(0,6000),aiKey);}
+        catch(e){console.error('Word AI error:',e);parsed=basicExtract(text);}
+      }else if(text.length>30){
         parsed=basicExtract(text);
-        await new Promise(r=>setTimeout(r,400));
-        setParseProgress(90,'Filling fields…',bar,lbl);
+      }else{
+        parsed=extractFromFileName(file.name);
+        toast('Could not extract Word content — please fill manually','');
       }
     }
 
@@ -1758,20 +1747,43 @@ async function readFileAsText(file){
   });
 }
 
-// For DOCX — parse using just the filename and ask AI to help
-async function parseWithAIText(filename,apiKey){
-  const prompt=`A recruiter uploaded a resume file named "${filename}". Based on the filename, extract what you can and return this JSON:
+// Load mammoth.js for Word file text extraction
+function loadMammoth(){
+  return new Promise((resolve,reject)=>{
+    if(window.mammoth){resolve();return;}
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js';
+    s.onload=resolve;
+    s.onerror=()=>reject(new Error('Could not load mammoth'));
+    document.head.appendChild(s);
+  });
+}
+
+// Parse plain text with AI (for Word files)
+async function parseTextWithAI(text,apiKey){
+  const prompt=`You are a resume parser. Extract details from this resume text and return ONLY this JSON:
 {"first_name":"","last_name":"","email":"","phone":"","current_title":"","current_company":"","total_experience_years":0,"current_ctc":"","location":"","skills":"","education":"","source":"Other","summary":""}
-Return ONLY the JSON. Use empty strings for unknown fields.`;
+Rules: total_experience_years = number only. Skills = comma separated. Return ONLY JSON no other text.
+
+Resume:
+${text}`;
   const resp=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:400,messages:[{role:'user',content:prompt}]})
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:800,messages:[{role:'user',content:prompt}]})
   });
+  if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||'AI error');}
   const d=await resp.json();
   let txt=(d.content?.[0]?.text||'{}').replace(/```json|```/gi,'').trim();
   const m=txt.match(/\{[\s\S]*\}/);
-  return m?JSON.parse(m[0]):{};
+  const result=m?JSON.parse(m[0]):{};
+  console.log('Word parsed:',JSON.stringify(result));
+  return result;
+}
+
+// For DOCX — parse using just the filename
+async function parseWithAIText(filename,apiKey){
+  return extractFromFileName(filename);
 }
 
 async function parseWithAI(base64,mimeType,ext,apiKey){
@@ -1830,7 +1842,7 @@ Rules: total_experience_years must be a NUMBER. Return ONLY JSON.`;
   const resp=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-opus-4-5',max_tokens:1200,messages:[{role:'user',content}]})
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,messages:[{role:'user',content}]})
   });
   if(!resp.ok){
     const e=await resp.json().catch(()=>({}));
@@ -2307,7 +2319,7 @@ async function aiMatch(job,cands){
   const prompt=`You are a recruiter AI. Score each candidate 0-99 for the job "${job.title}" requiring skills: ${(job.skills||[]).join(', ')}.
 Candidates: ${cands.slice(0,30).map((c,i)=>`[${i}] ${c.first_name} ${c.last_name} | ${c.title||''} @ ${c.company||''} | ${c.experience_years||0}yr | Skills: ${(c.skills||[]).join(', ')}`).join('\n')}
 Return ONLY JSON array: [{"index":0,"score":87,"reason":"brief reason max 8 words"}]`;
-  const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':localStorage.getItem('hg_ai'),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-opus-4-5',max_tokens:800,messages:[{role:'user',content:prompt}]})});
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':localStorage.getItem('hg_ai'),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:800,messages:[{role:'user',content:prompt}]})});
   if(!resp.ok)throw new Error('AI error');
   const d=await resp.json();
   const txt=(d.content?.[0]?.text||'[]').replace(/```json|```/gi,'').trim();
