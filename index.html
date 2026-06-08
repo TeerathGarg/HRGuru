@@ -542,6 +542,7 @@ button,input,select,textarea{font-family:var(--f)}
         <div class="srchbox" style="max-width:260px"><i class="ti ti-search"></i><input type="text" placeholder="Keywords…" oninput="filterCands(this.value)" id="csrch"></div>
         <button class="btn btn-sm" onclick="toggleFP('cand')"><i class="ti ti-adjustments-horizontal"></i>Advance Search</button>
         <div class="act-pill">Actions <i class="ti ti-dots"></i></div>
+        <button class="btn btn-sm" onclick="openModal('bulkimport')"><i class="ti ti-table-import"></i>Bulk Import</button>
         <button class="btn btn-p btn-sm" onclick="openModal('addcand')"><i class="ti ti-user-plus"></i>Add Candidate</button>
       </div>
     </div>
@@ -771,6 +772,70 @@ button,input,select,textarea{font-family:var(--f)}
       <button class="btn" style="justify-content:flex-start;gap:8px;padding:10px 12px" onclick="closeModal('addnew');openModal('addco')"><i class="ti ti-building" style="color:var(--pur)"></i>Company</button>
       <button class="btn" style="justify-content:flex-start;gap:8px;padding:10px 12px" onclick="closeModal('addnew');openModal('addinv')"><i class="ti ti-receipt" style="color:var(--gold)"></i>Invoice</button>
       <button class="btn" style="justify-content:flex-start;gap:8px;padding:10px 12px" onclick="closeModal('addnew');openModal('adduser')"><i class="ti ti-user-circle" style="color:var(--sky)"></i>User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Import Modal -->
+<div class="modal-bg" id="modal-bulkimport">
+  <div class="modal modal-xl">
+    <div class="mhd">
+      <h2><i class="ti ti-files"></i>Bulk Resume Upload — AI Auto-Fill</h2>
+      <button class="btn btn-ghost btn-xs" onclick="closeModal('bulkimport');resetBulkResume()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="mbd" style="padding:0;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">
+
+      <!-- Info bar -->
+      <div style="padding:12px 18px;background:linear-gradient(90deg,#0f1929,#1a2744);display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <i class="ti ti-sparkles" style="color:#34d399;font-size:18px;flex-shrink:0"></i>
+        <div style="font-size:12.5px;color:rgba(255,255,255,.7)">Upload multiple resumes at once — AI reads each one and saves all candidates automatically</div>
+        <span id="br-ai-badge" style="margin-left:auto;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#fee2e2;color:#991b1b;white-space:nowrap;flex-shrink:0">AI Key Needed</span>
+      </div>
+
+      <!-- Upload zone -->
+      <div style="padding:18px;flex-shrink:0">
+        <div id="br-dropzone"
+          ondragover="brDrag(event)" ondragleave="brOff()" ondrop="brDrop(event)"
+          style="border:2px dashed var(--border2);border-radius:var(--rl);padding:28px 20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg3);position:relative">
+          <input type="file" id="br-file" accept=".pdf,.doc,.docx" multiple style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="brFilesSelected(event)">
+          <i class="ti ti-file-upload" style="font-size:44px;color:var(--ink6);display:block;margin-bottom:10px"></i>
+          <div style="font-size:15px;font-weight:700;color:var(--ink2)">Drop multiple resumes here or click to browse</div>
+          <div style="font-size:12.5px;color:var(--ink5);margin-top:5px">Select multiple PDF, DOC or DOCX files at once</div>
+          <div style="margin-top:12px;display:inline-flex;gap:8px">
+            <span style="padding:3px 9px;background:var(--bg4);border-radius:4px;font-size:12px;color:var(--ink4);font-weight:600">PDF</span>
+            <span style="padding:3px 9px;background:var(--bg4);border-radius:4px;font-size:12px;color:var(--ink4);font-weight:600">DOC</span>
+            <span style="padding:3px 9px;background:var(--bg4);border-radius:4px;font-size:12px;color:var(--ink4);font-weight:600">DOCX</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- File list + progress -->
+      <div style="flex:1;overflow-y:auto;padding:0 18px 18px" id="br-list-container" style="display:none">
+        <!-- Summary stats -->
+        <div id="br-stats" style="display:none;margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap">
+          <div style="padding:8px 14px;background:var(--bg3);border-radius:var(--r);font-size:12.5px"><span id="br-total" style="font-weight:700;color:var(--ink)">0</span> <span style="color:var(--ink5)">Total</span></div>
+          <div style="padding:8px 14px;background:var(--grn2);border-radius:var(--r);font-size:12.5px"><span id="br-done" style="font-weight:700;color:var(--grn)">0</span> <span style="color:#065f46">Saved</span></div>
+          <div style="padding:8px 14px;background:var(--gold2);border-radius:var(--r);font-size:12.5px"><span id="br-processing" style="font-weight:700;color:var(--gold)">0</span> <span style="color:#92400e">Processing</span></div>
+          <div style="padding:8px 14px;background:var(--red2);border-radius:var(--r);font-size:12.5px"><span id="br-failed" style="font-weight:700;color:var(--red)">0</span> <span style="color:#991b1b">Failed</span></div>
+          <!-- Overall progress -->
+          <div style="flex:1;min-width:200px;display:flex;align-items:center;gap:8px">
+            <div style="flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden">
+              <div id="br-overall-bar" style="height:100%;background:var(--acc);border-radius:4px;transition:width .4s;width:0%"></div>
+            </div>
+            <span id="br-overall-pct" style="font-size:12px;font-weight:700;color:var(--ink);flex-shrink:0">0%</span>
+          </div>
+        </div>
+
+        <!-- Individual file cards -->
+        <div id="br-file-cards" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+    </div>
+
+    <div class="mft">
+      <button class="btn" onclick="closeModal('bulkimport');resetBulkResume()">Cancel</button>
+      <button class="btn btn-p" id="br-start-btn" style="display:none" onclick="startBulkResumeImport()"><i class="ti ti-rocket"></i>Start AI Import</button>
+      <button class="btn btn-grn" id="br-done-btn" style="display:none" onclick="closeModal('bulkimport');resetBulkResume();loadCandidates()"><i class="ti ti-check"></i>Done — View Candidates</button>
     </div>
   </div>
 </div>
@@ -1664,8 +1729,245 @@ async function loadUsers(){
 }
 
 /* ═══════════════════════════════════════
-   RESUME PARSER — AI AUTO-FILL
+   BULK RESUME UPLOAD — AI AUTO-FILL
 ═══════════════════════════════════════ */
+let brFiles=[];let brResults=[];let brImporting=false;
+
+function brDrag(e){e.preventDefault();const dz=document.getElementById('br-dropzone');if(dz){dz.style.borderColor='var(--acc)';dz.style.background='var(--acc3)';}}
+function brOff(){const dz=document.getElementById('br-dropzone');if(dz){dz.style.borderColor='var(--border2)';dz.style.background='var(--bg3)';}}
+function brDrop(e){e.preventDefault();brOff();const files=Array.from(e.dataTransfer?.files||[]);if(files.length)brSetFiles(files);}
+function brFilesSelected(e){const files=Array.from(e.target?.files||[]);if(files.length)brSetFiles(files);}
+
+function brSetFiles(files){
+  // Filter valid files
+  const valid=files.filter(f=>{
+    const ext=f.name.split('.').pop().toLowerCase();
+    return ['pdf','doc','docx'].includes(ext)&&f.size<=5*1024*1024;
+  });
+  if(!valid.length){toast('No valid resume files found. Use PDF, DOC or DOCX under 5MB.','');return;}
+  brFiles=valid;
+  brResults=valid.map(f=>({file:f,status:'pending',data:null,error:null}));
+
+  // Check AI key
+  const aiKey=localStorage.getItem('hg_ai')||'';
+  const badge=document.getElementById('br-ai-badge');
+  if(badge){badge.textContent=aiKey?'✓ AI Active':'No AI — Basic Extraction';badge.style.background=aiKey?'#d1fae5':'#fef3c7';badge.style.color=aiKey?'#065f46':'#92400e';}
+
+  // Show file cards
+  document.getElementById('br-list-container').style.display='block';
+  const statsDiv=document.getElementById('br-stats');
+  if(statsDiv)statsDiv.style.display='flex';
+  document.getElementById('br-total').textContent=valid.length;
+  document.getElementById('br-done').textContent='0';
+  document.getElementById('br-processing').textContent='0';
+  document.getElementById('br-failed').textContent='0';
+  document.getElementById('br-overall-bar').style.width='0%';
+  document.getElementById('br-overall-pct').textContent='0%';
+
+  // Render file cards
+  const cards=document.getElementById('br-file-cards');
+  cards.innerHTML=brResults.map((r,i)=>`
+    <div id="brcard-${i}" style="display:flex;align-items:center;gap:10px;padding:10px 13px;background:#fff;border:1px solid var(--border);border-radius:var(--r)">
+      <i class="ti ti-file-text" style="font-size:20px;color:var(--ink5);flex-shrink:0"></i>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.file.name}</div>
+        <div style="font-size:11.5px;color:var(--ink5)">${fsz(r.file.size)}</div>
+      </div>
+      <div id="brcard-status-${i}" style="font-size:11.5px;font-weight:600;color:var(--ink5);white-space:nowrap">Pending</div>
+      <div id="brcard-icon-${i}"><i class="ti ti-clock" style="color:var(--ink5);font-size:16px"></i></div>
+    </div>`).join('');
+
+  document.getElementById('br-start-btn').style.display='flex';
+  document.getElementById('br-done-btn').style.display='none';
+
+  // Update dropzone
+  const dz=document.getElementById('br-dropzone');
+  if(dz){
+    dz.style.padding='16px 20px';
+    const input=dz.querySelector('input');
+    dz.innerHTML=`<div style="display:flex;align-items:center;gap:10px;justify-content:center">
+      <i class="ti ti-check-circle" style="font-size:24px;color:var(--grn)"></i>
+      <div><div style="font-size:14px;font-weight:700;color:var(--ink)">${valid.length} resume${valid.length>1?'s':''} selected</div>
+      <div style="font-size:12px;color:var(--ink5)">Click "Start AI Import" to process all</div></div>
+      <label style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:12px;color:var(--ink4)">
+        <input type="file" accept=".pdf,.doc,.docx" multiple style="display:none" onchange="brFilesSelected(event)">Add more files
+      </label>
+    </div>`;
+  }
+}
+
+async function startBulkResumeImport(){
+  if(brImporting)return;
+  brImporting=true;
+  const btn=document.getElementById('br-start-btn');
+  btn.disabled=true;btn.innerHTML='<div class="spinner" style="border-top-color:#fff;border-color:rgba(255,255,255,.3)"></div>Processing…';
+
+  const aiKey=localStorage.getItem('hg_ai')||'';
+  let done=0,failed=0;
+
+  for(let i=0;i<brResults.length;i++){
+    const r=brResults[i];
+    updateBRCard(i,'processing','Processing…','ti-loader-2',`color:var(--gold)`);
+    document.getElementById('br-processing').textContent='1';
+
+    try{
+      // Parse resume
+      let parsed=null;
+      const ext=r.file.name.split('.').pop().toLowerCase();
+
+      if(ext==='pdf'){
+        // Try PDF.js first
+        let pdfText='';
+        try{
+          await loadPDFJS();
+          pdfText=await extractPDFText(r.file);
+        }catch(e){console.warn('PDF.js failed:',e.message);}
+
+        if(aiKey&&pdfText.length>30){
+          try{parsed=await parseTextWithAI(pdfText.slice(0,6000),aiKey);}
+          catch(e){parsed=basicExtract(pdfText);}
+        }else if(pdfText.length>30){
+          parsed=basicExtract(pdfText);
+        }else if(aiKey){
+          const b64=await fileToBase64(r.file);
+          try{parsed=await parseWithAI(b64,r.file.type,ext,aiKey);}
+          catch(e){parsed=extractFromFileName(r.file.name);}
+        }else{
+          parsed=extractFromFileName(r.file.name);
+        }
+      }else{
+        // DOCX/DOC
+        let text='';
+        try{
+          await loadMammoth();
+          const ab=await r.file.arrayBuffer();
+          const res=await mammoth.extractRawText({arrayBuffer:ab});
+          text=res.value||'';
+        }catch(e){
+          text=await readFileAsText(r.file);
+          text=text.split('').filter(function(c){var n=c.charCodeAt(0);return n>=32&&n<=126||n===10||n===13||n===9;}).join('').replace(/  +/g,' ').trim();
+        }
+        if(aiKey&&text.length>30){
+          try{parsed=await parseTextWithAI(text.slice(0,6000),aiKey);}
+          catch(e){parsed=basicExtract(text);}
+        }else if(text.length>30){
+          parsed=basicExtract(text);
+        }else{
+          parsed=extractFromFileName(r.file.name);
+        }
+      }
+
+      if(!parsed)parsed={};
+
+      // Build candidate record
+      const fn=parsed.first_name||parsed.firstName||parsed.name?.split(' ')[0]||'';
+      const ln=parsed.last_name||parsed.lastName||parsed.name?.split(' ').slice(1).join(' ')||'';
+      const em=parsed.email||'';
+
+      if(!fn&&!em){
+        throw new Error('Could not extract name or email');
+      }
+
+      const skillsRaw=Array.isArray(parsed.skills)?parsed.skills.join(', '):(parsed.skills||'');
+      const skills=skillsRaw.split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+
+      const{error}=await sb.from('hp_candidates').insert([{
+        first_name:fn,last_name:ln,email:em,
+        phone:parsed.phone||parsed.mobile||'',
+        title:parsed.current_title||parsed.title||parsed.designation||'',
+        company:parsed.current_company||parsed.company||'',
+        experience_years:parseFloat(parsed.total_experience_years||parsed.experience_years||0)||0,
+        current_ctc:parsed.current_ctc||parsed.ctc||'',
+        location:parsed.location||parsed.city||'',
+        source:parsed.source||'Other',
+        skills,
+        notes:parsed.summary||'',
+        status:'Sourced',
+        created_by:currentUser?.name||'Admin',
+      }]);
+
+      if(error)throw new Error(error.message);
+
+      done++;
+      r.status='done';
+      r.data=parsed;
+      updateBRCard(i,'done',`${fn} ${ln}`.trim()||'Saved','ti-check-circle',`color:var(--grn)`);
+
+    }catch(e){
+      failed++;
+      r.status='failed';
+      r.error=e.message;
+      updateBRCard(i,'failed','Failed: '+e.message.slice(0,40),'ti-x-circle',`color:var(--red)`);
+      console.error('Resume',i,'error:',e.message);
+    }
+
+    // Update counters
+    document.getElementById('br-done').textContent=done;
+    document.getElementById('br-failed').textContent=failed;
+    document.getElementById('br-processing').textContent='0';
+    const pct=Math.round(((i+1)/brResults.length)*100);
+    document.getElementById('br-overall-bar').style.width=pct+'%';
+    document.getElementById('br-overall-pct').textContent=pct+'%';
+
+    // Small delay between files
+    if(i<brResults.length-1)await new Promise(r=>setTimeout(r,300));
+  }
+
+  brImporting=false;
+  btn.style.display='none';
+  document.getElementById('br-done-btn').style.display='flex';
+  toast(`✓ ${done} candidates imported!${failed>0?' '+failed+' failed':''}`, 'success');
+}
+
+function updateBRCard(i,status,msg,icon,iconStyle){
+  const statusEl=document.getElementById('brcard-status-'+i);
+  const iconEl=document.getElementById('brcard-icon-'+i);
+  const card=document.getElementById('brcard-'+i);
+  const colors={pending:'var(--ink5)',processing:'var(--gold)',done:'var(--grn)',failed:'var(--red)'};
+  if(statusEl){statusEl.textContent=msg;statusEl.style.color=colors[status]||'var(--ink5)';}
+  if(iconEl)iconEl.innerHTML=`<i class="ti ${icon}" style="font-size:16px;${iconStyle}"></i>`;
+  if(card&&status==='done')card.style.background='#f0fdf4';
+  if(card&&status==='failed')card.style.background='#fef2f2';
+}
+
+function resetBulkResume(){
+  brFiles=[];brResults=[];brImporting=false;
+  const cards=document.getElementById('br-file-cards');if(cards)cards.innerHTML='';
+  const lc=document.getElementById('br-list-container');if(lc)lc.style.display='none';
+  const stats=document.getElementById('br-stats');if(stats)stats.style.display='none';
+  const startBtn=document.getElementById('br-start-btn');
+  if(startBtn){startBtn.style.display='none';startBtn.disabled=false;startBtn.innerHTML='<i class="ti ti-rocket"></i>Start AI Import';}
+  const doneBtn=document.getElementById('br-done-btn');if(doneBtn)doneBtn.style.display='none';
+  // Reset dropzone
+  const dz=document.getElementById('br-dropzone');
+  if(dz){
+    dz.style.padding='28px 20px';
+    dz.innerHTML=`<input type="file" id="br-file" accept=".pdf,.doc,.docx" multiple style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="brFilesSelected(event)">
+      <i class="ti ti-file-upload" style="font-size:44px;color:var(--ink6);display:block;margin-bottom:10px"></i>
+      <div style="font-size:15px;font-weight:700;color:var(--ink2)">Drop multiple resumes here or click to browse</div>
+      <div style="font-size:12.5px;color:var(--ink5);margin-top:5px">Select multiple PDF, DOC or DOCX files at once</div>
+      <div style="margin-top:12px;display:inline-flex;gap:8px">
+        <span style="padding:3px 9px;background:var(--bg4);border-radius:4px;font-size:12px;color:var(--ink4);font-weight:600">PDF</span>
+        <span style="padding:3px 9px;background:var(--bg4);border-radius:4px;font-size:12px;color:var(--ink4);font-weight:600">DOC</span>
+        <span style="padding:3px 9px;background:var(--bg4);border-radius:4px;font-size:12px;color:var(--ink4);font-weight:600">DOCX</span>
+      </div>`;
+  }
+}
+
+// Keep CSV bulk import as separate download template function
+function downloadTemplate(){
+  const headers=['First Name*','Last Name','Email*','Phone','Current Title','Current Company','Experience (Years)','Current CTC','Location','Source','Skills','Industry','Functional Area','Notes'];
+  const sample=[
+    ['Rahul','Sharma','rahul@email.com','+91 98765 43210','Sales Manager','ABC Corp','5','600000','Mumbai','Naukri','Sales, B2B, CRM','FMCG','Sales & Business Development','Good candidate'],
+    ['Priya','Verma','priya@email.com','+91 98765 11111','HR Executive','XYZ Ltd','3','450000','Delhi','LinkedIn','HR, Recruitment','Manufacturing','Human Resources',''],
+  ];
+  const csv=[[...headers],...sample].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='HRGURU_Template.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
 let selectedResumeFile=null;
 let currentTab='resume';
 
