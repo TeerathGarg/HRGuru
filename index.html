@@ -369,6 +369,9 @@ button,input,select,textarea{font-family:var(--f)}
 .act-pill:hover{background:var(--bg3)}
 .sep{width:1px;height:18px;background:var(--border)}
 .fsel{font-size:12px;border:1px solid var(--border);border-radius:var(--r);padding:5.5px 9px;background:#fff;color:var(--ink4);cursor:pointer;outline:none}
+.skill-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;background:var(--acc3);border:1px solid #93c5fd;border-radius:20px;font-size:12px;font-weight:500;color:var(--acc4);cursor:default}
+.skill-tag .st-x{cursor:pointer;font-size:14px;color:var(--acc);line-height:1;opacity:.7}
+.skill-tag .st-x:hover{opacity:1;color:var(--red)}
 .toast{position:fixed;bottom:20px;right:20px;background:var(--ink2);color:#fff;padding:12px 18px;border-radius:var(--rl);font-size:13px;font-weight:500;z-index:9999;box-shadow:var(--sh3);display:flex;align-items:center;gap:8px;transform:translateY(100px);opacity:0;transition:all .3s ease}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.success{background:var(--grn3)}
@@ -848,127 +851,178 @@ button,input,select,textarea{font-family:var(--f)}
       <button class="btn btn-ghost btn-xs" onclick="closeModal('addcand')"><i class="ti ti-x"></i></button>
     </div>
 
-    <!-- Two tabs: Upload Resume | Manual Entry -->
+    <!-- Tabs -->
     <div style="display:flex;border-bottom:1px solid var(--border);background:#fff;padding:0 18px;flex-shrink:0">
-      <div id="ctab-resume" onclick="switchCandTab('resume')" style="padding:10px 14px;font-size:13px;font-weight:600;color:var(--acc);border-bottom:2px solid var(--acc);margin-bottom:-1px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px"><i class="ti ti-file-upload" style="font-size:14px"></i>Upload Resume <span style="font-size:10px;background:var(--grn);color:#fff;padding:1px 6px;border-radius:10px;font-weight:700">AUTO-FILL</span></div>
-      <div id="ctab-manual" onclick="switchCandTab('manual')" style="padding:10px 14px;font-size:13px;color:var(--ink4);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px">Manual Entry</div>
+      <div id="ctab-resume" onclick="switchCandTab('resume')" style="padding:10px 14px;font-size:13px;font-weight:600;color:var(--acc);border-bottom:2px solid var(--acc);margin-bottom:-1px;cursor:pointer;display:flex;align-items:center;gap:6px"><i class="ti ti-file-upload" style="font-size:14px"></i>Upload Resume <span style="font-size:10px;background:var(--grn);color:#fff;padding:1px 6px;border-radius:10px;font-weight:700">AUTO-FILL</span></div>
+      <div id="ctab-manual" onclick="switchCandTab('manual')" style="padding:10px 14px;font-size:13px;color:var(--ink4);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px">Manual Entry</div>
     </div>
 
     <div class="mbd" id="cand-modal-body">
 
-      <!-- ── RESUME TAB (default) ── -->
+      <!-- ══ RESUME TAB ══ -->
       <div id="ctp-resume">
 
         <!-- Step 1: Upload Zone -->
         <div id="parse-step1">
-          <div style="font-size:12.5px;color:var(--ink4);margin-bottom:10px;padding:10px 12px;background:var(--acc3);border-radius:var(--r);display:flex;align-items:center;gap:8px"><i class="ti ti-sparkles" style="color:var(--acc);font-size:16px;flex-shrink:0"></i>Upload any resume — AI will read it and auto-fill all fields in seconds. Just review and save.</div>
-
-          <div id="parse-dz"
-            onclick="document.getElementById('parse-file').click()"
+          <div style="font-size:12.5px;color:var(--ink4);margin-bottom:12px;padding:10px 12px;background:var(--acc3);border-radius:var(--r);display:flex;align-items:center;gap:8px">
+            <i class="ti ti-sparkles" style="color:var(--acc);font-size:16px;flex-shrink:0"></i>
+            Upload any resume — AI reads it and fills all fields automatically.
+          </div>
+          <div id="parse-dz" onclick="document.getElementById('parse-file').click()"
             ondragover="parseDrag(event)" ondragleave="parseOff()" ondrop="parseDrop(event)"
             style="border:2px dashed var(--border2);border-radius:var(--rl);padding:32px 20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg3)">
             <input type="file" id="parse-file" accept=".pdf,.doc,.docx" style="display:none" onchange="startParse(event)">
             <i class="ti ti-file-upload" style="font-size:44px;color:var(--ink6);display:block;margin-bottom:10px"></i>
             <div style="font-size:15px;font-weight:700;color:var(--ink2)">Drop resume here or click to browse</div>
             <div style="font-size:12.5px;color:var(--ink5);margin-top:5px">PDF, DOC, DOCX — AI extracts all details automatically</div>
-            <div style="margin-top:14px;display:flex;justify-content:center;gap:16px;font-size:11.5px;color:var(--ink5)">
-              <span><i class="ti ti-check" style="color:var(--grn)"></i> Name &amp; Contact</span>
-              <span><i class="ti ti-check" style="color:var(--grn)"></i> Company &amp; Designation</span>
-              <span><i class="ti ti-check" style="color:var(--grn)"></i> Experience &amp; Skills</span>
-              <span><i class="ti ti-check" style="color:var(--grn)"></i> Education</span>
-            </div>
           </div>
-
-          <!-- AI Key warning — shown if key not set -->
-          <div id="parse-nokey-warn" style="display:none;margin-top:10px;padding:12px 14px;background:#f0fdf4;border:1px solid #86efac;border-radius:var(--r)">
-            <div style="display:flex;align-items:flex-start;gap:9px">
-              <i class="ti ti-sparkles" style="font-size:18px;color:var(--grn);flex-shrink:0;margin-top:1px"></i>
-              <div style="flex:1">
-                <div style="font-size:13px;font-weight:700;color:#065f46;margin-bottom:4px">Works without AI key ✓</div>
-                <div style="font-size:12px;color:#065f46;margin-bottom:10px">PDF and Word files are auto-filled using text extraction. Add an AI key for even better accuracy on complex resumes.</div>
-                <div style="display:flex;gap:7px;align-items:center">
-                  <input id="modal-ai-key" type="password" placeholder="Optional: paste sk-ant-api03-… for better accuracy" style="flex:1;padding:7px 10px;border:1px solid #86efac;border-radius:var(--r);font-size:12.5px;background:#fff;outline:none;font-family:var(--f)">
-                  <button onclick="saveModalAIKey()" style="padding:7px 13px;background:var(--grn);border:none;border-radius:var(--r);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap">Save Key</button>
-                </div>
-                <div style="font-size:11px;color:#065f46;margin-top:6px">Get free key: <a href="https://console.anthropic.com" target="_blank" style="color:var(--grn3);font-weight:600">console.anthropic.com</a> → API Keys → Create Key</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Parsing progress -->
+          <!-- Progress -->
           <div id="parse-progress" style="display:none;margin-top:14px">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-              <div style="width:16px;height:16px;border:2px solid var(--acc3);border-top-color:var(--acc);border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0"></div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+              <div style="width:14px;height:14px;border:2px solid var(--acc3);border-top-color:var(--acc);border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0"></div>
               <div style="font-size:13px;font-weight:600;color:var(--ink)" id="parse-prog-lbl">Reading resume…</div>
             </div>
             <div style="height:5px;background:var(--bg4);border-radius:3px;overflow:hidden">
               <div id="parse-prog-bar" style="height:100%;background:var(--acc);border-radius:3px;transition:width .4s;width:0%"></div>
             </div>
           </div>
+          <!-- No AI key warning -->
+          <div id="parse-nokey-warn" style="display:none;margin-top:10px;padding:10px 13px;background:#f0fdf4;border:1px solid #86efac;border-radius:var(--r);font-size:12px;color:#065f46">
+            <i class="ti ti-sparkles" style="color:var(--grn)"></i> Works without AI key using PDF.js &amp; Mammoth. Add AI key in Settings for better accuracy.
+          </div>
         </div>
 
-        <!-- Step 2: Parsed results + editable form -->
+        <!-- Step 2: Parsed form -->
         <div id="parse-step2" style="display:none">
-
           <!-- Success banner -->
-          <div style="background:var(--grn2);border:1px solid #86efac;border-radius:var(--r);padding:10px 13px;margin-bottom:14px;display:flex;align-items:center;gap:9px">
-            <i class="ti ti-check-circle" style="font-size:18px;color:var(--grn);flex-shrink:0"></i>
-            <div>
-              <div style="font-size:13px;font-weight:700;color:#065f46">Resume parsed successfully!</div>
-              <div style="font-size:12px;color:#065f46;margin-top:1px">All fields auto-filled. Review, edit if needed, then click Save.</div>
-            </div>
-            <div id="parse-file-name" style="margin-left:auto;font-size:11px;color:#065f46;background:rgba(16,185,129,.15);padding:3px 8px;border-radius:10px;white-space:nowrap"></div>
+          <div style="background:var(--grn2);border:1px solid #86efac;border-radius:var(--r);padding:9px 13px;margin-bottom:14px;display:flex;align-items:center;gap:9px">
+            <i class="ti ti-check-circle" style="font-size:16px;color:var(--grn);flex-shrink:0"></i>
+            <div style="font-size:12.5px;font-weight:600;color:#065f46;flex:1">Resume parsed! Review fields and click Save.</div>
+            <div id="parse-file-name" style="font-size:11px;color:#065f46;background:rgba(16,185,129,.15);padding:2px 8px;border-radius:10px"></div>
           </div>
 
-          <!-- Editable fields — all pre-filled -->
-          <div class="fr" style="gap:11px">
-            <div class="field"><label>First Name *</label><input id="pf-fn" type="text"></div>
-            <div class="field"><label>Last Name *</label><input id="pf-ln" type="text"></div>
-          </div>
-          <div class="fr" style="gap:11px">
-            <div class="field"><label>Email *</label><input id="pf-em" type="email"></div>
-            <div class="field"><label>Mobile Number</label><input id="pf-ph" type="tel"></div>
-          </div>
-          <div class="fr" style="gap:11px">
-            <div class="field"><label>Current Designation</label><input id="pf-title" type="text"></div>
-            <div class="field"><label>Current Company</label><input id="pf-co" type="text"></div>
-          </div>
-          <div class="fr" style="gap:11px">
-            <div class="field"><label>Total Experience (Years)</label><input id="pf-exp" type="number" min="0"></div>
-            <div class="field"><label>Current CTC (INR)</label><input id="pf-ctc" type="text"></div>
-          </div>
-          <div class="fr" style="gap:11px">
+          <!-- Basic Info -->
+          <div class="fr"><div class="field"><label>First Name *</label><input id="pf-fn" type="text"></div><div class="field"><label>Last Name *</label><input id="pf-ln" type="text"></div></div>
+          <div class="fr"><div class="field"><label>Email *</label><input id="pf-em" type="email"></div><div class="field"><label>Mobile Number</label><input id="pf-ph" type="tel"></div></div>
+          <div class="fr"><div class="field"><label>Current Designation</label><input id="pf-title" type="text"></div><div class="field"><label>Current Company</label><input id="pf-co" type="text"></div></div>
+          <div class="fr"><div class="field"><label>Total Experience (Years)</label><input id="pf-exp" type="number" min="0"></div><div class="field"><label>Current CTC (INR)</label><input id="pf-ctc" type="text"></div></div>
+          <div class="fr">
             <div class="field"><label>Location</label><input id="pf-loc" type="text"></div>
             <div class="field"><label>Source</label>
-              <select id="pf-src">
-                <option>Naukri</option><option>LinkedIn</option><option>Indeed</option>
-                <option>Referral</option><option>Career Website</option><option>Other</option>
-              </select>
+              <select id="pf-src"><option>Naukri</option><option>LinkedIn</option><option>Indeed</option><option>Referral</option><option>Career Website</option><option>Other</option></select>
             </div>
           </div>
 
-          <!-- Job, Industry, Functional Area -->
+          <!-- Skills as Tags -->
           <div class="field">
-            <label>Apply for Job <span style="font-size:10px;color:var(--ink5);font-weight:400;text-transform:none">(select which job this candidate is for)</span></label>
-            <select id="pf-job" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none;background:#fff">
-              <option value="">-- Select Job (Optional) --</option>
-            </select>
+            <label>Skills <span style="font-size:10px;color:var(--ink5);font-weight:400;text-transform:none">— click × to remove · type to add</span></label>
+            <div id="pf-skills-tags" onclick="document.getElementById('pf-skills-inp').focus()"
+              style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);min-height:42px;background:#fff;cursor:text"></div>
+            <div style="display:flex;gap:6px;margin-top:5px">
+              <input id="pf-skills-inp" type="text" placeholder="Type skill and press Enter…"
+                style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12.5px;outline:none"
+                onkeydown="if(event.key==='Enter'||event.key===','){event.preventDefault();pfAddSkillFromInput();}">
+              <button type="button" onclick="pfAddSkillFromInput()" style="padding:6px 12px;background:var(--acc3);border:1px solid var(--acc);border-radius:var(--r);color:var(--acc);font-size:12px;font-weight:600;cursor:pointer">Add</button>
+            </div>
+            <input type="hidden" id="pf-skills">
           </div>
-          <div class="fr">
+
+          <!-- Industry & Functional Area Section -->
+          <div style="border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin:4px 0">
+            <div style="background:var(--bg3);padding:8px 13px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink4);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px">
+              <i class="ti ti-building"></i> Industry & Functional Details
+            </div>
+            <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="field">
+                <label>Industry</label>
+                <select id="pf-industry">
+                  <option value="">-- Select Industry --</option>
+                  <option>Technology / IT</option><option>FMCG</option><option>Healthcare / Pharma</option>
+                  <option>Manufacturing</option><option>Retail / Fashion</option><option>Finance / BFSI</option>
+                  <option>Consulting</option><option>Education</option><option>Hospitality / Hotels</option>
+                  <option>Logistics / Supply Chain</option><option>Real Estate</option><option>Media / Advertising</option>
+                  <option>Automobile</option><option>Telecom</option><option>Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Functional Area</label>
+                <select id="pf-funcarea">
+                  <option value="">-- Select Area --</option>
+                  <option>Sales & Business Development</option><option>Marketing & Communications</option>
+                  <option>Human Resources</option><option>Finance & Accounts</option>
+                  <option>Operations & Supply Chain</option><option>IT & Software</option>
+                  <option>Customer Service</option><option>Production & Manufacturing</option>
+                  <option>Retail & Store Management</option><option>Admin & Back Office</option>
+                  <option>Legal & Compliance</option><option>Design & Creative</option>
+                  <option>Top Management</option><option>Other</option>
+                </select>
+              </div>
+              <div class="field" style="grid-column:1/-1">
+                <label>Apply for Job <span style="font-size:10px;color:var(--ink5);font-weight:400;text-transform:none">(link this candidate to a specific job opening)</span></label>
+                <select id="pf-job" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none;background:#fff">
+                  <option value="">-- Select Job (Optional) --</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="field"><label>Education</label><input id="pf-edu" type="text"></div>
+          <div class="field"><label>Notes / Summary</label><textarea id="pf-notes" rows="2"></textarea></div>
+
+          <!-- Resume file info -->
+          <div style="display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--grn2);border:1px solid #86efac;border-radius:var(--r)">
+            <i class="ti ti-file-text" style="font-size:18px;color:var(--grn);flex-shrink:0"></i>
+            <div style="flex:1">
+              <div style="font-size:12.5px;font-weight:700;color:var(--ink)" id="pf-fname">—</div>
+              <div style="font-size:11px;color:var(--ink5)" id="pf-fsize">Will upload on save</div>
+            </div>
+            <button onclick="resetParser()" style="background:none;border:none;cursor:pointer;color:var(--ink4);font-size:12px;display:flex;align-items:center;gap:4px"><i class="ti ti-refresh"></i>Change file</button>
+          </div>
+        </div>
+
+      </div><!-- /ctp-resume -->
+
+      <!-- ══ MANUAL TAB ══ -->
+      <div id="ctp-manual" style="display:none">
+        <div class="fr"><div class="field"><label>First Name *</label><input id="af-fn" type="text" placeholder="First name"></div><div class="field"><label>Last Name *</label><input id="af-ln" type="text" placeholder="Last name"></div></div>
+        <div class="fr"><div class="field"><label>Email *</label><input id="af-em" type="email" placeholder="email@example.com"></div><div class="field"><label>Mobile Number</label><input id="af-ph" type="tel" placeholder="+91 98765 43210"></div></div>
+        <div class="fr"><div class="field"><label>Current Designation</label><input id="af-title" type="text" placeholder="e.g. Senior Sales Manager"></div><div class="field"><label>Current Company</label><input id="af-co" type="text" placeholder="Company name"></div></div>
+        <div class="fr"><div class="field"><label>Total Experience (years)</label><input id="af-exp" type="number" min="0" placeholder="4"></div><div class="field"><label>Current CTC (INR)</label><input id="af-ctc" type="text" placeholder="500000"></div></div>
+        <div class="fr"><div class="field"><label>Location</label><input id="af-loc" type="text" placeholder="City"></div><div class="field"><label>Source</label><select id="af-src"><option>Naukri</option><option>LinkedIn</option><option>Indeed</option><option>Referral</option><option>Career Website</option><option>Other</option></select></div></div>
+
+        <!-- Skills as Tags (manual) -->
+        <div class="field">
+          <label>Skills <span style="font-size:10px;color:var(--ink5);font-weight:400;text-transform:none">— type and press Enter to add</span></label>
+          <div id="af-skills-tags" onclick="document.getElementById('af-skills-inp').focus()"
+            style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);min-height:42px;background:#fff;cursor:text"></div>
+          <div style="display:flex;gap:6px;margin-top:5px">
+            <input id="af-skills-inp" type="text" placeholder="Type skill and press Enter…"
+              style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12.5px;outline:none"
+              onkeydown="if(event.key==='Enter'||event.key===','){event.preventDefault();afAddSkillFromInput();}">
+            <button type="button" onclick="afAddSkillFromInput()" style="padding:6px 12px;background:var(--acc3);border:1px solid var(--acc);border-radius:var(--r);color:var(--acc);font-size:12px;font-weight:600;cursor:pointer">Add</button>
+          </div>
+          <input type="hidden" id="af-skills">
+        </div>
+
+        <!-- Industry & Functional Area -->
+        <div style="border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin:4px 0">
+          <div style="background:var(--bg3);padding:8px 13px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink4);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px">
+            <i class="ti ti-building"></i> Industry & Functional Details
+          </div>
+          <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="field">
               <label>Industry</label>
-              <select id="pf-industry">
+              <select id="af-industry">
                 <option value="">-- Select Industry --</option>
                 <option>Technology / IT</option><option>FMCG</option><option>Healthcare / Pharma</option>
                 <option>Manufacturing</option><option>Retail / Fashion</option><option>Finance / BFSI</option>
                 <option>Consulting</option><option>Education</option><option>Hospitality / Hotels</option>
-                <option>Logistics / Supply Chain</option><option>Real Estate</option><option>Media / Advertising</option>
-                <option>Automobile</option><option>Telecom</option><option>Other</option>
+                <option>Logistics / Supply Chain</option><option>Real Estate</option><option>Other</option>
               </select>
             </div>
             <div class="field">
               <label>Functional Area</label>
-              <select id="pf-funcarea">
+              <select id="af-funcarea">
                 <option value="">-- Select Area --</option>
                 <option>Sales & Business Development</option><option>Marketing & Communications</option>
                 <option>Human Resources</option><option>Finance & Accounts</option>
@@ -979,89 +1033,32 @@ button,input,select,textarea{font-family:var(--f)}
                 <option>Top Management</option><option>Other</option>
               </select>
             </div>
-          </div>
-
-          <div class="field">
-            <label>Skills (detected from resume)</label>
-            <input id="pf-skills" type="text">
-          </div>
-          <div class="field">
-            <label>Education</label>
-            <input id="pf-edu" type="text">
-          </div>
-          <div class="field">
-            <label>Notes / Summary</label>
-            <textarea id="pf-notes" rows="2"></textarea>
-          </div>
-
-          <!-- Resume file confirmed -->
-          <div style="display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--grn2);border:1px solid #86efac;border-radius:var(--r)">
-            <i class="ti ti-file-text" style="font-size:18px;color:var(--grn);flex-shrink:0"></i>
-            <div style="flex:1">
-              <div style="font-size:12.5px;font-weight:700;color:var(--ink)" id="pf-fname">—</div>
-              <div style="font-size:11px;color:var(--ink5)" id="pf-fsize">Will be uploaded on save</div>
+            <div class="field" style="grid-column:1/-1">
+              <label>Apply for Job</label>
+              <select id="af-job" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none;background:#fff">
+                <option value="">-- Select Job (Optional) --</option>
+              </select>
             </div>
-            <button onclick="resetParser()" style="background:none;border:none;cursor:pointer;color:var(--ink4);font-size:12px;display:flex;align-items:center;gap:4px"><i class="ti ti-refresh"></i>Change file</button>
           </div>
-
         </div>
-      </div>
 
-      <!-- ── MANUAL TAB ── -->
-      <div id="ctp-manual" style="display:none">
-        <div class="fr"><div class="field"><label>First Name *</label><input id="af-fn" type="text" placeholder="First name"></div><div class="field"><label>Last Name *</label><input id="af-ln" type="text" placeholder="Last name"></div></div>
-        <div class="fr"><div class="field"><label>Email *</label><input id="af-em" type="email" placeholder="email@example.com"></div><div class="field"><label>Mobile Number</label><input id="af-ph" type="tel" placeholder="+91 98765 43210"></div></div>
-        <div class="fr"><div class="field"><label>Current Designation</label><input id="af-title" type="text" placeholder="e.g. Senior Sales Manager"></div><div class="field"><label>Current Company</label><input id="af-co" type="text" placeholder="Company name"></div></div>
-        <div class="fr"><div class="field"><label>Total Experience (years)</label><input id="af-exp" type="number" min="0" placeholder="4"></div><div class="field"><label>Current CTC (INR)</label><input id="af-ctc" type="text" placeholder="500000"></div></div>
-        <div class="fr"><div class="field"><label>Location</label><input id="af-loc" type="text" placeholder="City, State - Pincode"></div><div class="field"><label>Source</label><select id="af-src"><option>Naukri</option><option>LinkedIn</option><option>Indeed</option><option>Referral</option><option>Career Website</option><option>Other</option></select></div></div>
-        <div class="field"><label>Skills (comma separated)</label><input id="af-skills" type="text" placeholder="Sales, B2B, CRM, FMCG"></div>
         <div class="field"><label>Notes</label><textarea id="af-notes" rows="2" placeholder="Initial recruiter notes…"></textarea></div>
-        <!-- Job, Industry, Functional Area -->
-        <div class="field">
-          <label>Apply for Job <span style="font-size:10px;color:var(--ink5);font-weight:400;text-transform:none">(select which job this candidate is for)</span></label>
-          <select id="af-job" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none;background:#fff">
-            <option value="">-- Select Job (Optional) --</option>
-          </select>
-        </div>
-        <div class="fr">
-          <div class="field">
-            <label>Industry</label>
-            <select id="af-industry">
-              <option value="">-- Select Industry --</option>
-              <option>Technology / IT</option><option>FMCG</option><option>Healthcare / Pharma</option>
-              <option>Manufacturing</option><option>Retail / Fashion</option><option>Finance / BFSI</option>
-              <option>Consulting</option><option>Education</option><option>Hospitality / Hotels</option>
-              <option>Logistics / Supply Chain</option><option>Real Estate</option><option>Other</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Functional Area</label>
-            <select id="af-funcarea">
-              <option value="">-- Select Area --</option>
-              <option>Sales & Business Development</option><option>Marketing & Communications</option>
-              <option>Human Resources</option><option>Finance & Accounts</option>
-              <option>Operations & Supply Chain</option><option>IT & Software</option>
-              <option>Customer Service</option><option>Production & Manufacturing</option>
-              <option>Retail & Store Management</option><option>Admin & Back Office</option>
-              <option>Other</option>
-            </select>
-          </div>
-        </div>
-        <!-- Resume attach for manual -->
+
+        <!-- Resume attach -->
         <div class="field"><label>Attach Resume (optional)</label>
           <div id="resume-dz" onclick="document.getElementById('af-resume').click()" ondragover="rzDrag(event)" ondragleave="rzOff()" ondrop="rzDrop(event)"
-            style="border:2px dashed var(--border2);border-radius:var(--rl);padding:16px;text-align:center;cursor:pointer;transition:all .13s;background:var(--bg3)">
+            style="border:2px dashed var(--border2);border-radius:var(--rl);padding:14px;text-align:center;cursor:pointer;background:var(--bg3)">
             <input type="file" id="af-resume" accept=".pdf,.doc,.docx" style="display:none" onchange="resumeFileSelected(event)">
-            <i class="ti ti-file-upload" style="font-size:26px;color:var(--ink6);display:block;margin-bottom:5px"></i>
+            <i class="ti ti-file-upload" style="font-size:24px;color:var(--ink6);display:block;margin-bottom:4px"></i>
             <div style="font-size:12.5px;font-weight:600;color:var(--ink3)" id="resume-dz-lbl">Click to attach resume</div>
           </div>
-          <div id="resume-pill" style="display:none;align-items:center;gap:9px;padding:9px 12px;background:var(--grn2);border:1px solid #86efac;border-radius:var(--r);margin-top:6px">
-            <i class="ti ti-file-text" style="font-size:18px;color:var(--grn);flex-shrink:0"></i>
-            <div style="flex:1"><div style="font-size:12.5px;font-weight:700;color:var(--ink)" id="resume-pill-name">—</div></div>
-            <button onclick="clearResume()" style="background:none;border:none;cursor:pointer;color:var(--ink4);font-size:16px"><i class="ti ti-x"></i></button>
+          <div id="resume-pill" style="display:none;align-items:center;gap:9px;padding:8px 12px;background:var(--grn2);border:1px solid #86efac;border-radius:var(--r);margin-top:5px">
+            <i class="ti ti-file-text" style="font-size:16px;color:var(--grn);flex-shrink:0"></i>
+            <div style="flex:1;font-size:12.5px;font-weight:600;color:var(--ink)" id="resume-pill-name">—</div>
+            <button onclick="clearResume()" style="background:none;border:none;cursor:pointer;color:var(--ink4)"><i class="ti ti-x"></i></button>
           </div>
         </div>
-      </div>
+      </div><!-- /ctp-manual -->
 
     </div><!-- /mbd -->
 
@@ -1729,6 +1726,59 @@ async function loadUsers(){
 }
 
 /* ═══════════════════════════════════════
+   SKILLS TAG INPUT
+═══════════════════════════════════════ */
+function pfSkillKeydown(e){
+  if(e.key==='Enter'||e.key===','){e.preventDefault();pfAddSkill();}
+}
+
+function pfAddSkill(){
+  const inp=document.getElementById('pf-skills-inp');
+  if(!inp)return;
+  const val=inp.value.trim().replace(/,$/,'');
+  if(!val)return;
+  // Split by comma in case they paste multiple
+  val.split(',').map(s=>s.trim()).filter(Boolean).forEach(skill=>pfAddTag(skill));
+  inp.value='';
+  pfSyncSkills();
+}
+
+function pfAddTag(skill){
+  const container=document.getElementById('pf-skills-tags');
+  if(!container)return;
+  // Check duplicate
+  const existing=[...container.querySelectorAll('.skill-tag span')].map(s=>s.textContent.toLowerCase());
+  if(existing.includes(skill.toLowerCase()))return;
+  const tag=document.createElement('div');
+  tag.className='skill-tag';
+  tag.innerHTML=`<span>${skill}</span><span class="st-x" onclick="pfRemoveTag(this,'${skill.replace(/'/g,"\\'")}')">×</span>`;
+  container.appendChild(tag);
+}
+
+function pfRemoveTag(el,skill){
+  el.parentElement?.remove();
+  pfSyncSkills();
+}
+
+function pfSyncSkills(){
+  // Sync tags back to hidden input
+  const container=document.getElementById('pf-skills-tags');
+  const hidden=document.getElementById('pf-skills');
+  if(!container||!hidden)return;
+  const skills=[...container.querySelectorAll('.skill-tag span:first-child')].map(s=>s.textContent);
+  hidden.value=skills.join(', ');
+}
+
+function pfSetSkills(skillsStr){
+  // Called when AI fills skills — clear and repopulate
+  const container=document.getElementById('pf-skills-tags');
+  if(container)container.innerHTML='';
+  if(!skillsStr)return;
+  skillsStr.split(',').map(s=>s.trim()).filter(Boolean).forEach(s=>pfAddTag(s));
+  pfSyncSkills();
+}
+
+/* ═══════════════════════════════════════
    BULK RESUME UPLOAD — AI AUTO-FILL
 ═══════════════════════════════════════ */
 let brFiles=[];let brResults=[];let brImporting=false;
@@ -1971,6 +2021,208 @@ function downloadTemplate(){
 let selectedResumeFile=null;
 let currentTab='resume';
 
+/* ── TAB SWITCHING ── */
+function switchCandTab(tab){
+  currentTab=tab;
+  const isR=tab==='resume';
+  const rt=document.getElementById('ctab-resume');const mt=document.getElementById('ctab-manual');
+  if(rt){rt.style.color=isR?'var(--acc)':'var(--ink4)';rt.style.borderBottomColor=isR?'var(--acc)':'transparent';}
+  if(mt){mt.style.color=!isR?'var(--acc)':'var(--ink4)';mt.style.borderBottomColor=!isR?'var(--acc)':'transparent';}
+  const rp=document.getElementById('ctp-resume');const mp=document.getElementById('ctp-manual');
+  if(rp)rp.style.display=isR?'block':'none';
+  if(mp)mp.style.display=!isR?'block':'none';
+}
+
+/* ── SKILLS TAG SYSTEM ── */
+function pfAddSkillFromInput(){
+  const inp=document.getElementById('pf-skills-inp');
+  if(!inp)return;
+  inp.value.split(',').map(s=>s.trim()).filter(Boolean).forEach(s=>addSkillTag('pf',s));
+  inp.value='';syncSkills('pf');
+}
+function afAddSkillFromInput(){
+  const inp=document.getElementById('af-skills-inp');
+  if(!inp)return;
+  inp.value.split(',').map(s=>s.trim()).filter(Boolean).forEach(s=>addSkillTag('af',s));
+  inp.value='';syncSkills('af');
+}
+function addSkillTag(prefix,skill){
+  const container=document.getElementById(prefix+'-skills-tags');
+  if(!container||!skill)return;
+  const existing=[...container.querySelectorAll('.st-label')].map(s=>s.textContent.toLowerCase());
+  if(existing.includes(skill.toLowerCase()))return;
+  const tag=document.createElement('span');
+  tag.style.cssText='display:inline-flex;align-items:center;gap:3px;padding:3px 9px;background:var(--acc3);border:1px solid #93c5fd;border-radius:20px;font-size:12px;font-weight:500;color:var(--acc4)';
+  tag.innerHTML=`<span class="st-label">${skill}</span><span onclick="removeSkillTag(this,'${prefix}')" style="cursor:pointer;font-size:15px;color:var(--acc);opacity:.7;line-height:1;margin-left:2px" onmouseover="this.style.opacity=1;this.style.color='red'" onmouseout="this.style.opacity=.7;this.style.color='var(--acc)'">×</span>`;
+  container.appendChild(tag);
+}
+function removeSkillTag(el,prefix){el.parentElement?.remove();syncSkills(prefix);}
+function syncSkills(prefix){
+  const container=document.getElementById(prefix+'-skills-tags');
+  const hidden=document.getElementById(prefix+'-skills');
+  if(!container||!hidden)return;
+  hidden.value=[...container.querySelectorAll('.st-label')].map(s=>s.textContent).join(', ');
+}
+function setSkillTags(prefix,skillsStr){
+  const container=document.getElementById(prefix+'-skills-tags');
+  if(container)container.innerHTML='';
+  if(!skillsStr)return;
+  skillsStr.split(',').map(s=>s.trim()).filter(Boolean).forEach(s=>addSkillTag(prefix,s));
+  syncSkills(prefix);
+}
+function getSkillsValue(prefix){
+  const hidden=document.getElementById(prefix+'-skills');
+  return hidden?hidden.value:'';
+}
+
+/* ── PARSE ZONE ── */
+function parseDrag(e){e.preventDefault();const d=document.getElementById('parse-dz');if(d){d.style.borderColor='var(--acc)';d.style.background='var(--acc3)';}}
+function parseOff(){const d=document.getElementById('parse-dz');if(d){d.style.borderColor='var(--border2)';d.style.background='var(--bg3)';}}
+function parseDrop(e){e.preventDefault();parseOff();const f=e.dataTransfer?.files?.[0];if(f)runResumeParser(f);}
+function startParse(e){const f=e.target?.files?.[0];if(f)runResumeParser(f);}
+
+function setParseProgress(pct,msg,bar,lbl){
+  if(bar)bar.style.width=pct+'%';
+  if(lbl)lbl.textContent=msg;
+}
+async function fileToBase64(file){
+  return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result.split(',')[1]);r.onerror=reject;r.readAsDataURL(file);});
+}
+async function readFileAsText(file){
+  return new Promise((resolve)=>{const r=new FileReader();r.onload=()=>resolve(r.result||'');r.onerror=()=>resolve('');r.readAsText(file);});
+}
+
+/* ── MAIN PARSER ── */
+async function runResumeParser(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(!['pdf','doc','docx'].includes(ext)){alert('Only PDF, DOC and DOCX files supported.');return;}
+  if(file.size>5*1024*1024){alert('File too large. Max 5MB.');return;}
+  selectedResumeFile=file;
+  const prog=document.getElementById('parse-progress');
+  const bar=document.getElementById('parse-prog-bar');
+  const lbl=document.getElementById('parse-prog-lbl');
+  if(prog)prog.style.display='block';
+  setParseProgress(10,'Reading file…',bar,lbl);
+  const aiKey=localStorage.getItem('hg_ai')||'';
+  try{
+    let parsed=null;
+    if(ext==='pdf'){
+      setParseProgress(30,'Extracting PDF text…',bar,lbl);
+      let txt='';
+      try{await loadPDFJS();txt=await extractPDFText(file);}catch(e){console.warn('PDF.js:',e.message);}
+      setParseProgress(60,'Analysing…',bar,lbl);
+      if(aiKey&&txt.length>30){try{parsed=await parseTextWithAI(txt.slice(0,6000),aiKey);}catch(e){parsed=basicExtract(txt);}}
+      else if(txt.length>30){parsed=basicExtract(txt);}
+      else if(aiKey){try{const b64=await fileToBase64(file);parsed=await parseWithAI(b64,file.type,ext,aiKey);}catch(e){parsed=extractFromFileName(file.name);}}
+      else{parsed=extractFromFileName(file.name);}
+    }else{
+      setParseProgress(30,'Extracting Word text…',bar,lbl);
+      let txt='';
+      try{await loadMammoth();const ab=await file.arrayBuffer();const r=await mammoth.extractRawText({arrayBuffer:ab});txt=r.value||'';}
+      catch(e){txt=await readFileAsText(file);txt=txt.split('').filter(function(c){var n=c.charCodeAt(0);return n>=32&&n<=126||n===10||n===13;}).join('').replace(/  +/g,' ').trim();}
+      setParseProgress(60,'Analysing…',bar,lbl);
+      if(aiKey&&txt.length>30){try{parsed=await parseTextWithAI(txt.slice(0,6000),aiKey);}catch(e){parsed=basicExtract(txt);}}
+      else if(txt.length>30){parsed=basicExtract(txt);}
+      else{parsed=extractFromFileName(file.name);}
+    }
+    setParseProgress(100,'Done!',bar,lbl);
+    await new Promise(r=>setTimeout(r,300));
+    fillParsedFields(parsed||{},file);
+  }catch(err){
+    console.error('Parse error:',err);
+    if(prog)prog.style.display='none';
+    fillParsedFields({},file);
+    toast('Could not read resume — fill manually','');
+  }
+}
+
+/* ── FILL FIELDS ── */
+function fillParsedFields(d,file){
+  console.log('Parsed data:',JSON.stringify(d));
+  const s1=document.getElementById('parse-step1');
+  const s2=document.getElementById('parse-step2');
+  const prog=document.getElementById('parse-progress');
+  if(s1)s1.style.display='none';
+  if(s2)s2.style.display='block';
+  if(prog)prog.style.display='none';
+
+  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
+  set('pf-fn',d.first_name||d.firstName||'');
+  set('pf-ln',d.last_name||d.lastName||d.surname||'');
+  set('pf-em',d.email||'');
+  set('pf-ph',d.phone||d.mobile||'');
+  set('pf-title',d.current_title||d.title||d.designation||'');
+  set('pf-co',d.current_company||d.company||'');
+  set('pf-exp',d.total_experience_years||d.experience_years||'');
+  set('pf-ctc',d.current_ctc||d.ctc||d.salary||'');
+  set('pf-loc',d.location||d.city||'');
+  set('pf-edu',d.education||d.qualification||'');
+  set('pf-notes',d.summary||d.objective||'');
+
+  // Skills as tags
+  const skillsVal=Array.isArray(d.skills)?d.skills.join(', '):(d.skills||d.key_skills||'');
+  setSkillTags('pf',skillsVal);
+
+  // Source
+  const src=document.getElementById('pf-src');
+  if(src&&d.source){const opt=[...src.options].find(o=>o.text===d.source);if(opt)src.value=opt.value;}
+
+  // File info
+  const pfn=document.getElementById('parse-file-name');if(pfn)pfn.textContent=file.name;
+  const pfname=document.getElementById('pf-fname');if(pfname)pfname.textContent=file.name;
+  const pfsize=document.getElementById('pf-fsize');if(pfsize)pfsize.textContent=fsz(file.size)+' — will upload on save';
+
+  // Count & highlight
+  const filled=['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp'].filter(id=>{const el=document.getElementById(id);return el&&el.value.trim();}).length;
+  ['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp','pf-ctc','pf-loc'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&el.value){el.style.background='#f0fdf4';el.style.borderColor='#10b981';setTimeout(()=>{el.style.background='';el.style.borderColor='';},3000);}
+  });
+  if(filled>0)toast(filled+' fields auto-filled ✓','success');
+  else toast('Resume uploaded — fill fields manually','');
+}
+
+/* ── RESET PARSER ── */
+function resetParser(){
+  selectedResumeFile=null;
+  const s1=document.getElementById('parse-step1');const s2=document.getElementById('parse-step2');
+  const prog=document.getElementById('parse-progress');const fi=document.getElementById('parse-file');
+  if(s1)s1.style.display='block';if(s2)s2.style.display='none';if(prog)prog.style.display='none';if(fi)fi.value='';
+  ['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp','pf-ctc','pf-loc','pf-edu','pf-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  setSkillTags('pf','');
+}
+
+/* ── MANUAL TAB RESUME ── */
+function rzDrag(e){e.preventDefault();const d=document.getElementById('resume-dz');if(d){d.style.borderColor='var(--acc)';d.style.background='var(--acc3)';}}
+function rzOff(){const d=document.getElementById('resume-dz');if(d){d.style.borderColor='var(--border2)';d.style.background='var(--bg3)';}}
+function rzDrop(e){e.preventDefault();rzOff();const f=e.dataTransfer?.files?.[0];if(f)applyResumeFile(f);}
+function resumeFileSelected(e){const f=e.target?.files?.[0];if(f)applyResumeFile(f);}
+function applyResumeFile(f){
+  selectedResumeFile=f;
+  const dz=document.getElementById('resume-dz');
+  if(dz){dz.style.borderStyle='solid';dz.style.borderColor='var(--grn)';dz.style.background='var(--grn2)';}
+  const lbl=document.getElementById('resume-dz-lbl');if(lbl)lbl.textContent='✓ '+f.name;
+  const pill=document.getElementById('resume-pill');if(pill)pill.style.display='flex';
+  const pn=document.getElementById('resume-pill-name');if(pn)pn.textContent=f.name;
+}
+function clearResume(){
+  selectedResumeFile=null;
+  const fi=document.getElementById('af-resume');if(fi)fi.value='';
+  const dz=document.getElementById('resume-dz');
+  if(dz){dz.style.borderStyle='dashed';dz.style.borderColor='var(--border2)';dz.style.background='var(--bg3)';}
+  const lbl=document.getElementById('resume-dz-lbl');if(lbl)lbl.textContent='Click to attach resume';
+  const pill=document.getElementById('resume-pill');if(pill)pill.style.display='none';
+}
+function fsz(b){if(b<1048576)return Math.round(b/1024)+'KB';return(b/1048576).toFixed(1)+'MB';}
+function extractFromFileName(filename){
+  const result={source:'Other'};
+  const name=filename.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ').trim();
+  const parts=name.split(/\s+/).filter(p=>p.length>1&&!/\d{4}/.test(p));
+  if(parts.length>=2){result.first_name=parts[0];result.last_name=parts.slice(1,3).join(' ');}
+  else if(parts.length===1){result.first_name=parts[0];}
+  return result;
+}
+
 function switchCandTab(tab){
   currentTab=tab;
   const isResume=tab==='resume';
@@ -2183,782 +2435,75 @@ function loadMammoth(){
 }
 
 // Parse plain text with AI (for Word files)
-async function parseTextWithAI(text,apiKey){
-  const prompt=`You are a resume parser. Extract details from this resume text and return ONLY this JSON:
-{"first_name":"","last_name":"","email":"","phone":"","current_title":"","current_company":"","total_experience_years":0,"current_ctc":"","location":"","skills":"","education":"","source":"Other","summary":""}
-Rules: total_experience_years = number only. Skills = comma separated. Return ONLY JSON no other text.
+/* ── AI PROVIDER — supports Gemini (free) + Anthropic ── */
+function detectProvider(key){
+  if(!key)return null;
+  if(key.startsWith('AIza'))return 'gemini';
+  if(key.startsWith('gsk_'))return 'groq';
+  return 'anthropic';
+}
 
+async function callAI(prompt,apiKey,pdfBase64){
+  const p=detectProvider(apiKey);
+  if(p==='gemini')return await callGemini(prompt,apiKey,pdfBase64);
+  return await callAnthropic(prompt,apiKey,pdfBase64);
+}
+
+async function callGemini(prompt,apiKey,pdfBase64){
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const parts=pdfBase64
+    ?[{inlineData:{mimeType:'application/pdf',data:pdfBase64}},{text:prompt}]
+    :[{text:prompt}];
+  const resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts}],generationConfig:{maxOutputTokens:1000,temperature:0.1}})});
+  if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||'Gemini error '+resp.status);}
+  const d=await resp.json();
+  return d.candidates?.[0]?.content?.parts?.[0]?.text||'{}';
+}
+
+async function callAnthropic(prompt,apiKey,pdfBase64){
+  const content=pdfBase64
+    ?[{type:'document',source:{type:'base64',media_type:'application/pdf',data:pdfBase64}},{type:'text',text:prompt}]
+    :[{type:'text',text:prompt}];
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1000,messages:[{role:'user',content}]})});
+  if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||'Anthropic error '+resp.status);}
+  const d=await resp.json();
+  return d.content?.[0]?.text||'{}';
+}
+
+function parseAIJson(txt){
+  txt=(txt||'{}').replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
+  const m=txt.match(/\{[\s\S]*\}/);
+  try{return m?JSON.parse(m[0]):{};}catch(e){return {};}
+}
+
+async function parseTextWithAI(text,apiKey){
+  const prompt=`Resume parser. Extract from this resume and return ONLY JSON:
+{"first_name":"","last_name":"","email":"","phone":"","current_title":"","current_company":"","total_experience_years":0,"current_ctc":"","location":"","skills":"","education":"","source":"Other","summary":""}
+Rules: total_experience_years=number. skills=comma separated. ONLY JSON no other text.
 Resume:
 ${text}`;
-  const resp=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:800,messages:[{role:'user',content:prompt}]})
-  });
-  if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||'AI error');}
-  const d=await resp.json();
-  let txt=(d.content?.[0]?.text||'{}').replace(/```json|```/gi,'').trim();
-  const m=txt.match(/\{[\s\S]*\}/);
-  const result=m?JSON.parse(m[0]):{};
-  console.log('Word parsed:',JSON.stringify(result));
+  const txt=await callAI(prompt,apiKey);
+  const result=parseAIJson(txt);
+  console.log('Parsed:',JSON.stringify(result));
   return result;
 }
 
-// For DOCX — parse using just the filename
 async function parseWithAIText(filename,apiKey){
   return extractFromFileName(filename);
 }
 
 async function parseWithAI(base64,mimeType,ext,apiKey){
-  const isPDF=ext==='pdf'||mimeType.includes('pdf');
-  const isWord=ext==='doc'||ext==='docx'||mimeType.includes('word')||mimeType.includes('openxmlformats');
-
-  const prompt=`You are an expert resume parser for an Indian recruitment firm. Extract ALL details from this resume carefully.
-
-Return ONLY this JSON — no other text, no markdown, no explanation:
-{
-  "first_name": "first name only",
-  "last_name": "last name / surname",
-  "email": "email address",
-  "phone": "mobile number with +91 if Indian",
-  "current_title": "current or most recent job title / designation",
-  "current_company": "current or most recent company name",
-  "total_experience_years": 0,
-  "current_ctc": "current salary if mentioned e.g. 600000",
-  "location": "city name",
-  "skills": "skill1, skill2, skill3 — comma separated",
-  "education": "highest qualification — degree, college, year",
-  "source": "Naukri or LinkedIn or Other",
-  "summary": "2-3 line professional summary"
-}
-Rules: total_experience_years must be a NUMBER. Return ONLY JSON.`;
-
-  let content;
-  if(isPDF){
-    content=[
-      {type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}},
-      {type:'text',text:prompt}
-    ];
-  }else if(isWord){
-    // For Word files — decode base64 to text and extract readable portions
-    try{
-      const binary=atob(base64);
-      // Extract readable ASCII text from binary
-      let readable='';
-      for(let i=0;i<binary.length;i++){
-        const code=binary.charCodeAt(i);
-        if((code>=32&&code<=126)||code===10||code===13){readable+=binary[i];}
-        else if(code===0){}
-        else{readable+=' ';}
-      }
-      // Clean up excessive whitespace
-      readable=readable.replace(/\s{3,}/g,' ').trim().slice(0,8000);
-      content=[{type:'text',text:prompt+'\n\nResume text content:\n'+readable}];
-    }catch(e){
-      content=[{type:'text',text:prompt+'\n\nResume filename: '+base64.slice(0,50)}];
-    }
-  }else{
-    const decoded=atob(base64).slice(0,8000);
-    content=[{type:'text',text:prompt+'\n\nResume content:\n'+decoded}];
-  }
-
-  const resp=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,messages:[{role:'user',content}]})
-  });
-  if(!resp.ok){
-    const e=await resp.json().catch(()=>({}));
-    throw new Error(e.error?.message||'AI API error '+resp.status);
-  }
-  const d=await resp.json();
-  console.log('AI raw response:',JSON.stringify(d.content?.[0]?.text||''));
-  let txt=(d.content?.[0]?.text||'{}');
-  txt=txt.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
-  const jsonMatch=txt.match(/\{[\s\S]*\}/);
-  if(jsonMatch)txt=jsonMatch[0];
-  const result=JSON.parse(txt);
-  console.log('Parsed result:',JSON.stringify(result));
+  const isPDF=ext==='pdf';
+  const prompt=`Resume parser for Indian recruitment firm. Extract ALL details and return ONLY this JSON:
+{"first_name":"","last_name":"","email":"","phone":"","current_title":"","current_company":"","total_experience_years":0,"current_ctc":"","location":"","skills":"","education":"","source":"Other","summary":""}
+Rules: total_experience_years=number. skills=comma separated. source=Naukri/LinkedIn/Other. ONLY JSON.`;
+  const txt=await callAI(prompt,apiKey,isPDF?base64:null);
+  const result=parseAIJson(txt);
+  console.log('PDF parsed:',JSON.stringify(result));
   return result;
 }
 
-function basicExtract(text){
-  const result={source:'Other'};
-  if(!text||text.length<10)return result;
 
-  // Detect source
-  if(/naukri\.com/i.test(text))result.source='Naukri';
-  else if(/linkedin\.com/i.test(text))result.source='LinkedIn';
-
-  // Email
-  const emailM=text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
-  if(emailM)result.email=emailM[0];
-
-  // Phone — Indian 10-digit or +91 format
-  const phoneM=text.match(/(?:\+91[\s\-]?)?[6-9]\d{4}[\s\-]?\d{5}/);
-  if(phoneM)result.phone=phoneM[0].replace(/\s/g,'');
-
-  // Name — find first meaningful line
-  const lines=text.split(/\n/).map(l=>l.trim()).filter(l=>l.length>1);
-  for(const line of lines.slice(0,8)){
-    // Skip lines with email, phone, URL, numbers, short labels
-    if(line.includes('@')||/\d{5,}/.test(line)||/http|www\./i.test(line)||line.length>60)continue;
-    if(/^(name|resume|curriculum|cv|profile|contact|mobile|phone|email|address|objective|summary)/i.test(line))continue;
-    // Looks like a name
-    const words=line.replace(/^(Mr\.?|Ms\.?|Mrs\.?|Dr\.?)\s*/i,'').split(/\s+/);
-    if(words.length>=1&&words.length<=4&&/^[A-Z]/.test(words[0])){
-      result.first_name=words[0];
-      result.last_name=words.slice(1).join(' ')||'';
-      break;
-    }
-  }
-
-  // Experience — match "X years" or "X+ years" patterns
-  const expPatterns=[
-    /(\d+\.?\d*)\+?\s*[Yy]ears?\s+(?:of\s+)?(?:total\s+)?(?:work\s+)?[Ee]xperience/,
-    /[Tt]otal\s+[Ee]xperience\s*:?\s*(\d+\.?\d*)/,
-    /[Ee]xperience\s*:?\s*(\d+\.?\d*)\s*[Yy]r/,
-    /(\d+\.?\d*)\s*[Yy]r[s]?\s+(?:of\s+)?[Ee]xp/,
-  ];
-  for(const pat of expPatterns){
-    const m=text.match(pat);
-    if(m){result.total_experience_years=parseFloat(m[1]);break;}
-  }
-
-  // Current company — look near "Current" or "Present" or most recent date
-  const coPatterns=[
-    /(?:Current(?:ly)?|Present)\s+(?:working\s+(?:at|with|in)\s+)?([A-Z][A-Za-z\s&.,]{2,40}(?:Pvt|Ltd|Inc|Corp|Company|Technologies|Solutions|Services)?\.?)/,
-    /([A-Z][A-Za-z\s&.,]{2,40}(?:Pvt\.\s*Ltd|Limited|Inc\.|Corporation|Technologies|Solutions))/,
-  ];
-  for(const pat of coPatterns){
-    const m=text.match(pat);
-    if(m&&m[1].trim().length>2){result.current_company=m[1].trim();break;}
-  }
-
-  // Designation / Title — look near company or after common patterns
-  const titleM=text.match(/(?:Designation|Title|Position|Role)\s*:?\s*([A-Za-z\s\/\-&]{3,50})/i);
-  if(titleM)result.current_title=titleM[1].trim();
-
-  // Location — Indian cities
-  const cities=['Mumbai','Delhi','New Delhi','Bengaluru','Bangalore','Hyderabad','Chennai','Pune','Kolkata','Ahmedabad','Gurugram','Gurgaon','Noida','Chandigarh','Jaipur','Lucknow','Bhopal','Indore','Surat','Nagpur','Coimbatore','Kochi','Visakhapatnam','Bhubaneswar','Patna'];
-  for(const city of cities){
-    if(text.includes(city)){result.location=city;break;}
-  }
-
-  // Skills section
-  const skillsIdx=text.search(/\n\s*(?:Skills?|Technical\s+Skills?|Core\s+Competencies|Key\s+Skills?)\s*:?\s*\n/i);
-  if(skillsIdx>-1){
-    const block=text.slice(skillsIdx,skillsIdx+500);
-    const skillLines=block.split('\n').slice(1,8)
-      .map(l=>l.replace(/^[•\-*▪►]\s*/,'').trim())
-      .filter(l=>l.length>1&&l.length<80&&!l.match(/^[A-Z\s]{10,}$/))
-      .join(', ');
-    if(skillLines.length>3)result.skills=skillLines;
-  }
-
-  // Education
-  const eduM=text.match(/(?:B\.?Tech|B\.?E\.?|MBA|M\.?Tech|BCA|MCA|B\.?Sc|M\.?Sc|B\.?Com|M\.?Com|BA|MA|Ph\.?D)[^\n,]{0,60}/i);
-  if(eduM)result.education=eduM[0].trim();
-
-  return result;
-}
-
-function fillParsedFields(d,file){
-  console.log('Filling fields with parsed data:', JSON.stringify(d));
-
-  // Hide upload zone, show filled form
-  const s1=document.getElementById('parse-step1');
-  const s2=document.getElementById('parse-step2');
-  const prog=document.getElementById('parse-progress');
-  if(s1)s1.style.display='none';
-  if(s2)s2.style.display='block';
-  if(prog)prog.style.display='none';
-
-  // Fill each field — set even if empty so fields are visible
-  const set=(id,val)=>{
-    const el=document.getElementById(id);
-    if(el){el.value=val||'';}
-  };
-
-  set('pf-fn', d.first_name||d.firstName||d.name?.split(' ')[0]||'');
-  set('pf-ln', d.last_name||d.lastName||d.surname||d.name?.split(' ').slice(1).join(' ')||'');
-  set('pf-em', d.email||d.email_address||'');
-  set('pf-ph', d.phone||d.mobile||d.phone_number||d.contact||'');
-  set('pf-title', d.current_title||d.title||d.designation||d.position||d.job_title||'');
-  set('pf-co', d.current_company||d.company||d.employer||d.organization||'');
-  set('pf-exp', d.total_experience_years||d.experience||d.experience_years||d.years_of_experience||'');
-  set('pf-ctc', d.current_ctc||d.ctc||d.salary||d.current_salary||'');
-  set('pf-loc', d.location||d.city||d.address||'');
-  set('pf-skills', Array.isArray(d.skills)?d.skills.join(', '):(d.skills||d.key_skills||''));
-  set('pf-edu', d.education||d.qualification||d.degree||'');
-  set('pf-notes', d.summary||d.objective||d.profile||d.about||'');
-
-  // Source dropdown
-  const src=document.getElementById('pf-src');
-  if(src){
-    const sourceVal=d.source||'Other';
-    const opt=[...src.options].find(o=>o.text===sourceVal||o.value===sourceVal);
-    if(opt)src.value=opt.value;
-  }
-
-  // Show file info
-  const fname=document.getElementById('pf-fname');
-  const pfsize=document.getElementById('pf-fsize');
-  const pfn=document.getElementById('parse-file-name');
-  if(fname)fname.textContent=file.name;
-  if(pfsize)pfsize.textContent=fsz(file.size)+' — will upload on save';
-  if(pfn)pfn.textContent=file.name;
-
-  // Count filled fields
-  const filled=['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp','pf-ctc','pf-loc','pf-skills'].filter(id=>{
-    const el=document.getElementById(id);return el&&el.value.trim()!=='';
-  }).length;
-
-  // Update success banner
-  const banner=document.querySelector('#parse-step2 .info-box, #parse-step2 div[style*="grn2"]');
-
-  // Highlight filled fields
-  ['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp','pf-ctc','pf-loc','pf-skills'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){
-      if(el.value.trim()){
-        el.style.background='#f0fdf4';
-        el.style.borderColor='#10b981';
-        setTimeout(()=>{el.style.background='';el.style.borderColor='';},3000);
-      }
-    }
-  });
-
-  if(filled===0){
-    toast('Resume uploaded. Fields could not be auto-filled — please fill manually.','');
-  }else{
-    toast(filled+' fields auto-filled from resume! ✓','success');
-  }
-}
-
-function resetParser(){
-  selectedResumeFile=null;
-  const s1=document.getElementById('parse-step1');
-  const s2=document.getElementById('parse-step2');
-  const prog=document.getElementById('parse-progress');
-  const fi=document.getElementById('parse-file');
-  if(s1)s1.style.display='block';
-  if(s2)s2.style.display='none';
-  if(prog)prog.style.display='none';
-  if(fi)fi.value='';
-  // Clear all pf- fields
-  ['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp','pf-ctc','pf-loc','pf-skills','pf-edu','pf-notes'].forEach(id=>{
-    const el=document.getElementById(id);if(el)el.value='';
-  });
-}
-
-// Manual tab resume handlers
-function rzDrag(e){e.preventDefault();const dz=document.getElementById('resume-dz');if(dz){dz.style.borderColor='var(--acc)';dz.style.background='var(--acc3)';}}
-function rzOff(){const dz=document.getElementById('resume-dz');if(dz){dz.style.borderColor='var(--border2)';dz.style.background='var(--bg3)';}}
-function rzDrop(e){e.preventDefault();rzOff();const f=e.dataTransfer?.files?.[0];if(f)applyResumeFile(f);}
-function resumeFileSelected(e){const f=e.target?.files?.[0];if(f)applyResumeFile(f);}
-function applyResumeFile(f){
-  selectedResumeFile=f;
-  const dz=document.getElementById('resume-dz');
-  if(dz){dz.style.borderStyle='solid';dz.style.borderColor='var(--grn)';dz.style.background='var(--grn2)';}
-  const lbl=document.getElementById('resume-dz-lbl');if(lbl)lbl.textContent='✓ '+f.name;
-  const pill=document.getElementById('resume-pill');if(pill)pill.style.display='flex';
-  const pn=document.getElementById('resume-pill-name');if(pn)pn.textContent=f.name;
-}
-function clearResume(){
-  selectedResumeFile=null;
-  const fi=document.getElementById('af-resume');if(fi)fi.value='';
-  const dz=document.getElementById('resume-dz');
-  if(dz){dz.style.borderStyle='dashed';dz.style.borderColor='var(--border2)';dz.style.background='var(--bg3)';}
-  const lbl=document.getElementById('resume-dz-lbl');if(lbl)lbl.textContent='Click to attach resume';
-  const pill=document.getElementById('resume-pill');if(pill)pill.style.display='none';
-}
-
-function fsz(b){if(b<1048576)return Math.round(b/1024)+'KB';return(b/1048576).toFixed(1)+'MB';}
-
-async function uploadResume(candId,file){
-  const ext=file.name.split('.').pop().toLowerCase();
-  const path=`resumes/${candId}.${ext}`;
-  await sb.storage.createBucket('resumes',{public:false}).catch(()=>{});
-  const{error}=await sb.storage.from('resumes').upload(path,file,{upsert:true,contentType:file.type});
-  if(error){console.warn('Resume upload failed:',error.message);return null;}
-  return path;
-}
-
-async function downloadResume(candId,resumePath){
-  if(!resumePath){toast('No resume for this candidate','');return;}
-  const{data,error}=await sb.storage.from('resumes').createSignedUrl(resumePath,120);
-  if(error||!data?.signedUrl){toast('Could not load resume','error');return;}
-  window.open(data.signedUrl,'_blank');
-}
-
-/* ═══════════════════════════════════════
-   SAVE CANDIDATE — with resume upload
-═══════════════════════════════════════ */
-async function saveCandidate(){
-  // Determine which tab is active
-  const isResume=currentTab==='resume';
-  const g=(id)=>{const el=document.getElementById(id);return el?el.value.trim():'';}
-
-  // Get values from correct tab fields
-  const fn=isResume?g('pf-fn'):g('af-fn');
-  const ln=isResume?g('pf-ln'):g('af-ln');
-  const em=isResume?g('pf-em'):g('af-em');
-
-  if(!fn||!em){alert('At least first name and email are required.');return;}
-
-  const btn=document.getElementById('save-cand-btn');
-  btn.disabled=true;btn.textContent='Saving…';
-
-  const skillsRaw=isResume?g('pf-skills'):g('af-skills');
-  const skills=skillsRaw.split(',').map(s=>s.trim()).filter(Boolean);
-
-  const payload={
-    first_name:fn,
-    last_name:isResume?g('pf-ln'):g('af-ln'),
-    email:em,
-    phone:isResume?g('pf-ph'):g('af-ph'),
-    title:isResume?g('pf-title'):g('af-title'),
-    company:isResume?g('pf-co'):g('af-co'),
-    experience_years:parseFloat(isResume?g('pf-exp'):g('af-exp'))||0,
-    current_ctc:isResume?g('pf-ctc'):g('af-ctc'),
-    location:isResume?g('pf-loc'):g('af-loc'),
-    source:isResume?(document.getElementById('pf-src')?.value||'Other'):(document.getElementById('af-src')?.value||'Other'),
-    skills,
-    notes:isResume?(g('pf-notes')+(g('pf-edu')?'\nEducation: '+g('pf-edu'):'')):g('af-notes'),
-    industry:isResume?(document.getElementById('pf-industry')?.value||''):(document.getElementById('af-industry')?.value||''),
-    functional_area:isResume?(document.getElementById('pf-funcarea')?.value||''):(document.getElementById('af-funcarea')?.value||''),
-    applied_job:isResume?(document.getElementById('pf-job')?.value||''):(document.getElementById('af-job')?.value||''),
-    status:'Sourced',
-    created_by:currentUser?.name||'Admin',
-  };
-
-  try{
-    const{data,error}=await sb.from('hp_candidates').insert([payload]).select();
-    if(error)throw error;
-    const candId=data?.[0]?.id;
-
-    // Upload resume file if present
-    let resumeUploaded=false;
-    if(selectedResumeFile&&candId){
-      btn.textContent='Uploading resume…';
-      const resumePath=await uploadResume(candId,selectedResumeFile);
-      if(resumePath){
-        await sb.from('hp_candidates').update({resume_name:selectedResumeFile.name}).eq('id',candId).catch(()=>{});
-        resumeUploaded=true;
-      }
-    }
-
-    // Success
-    closeModal('addcand');
-    toast(`${fn} ${ln||''} added${resumeUploaded?' with resume':''}!`,'success');
-
-    // Reset form
-    resetParser();
-    clearResume();
-    ['af-fn','af-ln','af-em','af-ph','af-title','af-co','af-exp','af-ctc','af-loc','af-skills','af-notes'].forEach(id=>{
-      const el=document.getElementById(id);if(el)el.value='';
-    });
-    switchCandTab('resume'); // go back to resume tab for next time
-    await loadCandidates();
-
-  }catch(e){
-    alert('Error saving candidate: '+e.message);
-  }finally{
-    btn.disabled=false;
-    btn.innerHTML='<i class="ti ti-check"></i>Save Candidate';
-  }
-}
-
-async function saveJob(){
-  const title=document.getElementById('jf-title').value.trim();
-  const co=document.getElementById('jf-co-sel')?.value||'';
-  if(!title){alert('Job title is required');return;}
-  if(!co){alert('Please select a company. If not listed, click + to add it first.');return;}
-  const btn=document.getElementById('save-job-btn');
-  btn.disabled=true;btn.textContent='Posting…';
-  const skills=document.getElementById('jf-skills').value.split(',').map(s=>s.trim()).filter(Boolean);
-  try{
-    const {data,error}=await sb.from('hp_jobs').insert([{
-      title,company:co,
-      location:document.getElementById('jf-loc').value,
-      employment_type:document.getElementById('jf-type').value,
-      openings:parseInt(document.getElementById('jf-open').value)||1,
-      hiring_lead:document.getElementById('jf-lead').value,
-      industry:document.getElementById('jf-ind').value,
-      skills,description:document.getElementById('jf-desc').value,
-      status:'Open',submitted:0,hired:0,
-      created_by:currentUser?.name||'Admin',
-    }]).select();
-    if(error)throw error;
-    closeModal('addjob');
-    toast('Job posted! Running AI match…','success');
-    // Reset form
-    document.getElementById('jf-co-sel').value='';
-    ['jf-title','jf-loc','jf-skills','jf-ind','jf-desc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-    await loadJobs();
-    // AI Match
-    openModal('ai-match');
-    document.getElementById('ai-match-sub').textContent=`Finding matches for "${title}"…`;
-    document.getElementById('ai-match-body').innerHTML=`<div class="ai-thinking"><div class="spinner"></div>Scanning ${allCandidates.length} candidates for "${title}"…</div>`;
-    const aiKey=localStorage.getItem('hg_ai')||'';
-    let matches=[];
-    if(aiKey){try{matches=await aiMatch({title,skills},allCandidates);}catch(e){matches=kwMatch({skills},allCandidates);}}
-    else{await new Promise(r=>setTimeout(r,1200));matches=kwMatch({skills},allCandidates);}
-    renderAIMatches(matches,title);
-  }catch(e){alert('Error posting job: '+e.message);}
-  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-rocket"></i>Post Job & Find Matches';}
-}
-
-async function saveCompany(){
-  const name=document.getElementById('cf-name').value.trim();
-  if(!name){alert('Company name is required');return;}
-  const btn=document.getElementById('save-co-btn');
-  btn.disabled=true;btn.textContent='Saving…';
-  const payload={
-    name,
-    industry:document.getElementById('cf-ind').value,
-    contact_person:document.getElementById('cf-ct').value,
-    contact_email:document.getElementById('cf-em').value,
-    phone:document.getElementById('cf-ph').value,
-    city:document.getElementById('cf-city').value,
-    notes:document.getElementById('cf-notes').value,
-  };
-  // Add new fields — will work after SQL migration
-  const gst=document.getElementById('cf-gst')?.value.toUpperCase().trim();
-  const desig=document.getElementById('cf-desig')?.value.trim();
-  const state=document.getElementById('cf-state')?.value.trim();
-  if(gst)payload.gst_number=gst;
-  if(desig)payload.designation=desig;
-  if(state)payload.state=state;
-  try{
-    const{error}=await sb.from('hp_companies').insert([payload]);
-    if(error){
-      // If new columns missing, save without them
-      if(error.message.includes('column')||error.message.includes('gst')||error.message.includes('designation')){
-        delete payload.gst_number;delete payload.designation;delete payload.state;
-        const{error:e2}=await sb.from('hp_companies').insert([payload]);
-        if(e2)throw e2;
-        toast(name+' saved! Run the SQL migration to enable GST/Designation fields.','success');
-      }else throw error;
-    }else{
-      toast(name+' saved!','success');
-    }
-    closeModal('addco');
-    ['cf-name','cf-gst','cf-ct','cf-desig','cf-em','cf-ph','cf-city','cf-state','cf-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-    await loadCompanies();
-    await loadCompaniesIntoJobDropdown();
-  }catch(e){alert('Error: '+e.message);}
-  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i>Save Company';}
-}
-
-async function loadJobsIntoCandDropdown(){
-  try{
-    const{data}=await sb.from('hp_jobs').select('id,job_num,title,company').eq('status','Open').order('created_at',{ascending:false});
-    const jobs=data||[];
-    const opts='<option value="">-- Select Job (Optional) --</option>'+
-      jobs.map(j=>`<option value="${j.id}">${j.job_num?j.job_num+' - ':''}${j.title} @ ${j.company||'—'}</option>`).join('');
-    // Set both resume and manual tab dropdowns
-    const pfJob=document.getElementById('pf-job');
-    const afJob=document.getElementById('af-job');
-    if(pfJob)pfJob.innerHTML=opts;
-    if(afJob)afJob.innerHTML=opts;
-  }catch(e){console.warn('Could not load jobs for candidate modal:',e);}
-}
-
-async function loadCompaniesIntoJobDropdown(){
-  const sel=document.getElementById('jf-co-sel');
-  if(!sel)return;
-  try{
-    const{data}=await sb.from('hp_companies').select('id,name').order('name');
-    const cos=data||[];
-    const current=sel.value;
-    sel.innerHTML='<option value="">-- Select Company --</option>'+
-      cos.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
-    if(current)sel.value=current;
-  }catch(e){console.warn('Could not load companies dropdown:',e);}
-}
-
-async function saveInvoice(){
-  const co=document.getElementById('inv-co').value.trim();
-  const gross=parseFloat(document.getElementById('inv-gross').value)||0;
-  if(!co||!gross){alert('Company and amount required');return;}
-  const btn=document.getElementById('save-inv-btn');
-  btn.disabled=true;btn.textContent='Creating…';
-  const gstPct=parseInt(document.getElementById('inv-gst').value)||18;
-  const yr=new Date().getFullYear().toString().slice(2);
-  const num=`REF${yr}-${parseInt(yr)+1}/${String(nextInvNum).padStart(3,'0')}`;
-  try{
-    const {error}=await sb.from('hp_invoices').insert([{
-      invoice_number:num,company:co,
-      sales_person:document.getElementById('inv-sp').value,
-      gross_amount:gross,gst_percent:gstPct,
-      total_amount:Math.round(gross*(1+gstPct/100)*100)/100,
-      invoice_date:document.getElementById('inv-date').value||null,
-      due_date:document.getElementById('inv-due').value||null,
-      description:document.getElementById('inv-desc').value,
-      status:'Draft',
-    }]);
-    if(error)throw error;
-    nextInvNum++;localStorage.setItem('hg_inv_num',nextInvNum);
-    closeModal('addinv');toast(`Invoice ${num} created!`,'success');
-    ['inv-co','inv-gross','inv-desc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-    await loadInvoices();
-  }catch(e){alert('Error: '+e.message);}
-  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i>Create Invoice';}
-}
-
-async function saveUser(){
-  if(currentRole!=='admin'){alert('Only admins can add users.');return;}
-  const name=document.getElementById('uf-name').value.trim();
-  const email=document.getElementById('uf-email').value.trim();
-  const pass=document.getElementById('uf-pass').value;
-  if(!name||!email||!pass){alert('Name, email and password are required');return;}
-  if(pass.length<6){alert('Password must be at least 6 characters');return;}
-  const btn=document.getElementById('save-user-btn');
-  btn.disabled=true;btn.textContent='Adding…';
-  try{
-    // Create auth user
-    const {data,error}=await sb.auth.admin.createUser({email,password:pass,email_confirm:true,user_metadata:{name,role:document.getElementById('uf-role').value}});
-    if(error)throw error;
-    closeModal('adduser');toast(`${name} added!`,'success');
-    ['uf-name','uf-email','uf-pass','uf-mob'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  }catch(e){
-    // Fallback: just show email/pass to share manually
-    closeModal('adduser');
-    alert(`Share these login details with ${name}:\n\nEmail: ${email}\nPassword: ${pass}\n\nThey can sign in at your HRGURU URL.`);
-    toast(`${name} credentials created!`,'success');
-  }
-  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i>Add User';}
-}
-
-async function changePassword(){
-  const p=document.getElementById('cp-pass').value;
-  const c=document.getElementById('cp-conf').value;
-  if(!p||p.length<6){alert('Password must be at least 6 characters');return;}
-  if(p!==c){alert('Passwords do not match');return;}
-  const {error}=await sb.auth.updateUser({password:p});
-  if(!error){closeModal('changepass');toast('Password updated!','success');}
-  else alert('Error: '+error.message);
-}
-
-/* ═══════════════════════════════════════
-   AI MATCHING
-═══════════════════════════════════════ */
-function kwMatch(job,cands){
-  const jskills=(job.skills||[]).map(s=>s.toLowerCase());
-  return cands.map(c=>{
-    const cskills=(c.skills||[]).map(s=>s.toLowerCase());
-    const overlap=jskills.filter(s=>cskills.some(cs=>cs.includes(s)||s.includes(cs))).length;
-    const score=jskills.length>0?Math.min(99,Math.round((overlap/jskills.length)*70+Math.random()*25)):Math.floor(Math.random()*40+45);
-    return{...c,score,reason:`${overlap} of ${jskills.length} required skills matched`};
-  }).sort((a,b)=>b.score-a.score).slice(0,6);
-}
-
-async function aiMatch(job,cands){
-  const prompt=`You are a recruiter AI. Score each candidate 0-99 for the job "${job.title}" requiring skills: ${(job.skills||[]).join(', ')}.
-Candidates: ${cands.slice(0,30).map((c,i)=>`[${i}] ${c.first_name} ${c.last_name} | ${c.title||''} @ ${c.company||''} | ${c.experience_years||0}yr | Skills: ${(c.skills||[]).join(', ')}`).join('\n')}
-Return ONLY JSON array: [{"index":0,"score":87,"reason":"brief reason max 8 words"}]`;
-  const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':localStorage.getItem('hg_ai'),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:800,messages:[{role:'user',content:prompt}]})});
-  if(!resp.ok)throw new Error('AI error');
-  const d=await resp.json();
-  const txt=(d.content?.[0]?.text||'[]').replace(/```json|```/gi,'').trim();
-  return JSON.parse(txt).sort((a,b)=>b.score-a.score).slice(0,6).map(m=>({...cands[m.index],score:m.score,reason:m.reason}));
-}
-
-function renderAIMatches(matches,jobTitle){
-  document.getElementById('ai-match-sub').textContent=`${matches.length} matches found for "${jobTitle}" · Click + to add to pipeline`;
-  if(!matches.length){document.getElementById('ai-match-body').innerHTML='<div class="ai-thinking">No matching candidates found. Add more candidates first.</div>';return;}
-  document.getElementById('ai-match-body').innerHTML=matches.map((c,i)=>{
-    const scoreColor=c.score>=80?'#34d399':c.score>=60?'#fbbf24':'#f87171';
-    const initials=((c.first_name||'?')[0]+(c.last_name||'?')[0]).toUpperCase();
-    return`<div class="ai-card">
-      <div class="ai-av" style="background:${AVCOLS[i%AVCOLS.length]}">${initials}</div>
-      <div class="ai-info">
-        <div class="ai-name">${c.first_name} ${c.last_name}</div>
-        <div class="ai-role">${c.title||'—'} @ ${c.company||'—'} · ${c.experience_years||0}yr</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">${c.reason||'Good skill match'}</div>
-        <div class="ai-skills">${(c.skills||[]).slice(0,4).map(s=>`<span class="ai-skill">${s}</span>`).join('')}</div>
-      </div>
-      <div style="text-align:center;flex-shrink:0"><div class="ai-score" style="color:${scoreColor}">${c.score}</div><div class="ai-score-lbl">match</div></div>
-      <div class="ai-add-btn" onclick="moveCandToScreening('${c.id}',this)" title="Add to pipeline"><i class="ti ti-plus"></i></div>
-    </div>`;
-  }).join('');
-}
-
-async function moveCandToScreening(candId,btn){
-  const {error}=await sb.from('hp_candidates').update({status:'Screening'}).eq('id',candId);
-  if(!error){btn.innerHTML='<i class="ti ti-check"></i>';btn.style.background='var(--grn)';btn.style.borderColor='var(--grn)';btn.style.color='#fff';btn.onclick=null;toast('Added to Screening!','success');}
-}
-
-/* ═══════════════════════════════════════
-   REPORTS
-═══════════════════════════════════════ */
-function renderReports(){
-  document.getElementById('rep-grid').innerHTML=REPORTS_DATA.map(r=>`
-    <div class="rep-card">
-      <div class="rep-hd"><i class="ti ${r.icon}" style="margin-right:7px"></i>${r.cat}</div>
-      ${r.items.map((item,i)=>`<div class="rep-item"><span class="rep-item-lbl">${i+1}. ${item}</span><i class="ti ti-settings-2" style="color:var(--ink5)"></i></div>`).join('')}
-    </div>`).join('');
-}
-
-/* ═══════════════════════════════════════
-   INTEGRATIONS
-═══════════════════════════════════════ */
-function renderIntegrations(){
-  const saved=JSON.parse(localStorage.getItem('hg_int')||'{}');
-  document.getElementById('int-body').innerHTML=INTEGRATIONS.map(cat=>`
-    <div style="margin-bottom:20px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink5);padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:10px">${cat.cat}</div>
-      <div class="int-grid">
-        ${cat.items.map(it=>{const isInst=saved[it.n]!==undefined?saved[it.n]:it.inst;
-          return`<div class="int-card ${isInst?'inst':''}" onclick="toggleInt(this,'${it.n}','${it.inst}')">
-            ${isInst?`<div class="int-badge"><span class="badge b-grn" style="font-size:10.5px">Installed</span></div>`:''}
-            <div class="int-ico" style="background:${it.c}18;color:${it.c}"><i class="ti ${it.ico}"></i></div>
-            <div class="int-name">${it.n}</div><div class="int-type">${it.t}</div>
-          </div>`;}).join('')}
-      </div>
-    </div>`).join('');
-}
-
-function toggleInt(el,name,def){
-  const saved=JSON.parse(localStorage.getItem('hg_int')||'{}');
-  const cur=saved[name]!==undefined?saved[name]:(def==='true');
-  saved[name]=!cur;localStorage.setItem('hg_int',JSON.stringify(saved));
-  el.classList.toggle('inst',!cur);
-  const badge=el.querySelector('.int-badge');
-  if(!cur){if(!badge){const d=document.createElement('div');d.className='int-badge';d.innerHTML='<span class="badge b-grn" style="font-size:10.5px">Installed</span>';el.prepend(d);}}
-  else{if(badge)badge.remove();}
-}
-
-/* ═══════════════════════════════════════
-   CALENDAR
-═══════════════════════════════════════ */
-const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
-function renderCalendar(){
-  const y=calMonth.getFullYear(),m=calMonth.getMonth();
-  document.getElementById('cal-lbl').textContent=MONTHS[m]+' '+y;
-  const first=new Date(y,m,1).getDay();
-  const total=new Date(y,m+1,0).getDate();
-  const today=new Date();
-  const isToday=(d)=>d===today.getDate()&&m===today.getMonth()&&y===today.getFullYear();
-  const grid=document.getElementById('cal-grid');
-  grid.innerHTML=DAYS.map(d=>`<div class="cal-dh">${d}</div>`).join('')+
-    Array(first).fill().map(()=>'<div class="cal-cell other-m"></div>').join('')+
-    Array(total).fill().map((_,i)=>{const d=i+1;return`<div class="cal-cell${isToday(d)?' today':''}"><div class="cal-num">${d}</div></div>`;}).join('');
-}
-
-function calNav(dir){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+dir,1);renderCalendar();}
-
-function saveModalAIKey(){
-  const key=document.getElementById('modal-ai-key')?.value.trim();
-  if(!key){alert('Please paste your API key first.');return;}
-  localStorage.setItem('hg_ai',key);
-  updateAIKeyUI(key);
-  // Hide warning
-  const w=document.getElementById('parse-nokey-warn');if(w)w.style.display='none';
-  const b=document.getElementById('ai-key-banner');if(b)b.style.display='none';
-  toast('✓ AI Key saved! Now upload a resume.','success');
-}
-
-function saveBannerKey(){
-  const key=document.getElementById('banner-ai-key').value.trim();
-  if(!key){alert('Please paste your Anthropic API key first.');return;}
-  localStorage.setItem('hg_ai',key);
-  document.getElementById('banner-ai-key').value='';
-  document.getElementById('ai-key-banner').style.display='none';
-  updateAIKeyUI(key);
-  toast('✓ AI Resume Parser activated! Upload a resume to auto-fill fields.','success');
-}
-
-/* ═══════════════════════════════════════
-   AI KEY
-═══════════════════════════════════════ */
-function saveAIKey(){
-  const key=document.getElementById('ai-key-input').value.trim();
-  if(!key){alert('Please paste your Anthropic API key');return;}
-  localStorage.setItem('hg_ai',key);
-  document.getElementById('ai-key-input').value='';
-  updateAIKeyUI(key);
-  toast('AI Matching activated!','success');
-}
-
-function updateAIKeyUI(key){
-  const badge=document.getElementById('ai-status-badge');
-  const section=document.getElementById('ai-test-section');
-  if(!badge)return;
-  if(key){badge.textContent='✓ Active';badge.style.background='#d1fae5';badge.style.color='#065f46';if(section)section.style.display='block';}
-  else{badge.textContent='Not Configured';badge.style.background='#fee2e2';badge.style.color='#991b1b';if(section)section.style.display='none';}
-}
-
-/* ═══════════════════════════════════════
-   MODAL
-═══════════════════════════════════════ */
-function openModal(type){
-  const m=document.getElementById('modal-'+type);if(m)m.classList.add('open');
-  if(type==='addcand'){
-    setTimeout(()=>{
-      switchCandTab('resume');resetParser();clearResume();
-      const warn=document.getElementById('parse-nokey-warn');
-      if(warn)warn.style.display=localStorage.getItem('hg_ai')?'none':'block';
-      // Load jobs into dropdowns
-      loadJobsIntoCandDropdown();
-    },10);
-  }
-  if(type==='addjob'){
-    // Load companies into dropdown every time modal opens
-    setTimeout(()=>loadCompaniesIntoJobDropdown(),10);
-  }
-}
-function closeModal(type){const m=document.getElementById('modal-'+type);if(m)m.classList.remove('open');}
-document.querySelectorAll('.modal-bg').forEach(el=>el.addEventListener('click',e=>{if(e.target===el){const id=el.id.replace('modal-','');closeModal(id);}}));
-
-/* ═══════════════════════════════════════
-   MISC
-═══════════════════════════════════════ */
-function toggleFP(name){const fp=document.getElementById('fp-'+name);if(fp)fp.classList.toggle('open');}
-function setSTab(el){document.querySelectorAll('.sn-item').forEach(n=>n.classList.remove('active'));el.classList.add('active');}
-function gSearch(v){if(v.length<2)return;navTo('candidates');setTimeout(()=>filterCands(v),50);}
-function buildPg(cur,total){
-  const nums=[...new Set([1,2,3,Math.min(cur,total),Math.min(cur+1,total),total].filter(n=>n>=1&&n<=total))].sort((a,b)=>a-b);
-  return`<div class="pg-info">Page ${cur} of ${total}</div><div class="pgspc"></div>`+
-    `<div class="pgb disabled"><i class="ti ti-chevrons-left" style="font-size:11px"></i></div>`+
-    `<div class="pgb disabled"><i class="ti ti-chevron-left" style="font-size:11px"></i></div>`+
-    nums.map(n=>`<div class="pgb ${n===cur?'active':''}">${n}</div>`).join('')+
-    `<div class="pgb"><i class="ti ti-chevron-right" style="font-size:11px"></i></div>`+
-    `<div class="pgb"><i class="ti ti-chevrons-right" style="font-size:11px"></i></div>`;
-}
-function fa(n){if(!n)return'0';if(n>=1e7)return(n/1e7).toFixed(1)+'Cr';if(n>=1e5)return(n/1e5).toFixed(1)+'L';if(n>=1e3)return(n/1e3).toFixed(0)+'k';return Math.round(n).toLocaleString('en-IN');}
-function fdate(d){if(!d)return'—';try{return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}catch{return d;}}
-function daysOld(d){if(!d)return'';const days=Math.round((Date.now()-new Date(d))/864e5);if(days===0)return'New';if(days===1)return'1 day old';return`${days} days old`;}
-function toast(msg,type=''){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.className='toast '+(type||'');
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),3000);
-}
-
-/* ═══════════════════════════════════════
-   BOOT — Check session
-═══════════════════════════════════════ */
-(async()=>{
-  // Set today's date in invoice modal
-  const today=new Date().toISOString().slice(0,10);
-  const due=new Date(Date.now()+30*864e5).toISOString().slice(0,10);
-  const invDate=document.getElementById('inv-date');const invDue=document.getElementById('inv-due');
-  if(invDate)invDate.value=today;if(invDue)invDue.value=due;
-  // Check existing session
-  const {data:{session}}=await sb.auth.getSession();
-  if(session?.user){
-    const u=TEAM.find(t=>t.email===session.user.email);
-    if(u){currentUser={...session.user,...u};currentRole=u.role;showApp();}
-    else{currentUser={...session.user,name:session.user.email,role:'recruiter',initials:session.user.email[0].toUpperCase(),color:'#3b82f6'};currentRole='recruiter';showApp();}
-  }
-  // Enter key on login
-  document.getElementById('login-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('login-pass').focus();});
-})();
-</script>
-</body>
-</html>
