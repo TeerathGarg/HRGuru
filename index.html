@@ -1261,9 +1261,13 @@ async function doLogin(){
       if(isNewUser){
         // Create account
         const {data:sd,error:se}=await sb.auth.signUp({email,password:pass,options:{data:{name:teamMember.name,role:teamMember.role}}});
-        if(se&&!se.message.includes('already registered')){showErr('Error: '+se.message);return;}
-        // Confirm email via SQL is needed — show helpful message
-        showErr('Account created! Go to Supabase SQL Editor and run: UPDATE auth.users SET email_confirmed_at=now() WHERE email=\''+email+'\'; Then click Sign In again.');
+        if(se&&!se.message.includes('already registered')){showErr('Error creating account: '+se.message);return;}
+        // Try to sign in immediately after creating account
+        await new Promise(r=>setTimeout(r,500));
+        const {data:sd2,error:se2}=await sb.auth.signInWithPassword({email,password:pass});
+        if(!se2&&sd2?.user){await afterLogin(sd2.user,teamMember);return;}
+        // Email needs confirming — show friendly message
+        showErr('Account created! If sign-in fails, ask Teerath to run this SQL in Supabase:\nUPDATE auth.users SET email_confirmed_at=now() WHERE email=\''+email+'\';');
         return;
       }
       showErr(error.message);
@@ -1271,6 +1275,17 @@ async function doLogin(){
   }catch(e){showErr('Connection error: '+e.message);}
   finally{btn.disabled=false;btn.textContent='Sign In';}
 }
+
+// ── AUTO-RESTORE SESSION ON PAGE LOAD ──
+(async function init(){
+  try{
+    const {data:{session},error}=await sb.auth.getSession();
+    if(session?.user){
+      const tm=TEAM.find(t=>t.email===session.user.email)||{name:session.user.email,role:'recruiter',initials:'U',color:'#6366f1'};
+      await afterLogin(session.user,tm);
+    }
+  }catch(e){console.warn('Session check:',e.message);}
+})();
 
 async function afterLogin(user,teamMember){
   currentUser={...user,...teamMember};
@@ -2507,3 +2522,7 @@ Rules: total_experience_years=number. skills=comma separated. source=Naukri/Link
 }
 
 
+
+</script>
+</body>
+</html>
