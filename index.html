@@ -1,1 +1,1637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZYROHR — Smart ATS</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.2.0/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+// PIPELINE KANBAN
+async function loadPipeline(){
+  const jf=document.getElementById('pipeline-job-filter')?.value||'';
+  const statuses=['Sourced','Screening','Interviewing','Offered','Hired','Rejected'];
+  const sColors={Sourced:'#6366f1',Screening:'#f59e0b',Interviewing:'#06b6d4',Offered:'#84cc16',Hired:'#10b981',Rejected:'#ef4444'};
+  let list=allCandidates;if(jf)list=list.filter(c=>c.applied_job===jf);
+  const board=document.getElementById('kanban-board');
+  if(!board)return;
+  board.innerHTML=statuses.map(status=>{
+    const cards=list.filter(c=>(c.status||'Sourced')===status);
+    const COLORS=['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+    return `<div style="min-width:230px;max-width:250px;flex-shrink:0;background:var(--bg3);border-radius:var(--rl);border:1px solid var(--border);display:flex;flex-direction:column">
+      <div style="padding:11px 13px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--ink3)"><div style="width:8px;height:8px;border-radius:50%;background:${sColors[status]};flex-shrink:0"></div>${status}</div>
+        <span style="font-size:11px;background:var(--bg4);color:var(--ink5);padding:1px 6px;border-radius:8px;font-weight:600">${cards.length}</span>
+      </div>
+      <div style="padding:9px;display:flex;flex-direction:column;gap:7px;flex:1;overflow-y:auto;max-height:calc(100vh - 230px)">
+        ${cards.length?cards.map((c,i)=>`<div style="background:#fff;border-radius:var(--r);border:1px solid var(--border);padding:10px 11px;cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div style="width:28px;height:28px;border-radius:8px;background:${COLORS[i%COLORS.length]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">${((c.first_name||'?')[0]+(c.last_name||'?')[0]).toUpperCase()}</div>
+            <div style="min-width:0"><div style="font-size:12.5px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.first_name||''} ${c.last_name||''}</div><div style="font-size:11.5px;color:var(--ink4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.title||'—'}</div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink5);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+            <span>${c.company||'—'}</span>
+            <span>${c.experience_years||0}yr</span>
+          </div>
+        </div>`).join(''):`<div style="text-align:center;padding:16px;font-size:12px;color:var(--ink6)">No candidates</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
 
+// CALENDAR
+let calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),allEvents=[];
+async function loadCalendarEvents(){try{const{data}=await sb.from('hp_events').select('*').order('event_date').catch(()=>({data:[]}));allEvents=data||[];}catch(e){allEvents=[];}}
+function renderCalendar(){
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const lbl=document.getElementById('cal-month-lbl');if(lbl)lbl.textContent=months[calMonth]+' '+calYear;
+  const today=new Date();const firstDay=new Date(calYear,calMonth,1).getDay();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const evColors={Interview:'#dbeafe','Follow-up':'#fef9c3',Meeting:'#ede9fe',Deadline:'#fee2e2',Other:'#f0fdf4'};
+  const evTextColors={Interview:'#1d4ed8','Follow-up':'#b45309',Meeting:'#6d28d9',Deadline:'#b91c1c',Other:'#065f46'};
+  const grid=document.getElementById('cal-grid');if(!grid)return;
+  let html='';
+  for(let i=0;i<firstDay;i++)html+='<div style="background:#fff;min-height:80px;padding:6px"></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const isToday=d===today.getDate()&&calMonth===today.getMonth()&&calYear===today.getFullYear();
+    const dateStr=calYear+'-'+(String(calMonth+1).padStart(2,'0'))+'-'+(String(d).padStart(2,'0'));
+    const dayEvents=allEvents.filter(e=>e.event_date===dateStr);
+    html+=`<div style="background:#fff;min-height:80px;padding:6px 8px;cursor:pointer;transition:background .1s${isToday?';background:var(--acc3)':''}" onmouseover="this.style.background='${isToday?'#e0e7ff':'var(--bg3)'}'" onmouseout="this.style.background='${isToday?'var(--acc3)':'#fff'}'">
+      <div style="font-weight:700;font-size:12px;color:${isToday?'var(--acc)':'var(--ink)'};margin-bottom:3px${isToday?';background:var(--acc);color:#fff;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center':''}">${d}</div>
+      ${dayEvents.slice(0,2).map(e=>`<div style="padding:2px 5px;border-radius:4px;font-size:10.5px;font-weight:500;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:${evColors[e.event_type]||'#f0fdf4'};color:${evTextColors[e.event_type]||'#065f46'}">${e.title}</div>`).join('')}
+      ${dayEvents.length>2?`<div style="font-size:10px;color:var(--ink5)">+${dayEvents.length-2} more</div>`:''}
+    </div>`;
+  }
+  grid.innerHTML=html;
+}
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+function calToday(){calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCalendar();}
+async function saveEvent(){
+  const title=document.getElementById('ef-title').value.trim();const date=document.getElementById('ef-date').value;
+  if(!title||!date){alert('Title and date are required');return;}
+  try{
+    const{error}=await sb.from('hp_events').insert([{title,event_date:date,event_time:document.getElementById('ef-time').value,event_type:document.getElementById('ef-type').value,person:document.getElementById('ef-person').value,notes:document.getElementById('ef-notes').value}]).catch(()=>({error:null}));
+    allEvents.push({title,event_date:date,event_type:document.getElementById('ef-type').value});
+    closeModal('addevent');toast(title+' saved!','success');renderCalendar();
+  }catch(e){alert('Error: '+e.message);}
+}
+
+// HOT LIST
+function renderHotlist(){
+  const cont=document.getElementById('hotlist-container');if(!cont)return;
+  const hot=allCandidates.filter(c=>c.status==='Hired');
+  if(!hot.length){cont.innerHTML='<div style="text-align:center;padding:48px;color:var(--ink5)"><i class="ti ti-flame" style="font-size:44px;display:block;margin-bottom:10px;opacity:.25"></i><div style="font-size:15px;font-weight:600;margin-bottom:6px">No candidates in Hot List yet</div></div>';return;}
+  const COLORS=['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6'];
+  cont.innerHTML='<div style="display:flex;flex-direction:column;gap:10px">'+hot.map((c,i)=>`
+    <div style="background:#fff;border-radius:var(--rl);border:1px solid var(--border);box-shadow:var(--sh);padding:14px 16px;display:flex;align-items:flex-start;gap:12px">
+      <div style="width:40px;height:40px;border-radius:12px;background:${COLORS[i%COLORS.length]};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">${((c.first_name||'?')[0]+(c.last_name||'?')[0]).toUpperCase()}</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13.5px">${c.first_name||''} ${c.last_name||''}</div>
+        <div style="font-size:12px;color:var(--ink4);margin-top:2px">${c.title||'No designation'}${c.company?' @ '+c.company:''}</div>
+        <div style="display:flex;gap:12px;margin-top:6px;font-size:12px;color:var(--ink5)">
+          ${c.experience_years?`<span><i class="ti ti-clock" style="font-size:11px"></i> ${c.experience_years}yr</span>`:''}
+          ${c.location?`<span><i class="ti ti-map-pin" style="font-size:11px"></i> ${c.location}</span>`:''}
+          ${c.skills&&c.skills.length?`<span><i class="ti ti-tags" style="font-size:11px"></i> ${c.skills.slice(0,3).join(', ')}</span>`:''}
+        </div>
+      </div>
+      <div style="text-align:right">
+        <span class="badge b-grn">Hired</span>
+        ${c.phone?`<div style="font-size:11.5px;color:var(--ink5);margin-top:6px">${c.phone}</div>`:''}
+      </div>
+    </div>`).join('')+'</div>';
+}
+
+// Override nav to trigger pipeline/calendar/hotlist loads
+const _origNav=nav;
+function nav(page){
+  _origNav(page);
+  if(page==='pipeline'){setTimeout(()=>{loadPipeline();const sel=document.getElementById('pipeline-job-filter');if(sel)sel.innerHTML='<option value="">All Jobs</option>'+(allJobs||[]).map(j=>`<option value="${j.id}">${j.title}</option>`).join('');},100);}
+  if(page==='calendar'){setTimeout(()=>{loadCalendarEvents().then(renderCalendar);},100);}
+  if(page==='hotlist'){setTimeout(renderHotlist,100);}
+}
+
+
+// VENDORS
+async function loadVendors(){
+  try{
+    const{data}=await sb.from('hp_vendors').select('*').order('created_at',{ascending:false}).catch(()=>({data:[]}));
+    const all=data||[];
+    const cnt=document.getElementById('vendor-cnt');if(cnt)cnt.textContent='('+all.length+') Total';
+    document.getElementById('vendors-tbody').innerHTML=all.length?all.map((v,i)=>`<tr><td style="color:var(--ink5)">${i+1}</td><td style="font-weight:600">${v.name}</td><td>${v.contact_person||'—'}</td><td style="color:var(--ink5);font-size:12px">${v.contact_email||'—'}</td><td>${v.phone||'—'}</td><td>${v.city||'—'}</td><td style="color:var(--ink5);font-size:12px">${new Date(v.created_at).toLocaleDateString('en-IN')}</td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--ink5)">No vendors yet</td></tr>';
+  }catch(e){}
+}
+async function saveVendor(){
+  const name=document.getElementById('vf-name').value.trim();if(!name){alert('Vendor name required');return;}
+  try{
+    await sb.from('hp_vendors').insert([{name,contact_person:document.getElementById('vf-ct').value,contact_email:document.getElementById('vf-em').value,phone:document.getElementById('vf-ph').value,city:document.getElementById('vf-city').value,notes:document.getElementById('vf-notes').value}]).catch(()=>({error:null}));
+    closeModal('addvendor');toast(name+' saved!','success');
+    ['vf-name','vf-ct','vf-em','vf-ph','vf-city','vf-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    loadVendors();
+  }catch(e){alert('Error: '+e.message);}
+}
+// CONSULTANTS
+async function loadConsultants(){
+  try{
+    const{data}=await sb.from('hp_consultants').select('*').order('created_at',{ascending:false}).catch(()=>({data:[]}));
+    const all=data||[];
+    const cnt=document.getElementById('consultant-cnt');if(cnt)cnt.textContent='('+all.length+') Total';
+    document.getElementById('consultants-tbody').innerHTML=all.length?all.map((c,i)=>`<tr><td style="color:var(--ink5)">${i+1}</td><td style="font-weight:600">${c.first_name||''} ${c.last_name||''}</td><td>${c.specialisation||'—'}</td><td>${c.company||'—'}</td><td style="color:var(--ink5);font-size:12px">${c.contact_email||'—'}</td><td>${c.phone||'—'}</td><td><span class='badge b-grn'>Active</span></td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--ink5)">No consultants yet</td></tr>';
+  }catch(e){}
+}
+async function saveConsultant(){
+  const fn=document.getElementById('conf-fn').value.trim();if(!fn){alert('First name required');return;}
+  try{
+    await sb.from('hp_consultants').insert([{first_name:fn,last_name:document.getElementById('conf-ln').value,specialisation:document.getElementById('conf-spec').value,company:document.getElementById('conf-co').value,contact_email:document.getElementById('conf-em').value,phone:document.getElementById('conf-ph').value,notes:document.getElementById('conf-notes').value}]).catch(()=>({error:null}));
+    closeModal('addconsultant');toast(fn+' saved!','success');
+    ['conf-fn','conf-ln','conf-spec','conf-co','conf-em','conf-ph','conf-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    loadConsultants();
+  }catch(e){alert('Error: '+e.message);}
+}
+
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4fa;--bg2:#e8eef7;--bg3:#f7f9fc;--bg4:#e2e8f2;
+  --ink:#1a2744;--ink2:#0f1929;--ink3:#334155;--ink4:#64748b;--ink5:#94a3b8;--ink6:#cbd5e1;
+  --acc:#6366f1;--acc2:#4f46e5;--acc3:#eef2ff;--acc4:#4338ca;
+  --grn:#10b981;--grn2:#d1fae5;--grn3:#059669;
+  --red:#ef4444;--red2:#fee2e2;
+  --gold:#f59e0b;--gold2:#fef3c7;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --sh:0 1px 3px rgba(0,0,0,.08);--sh2:0 4px 16px rgba(0,0,0,.1);--sh3:0 8px 32px rgba(0,0,0,.15);
+  --r:8px;--rl:12px;--rx:16px;
+  --f:'DM Sans',system-ui,sans-serif;--fh:'Syne','DM Sans',sans-serif;
+  --sidebar:220px;
+}
+html,body{height:100%;font-size:13px;color:var(--ink);background:var(--bg);font-family:var(--f)}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
+
+/* ── LAYOUT ── */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:var(--sidebar);background:linear-gradient(180deg,#0f1929 0%,#1a2744 100%);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;overflow-x:hidden}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:56px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;box-shadow:var(--sh)}
+.page{flex:1;overflow-y:auto;padding:20px}
+
+/* ── SIDEBAR ── */
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+.sb-logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#818cf8);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-logo-text{font-family:var(--fh);font-size:18px;font-weight:800;color:#fff;letter-spacing:.5px}
+.sb-logo-sub{font-size:9.5px;color:rgba(255,255,255,.4);font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin-top:1px}
+.sb-section{padding:14px 10px 4px;font-size:9.5px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:9px;padding:9px 12px;margin:1px 6px;border-radius:var(--r);cursor:pointer;color:rgba(255,255,255,.6);font-size:12.5px;font-weight:500;transition:all .13s;position:relative}
+.sb-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.9)}
+.sb-item.active{background:linear-gradient(90deg,rgba(99,102,241,.3),rgba(99,102,241,.1));color:#fff;font-weight:600}
+.sb-item.active::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:3px;background:var(--acc);border-radius:0 2px 2px 0}
+.sb-item i{font-size:16px;flex-shrink:0}
+.sb-badge{margin-left:auto;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;background:var(--acc);color:#fff}
+.sb-user{padding:12px 14px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:9px;margin-top:auto}
+.sb-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-user-name{font-size:12.5px;font-weight:600;color:#fff}
+.sb-user-role{font-size:10.5px;color:rgba(255,255,255,.4)}
+
+/* ── SCREENS ── */
+.screen{display:none;height:100%}
+.screen.active{display:flex;flex-direction:column}
+
+/* ── PAGE HEADER ── */
+.ph{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.ph-l{display:flex;align-items:center;gap:10px;flex:1}
+.ph-title{font-family:var(--fh);font-size:20px;font-weight:700;color:var(--ink)}
+.ph-cnt{font-size:12px;color:var(--ink5);background:var(--bg3);padding:2px 8px;border-radius:10px;border:1px solid var(--border)}
+.ph-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:var(--r);border:1px solid var(--border);background:#fff;color:var(--ink3);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .13s;font-family:var(--f);white-space:nowrap}
+.btn:hover{border-color:var(--ink6);background:var(--bg3)}
+.btn-p{background:var(--acc);color:#fff;border-color:var(--acc)}
+.btn-p:hover{background:var(--acc2);border-color:var(--acc2)}
+.btn-grn{background:var(--grn);color:#fff;border-color:var(--grn)}
+.btn-grn:hover{background:var(--grn3)}
+.btn-sm{padding:6px 11px;font-size:12px}
+.btn-xs{padding:4px 8px;font-size:11.5px}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--ink4)}
+.btn-ghost:hover{background:var(--bg3);border-color:var(--border)}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* ── CARDS ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi{background:#fff;border-radius:var(--rl);padding:16px 18px;border:1px solid var(--border);box-shadow:var(--sh);position:relative;overflow:hidden}
+.kpi-val{font-family:var(--fh);font-size:26px;font-weight:800;color:var(--ink);line-height:1}
+.kpi-lbl{font-size:11.5px;color:var(--ink5);margin-top:4px}
+.kpi-bar{position:absolute;top:0;left:0;right:0;height:3px}
+
+/* ── CANDIDATE CARDS ── */
+.cand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.ccard{background:#fff;border-radius:var(--rl);border:1px solid var(--border);box-shadow:var(--sh);padding:15px;cursor:pointer;transition:all .15s}
+.ccard:hover{box-shadow:var(--sh2);border-color:var(--acc);transform:translateY(-1px)}
+.ccard-head{display:flex;align-items:flex-start;gap:11px;margin-bottom:10px}
+.cav{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0}
+.ccard-name{font-size:14px;font-weight:700;color:var(--ink)}
+.ccard-title{font-size:12px;color:var(--ink4);margin-top:2px}
+.ccard-meta{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.cmeta{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--ink5)}
+.ccard-skills{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.skill-chip{padding:2px 8px;background:var(--acc3);border:1px solid #c7d2fe;border-radius:10px;font-size:11px;font-weight:500;color:var(--acc4)}
+.ccard-foot{display:flex;align-items:center;justify-content:space-between;padding-top:9px;border-top:1px solid var(--border)}
+.src-tag{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--ink5);background:var(--bg3);padding:2px 7px;border-radius:8px;border:1px solid var(--border)}
+
+/* ── STATUS BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.b-blue{background:#dbeafe;color:#1d4ed8}
+.b-grn{background:var(--grn2);color:var(--grn3)}
+.b-red{background:var(--red2);color:#b91c1c}
+.b-gold{background:var(--gold2);color:#b45309}
+.b-gray{background:var(--bg4);color:var(--ink4)}
+.b-purple{background:#ede9fe;color:#6d28d9}
+
+/* ── FORMS ── */
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink4)}
+.field input,.field select,.field textarea{padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none;font-family:var(--f);transition:border-color .13s;background:#fff}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.fr{display:flex;gap:10px}
+.fr .field{flex:1}
+.field textarea{resize:vertical;min-height:60px}
+
+/* ── MODALS ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(15,25,41,.5);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:var(--rx);box-shadow:var(--sh3);display:flex;flex-direction:column;max-height:90vh;width:100%;animation:mIn .2s ease}
+.modal-lg{max-width:560px}
+.modal-xl{max-width:720px}
+@keyframes mIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+.mhd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
+.mhd h2{font-family:var(--fh);font-size:16px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
+.mbd{padding:18px;overflow-y:auto;flex:1}
+.mft{padding:14px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;border-radius:var(--rl);border:1px solid var(--border)}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl thead th{background:var(--bg3);padding:10px 13px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink4);border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+.tbl tbody tr:hover{background:var(--bg3)}
+.tbl tbody td{padding:11px 13px;color:var(--ink3);vertical-align:middle}
+.tbl tbody tr:last-child{border-bottom:none}
+
+/* ── SEARCH ── */
+.srchbox{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:7px 11px;flex:1;max-width:340px}
+.srchbox i{color:var(--ink5);font-size:15px;flex-shrink:0}
+.srchbox input{border:none;outline:none;font-size:13px;color:var(--ink);background:transparent;width:100%;font-family:var(--f)}
+
+/* ── VIEW TOGGLE ── */
+.vt{display:flex;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.vt-b{padding:6px 10px;background:#fff;border:none;cursor:pointer;color:var(--ink5);font-size:14px;transition:all .1s}
+.vt-b.active{background:var(--acc);color:#fff}
+
+/* ── LOGIN ── */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f1929 0%,#1a2744 60%,#1e3a6a 100%)}
+.login-card{background:#fff;border-radius:var(--rx);padding:36px 32px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,.3)}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;justify-content:center}
+.login-logo-icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#818cf8);display:flex;align-items:center;justify-content:center}
+.login-logo-text{font-family:var(--fh);font-size:26px;font-weight:800;color:var(--ink)}
+.login-title{font-size:20px;font-weight:700;color:var(--ink);margin-bottom:4px;text-align:center}
+.login-sub{font-size:13px;color:var(--ink5);margin-bottom:22px;text-align:center}
+.login-btn{width:100%;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:700;cursor:pointer;transition:all .13s;margin-top:4px;font-family:var(--f)}
+.login-btn:hover{background:var(--acc2)}
+.login-btn:disabled{opacity:.6;cursor:default}
+.login-err{background:var(--red2);color:#b91c1c;padding:9px 12px;border-radius:var(--r);font-size:12.5px;margin-bottom:12px;display:none}
+.team-list{margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+.team-list-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink5);margin-bottom:10px}
+.team-member{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:var(--r);cursor:pointer;transition:background .1s}
+.team-member:hover{background:var(--bg3)}
+.team-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.team-name{font-size:12.5px;font-weight:600;color:var(--ink)}
+.team-role{font-size:11px;color:var(--ink5)}
+
+/* ── SKILL TAGS ── */
+.skill-tag-wrap{display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);min-height:42px;background:#fff;cursor:text}
+.skill-tag{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;background:var(--acc3);border:1px solid #c7d2fe;border-radius:20px;font-size:12px;font-weight:500;color:var(--acc4)}
+.skill-tag-x{cursor:pointer;font-size:15px;opacity:.6;line-height:1}
+.skill-tag-x:hover{opacity:1;color:var(--red)}
+
+.section-card{background:#fff;border-radius:var(--rl);border:1px solid var(--border);box-shadow:var(--sh);padding:18px;margin-bottom:16px}
+.section-title{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--ink);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--ink2);color:#fff;padding:12px 18px;border-radius:var(--rl);font-size:13px;font-weight:500;z-index:9999;box-shadow:var(--sh3);display:flex;align-items:center;gap:8px;transform:translateY(80px);opacity:0;transition:all .3s ease;max-width:360px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--grn3)}
+.toast.error{background:var(--red)}
+
+/* ── MISC ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+.section-box{background:#fff;border-radius:var(--rl);border:1px solid var(--border);box-shadow:var(--sh);padding:18px;margin-bottom:16px}
+.section-title{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--ink);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.info-box{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--acc3);border:1px solid #c7d2fe;border-radius:var(--r);margin-bottom:12px;font-size:12.5px;color:var(--acc4)}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════ -->
+<div id="login-screen" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo" style="flex-direction:column;align-items:center;gap:6px;margin-bottom:22px">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:48px;letter-spacing:1px;line-height:1">
+        <span style="color:#0f1929">ZYRO</span><span style="color:#6366f1">HR</span>
+      </div>
+      <div style="width:48px;height:3px;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:2px"></div>
+    </div>
+    <div class="login-title">Welcome back</div>
+    <div class="login-sub">Sign in to Reinforcement Consultants</div>
+    <div class="login-err" id="login-err"></div>
+    <div class="field"><label>Email Address</label><input type="email" id="login-email" placeholder="your@email.com" autocomplete="email"></div>
+    <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="team-list">
+      <div class="team-list-title">Team Accounts</div>
+      <div class="team-member" onclick="fillLogin('teerath@reinforcementconsultants.com')">
+        <div class="team-av" style="background:#6366f1">TG</div>
+        <div><div class="team-name">Teerath Garg</div><div class="team-role">Admin · Full Access</div></div>
+        <span class="badge b-purple" style="margin-left:auto">Admin</span>
+      </div>
+      <div class="team-member" onclick="fillLogin('niharika@reinforcementconsultants.com')">
+        <div class="team-av" style="background:#10b981">NS</div>
+        <div><div class="team-name">Niharika Srivastava</div><div class="team-role">Recruiter</div></div>
+        <span class="badge b-grn" style="margin-left:auto">Recruiter</span>
+      </div>
+      <div class="team-member" onclick="fillLogin('pragati@reinforcementconsultants.com')">
+        <div class="team-av" style="background:#f59e0b">PK</div>
+        <div><div class="team-name">Pragati Kharate</div><div class="team-role">Recruiter</div></div>
+        <span class="badge b-gold" style="margin-left:auto">Recruiter</span>
+      </div>
+      <div class="team-member" onclick="fillLogin('rinkal@reinforcementconsultants.com')">
+        <div class="team-av" style="background:#ef4444">RK</div>
+        <div><div class="team-name">Rinkal Kaur</div><div class="team-role">Recruiter</div></div>
+        <span class="badge b-red" style="margin-left:auto">Recruiter</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     APP SCREEN
+══════════════════════════════════════ -->
+<div id="app-screen" class="app" style="display:none">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-logo" style="padding:16px 14px 12px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:.5px;line-height:1">
+        <span style="color:#fff">ZYRO</span><span style="color:#818cf8">HR</span>
+      </div>
+      <div style="font-size:9px;font-weight:600;color:rgba(255,255,255,.3);letter-spacing:.12em;text-transform:uppercase;margin-top:3px">Smart ATS Platform</div>
+    </div>
+
+    <div class="sb-section">Core</div>
+    <div class="sb-item active" onclick="nav('dashboard')"><i class="ti ti-dashboard"></i><span>Dashboard</span></div>
+    <div class="sb-item" onclick="nav('candidates')"><i class="ti ti-users"></i><span>Candidates</span><span class="sb-badge" id="sb-cand-cnt" style="display:none">0</span></div>
+    <div class="sb-item" onclick="nav('pipeline')"><i class="ti ti-layout-kanban"></i><span>Pipeline</span></div>
+    <div class="sb-item" onclick="nav('jobs')"><i class="ti ti-briefcase"></i><span>Jobs</span><span class="sb-badge" id="sb-jobs-cnt" style="display:none">0</span></div>
+
+    <div class="sb-section">Business</div>
+    <div class="sb-item" onclick="nav('companies')"><i class="ti ti-building"></i><span>Companies</span></div>
+    <div class="sb-item" onclick="nav('vendors')"><i class="ti ti-building-store"></i><span>Vendors</span></div>
+    <div class="sb-item" onclick="nav('consultants')"><i class="ti ti-user-check"></i><span>Consultants</span></div>
+    <div class="sb-item" onclick="nav('invoices')"><i class="ti ti-receipt"></i><span>Invoices</span></div>
+
+    <div class="sb-section">Tools</div>
+    <div class="sb-section">Tools</div>
+    <div class="sb-item" onclick="nav('hotlist')"><i class="ti ti-flame"></i><span>Hot List</span></div>
+    <div class="sb-item" onclick="nav('calendar')"><i class="ti ti-calendar"></i><span>Calendar</span></div>
+    <div class="sb-item" onclick="nav('reports')"><i class="ti ti-chart-bar"></i><span>Reports</span></div>
+    <div class="sb-item" onclick="nav('integrations')"><i class="ti ti-plug"></i><span>Integrations</span><span style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:#10b981;color:#fff">NEW</span></div>
+    <div class="sb-item" onclick="nav('users')"><i class="ti ti-users-group"></i><span>Users</span></div>
+    <div class="sb-item" onclick="nav('settings')"><i class="ti ti-settings"></i><span>Settings</span></div>
+
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar" style="background:#6366f1">TG</div>
+      <div>
+        <div class="sb-user-name" id="sb-user-name">Teerath Garg</div>
+        <div class="sb-user-role" id="sb-user-role">Admin · Full Access</div>
+      </div>
+      <i class="ti ti-logout" style="color:rgba(255,255,255,.3);cursor:pointer;margin-left:auto;font-size:16px" onclick="doLogout()" title="Sign out"></i>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="srchbox" style="max-width:400px"><i class="ti ti-search"></i><input type="text" placeholder="Search candidates, jobs…" id="global-search"></div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <button class="btn btn-p btn-sm" onclick="openAddNew()"><i class="ti ti-plus"></i>Add New</button>
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff" id="topbar-avatar">TG</div>
+      </div>
+    </div>
+
+    <!-- PAGES -->
+    <div class="page">
+
+      <!-- DASHBOARD -->
+      <div id="pg-dashboard" class="screen active">
+        <div class="ph"><div class="ph-l"><div class="ph-title">Dashboard</div></div></div>
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kpi-bar" style="background:var(--grn)"></div><div class="kpi-val" id="kpi-hired">0</div><div class="kpi-lbl">Candidates Hired<br><span style="font-size:10.5px">Last 30 days</span></div></div>
+          <div class="kpi"><div class="kpi-bar" style="background:var(--acc)"></div><div class="kpi-val" id="kpi-jobs">0</div><div class="kpi-lbl">Open Jobs<br><span style="font-size:10.5px">Active positions</span></div></div>
+          <div class="kpi"><div class="kpi-bar" style="background:var(--gold)"></div><div class="kpi-val" id="kpi-total">0</div><div class="kpi-lbl">Total Candidates<br><span style="font-size:10.5px">In database</span></div></div>
+          <div class="kpi"><div class="kpi-bar" style="background:#a855f7"></div><div class="kpi-val" id="kpi-rev">₹0</div><div class="kpi-lbl">Revenue<br><span style="font-size:10.5px">Paid Invoices</span></div></div>
+        </div>
+        <div style="background:#fff;border-radius:var(--rl);border:1px solid var(--border);padding:28px;text-align:center;color:var(--ink5)">
+          <i class="ti ti-chart-bar" style="font-size:40px;display:block;margin-bottom:10px;opacity:.3"></i>
+          Add candidates, post jobs and create invoices to see your dashboard metrics here.
+        </div>
+      </div>
+
+      <!-- CANDIDATES -->
+      <div id="pg-candidates" class="screen">
+        <div class="ph">
+          <div class="ph-l">
+            <div class="ph-title">Candidates</div>
+            <div class="ph-cnt" id="cand-cnt">(0) Total</div>
+            <div class="vt"><button class="vt-b active" id="vt-g" onclick="setCandView('grid')"><i class="ti ti-layout-grid"></i></button><button class="vt-b" id="vt-l" onclick="setCandView('list')"><i class="ti ti-list"></i></button></div>
+          </div>
+          <div class="ph-r">
+            <div class="srchbox" style="max-width:240px"><i class="ti ti-search"></i><input type="text" placeholder="Search…" oninput="filterCands(this.value)"></div>
+            <button class="btn btn-sm" onclick="openModal('bulkresume')"><i class="ti ti-files"></i>Bulk Resume Import</button>
+            <button class="btn btn-p btn-sm" onclick="openModal('addcand')"><i class="ti ti-user-plus"></i>Add Candidate</button>
+          </div>
+        </div>
+        <!-- AI Key Banner -->
+        <div id="ai-banner" style="display:none;padding:10px 16px;background:linear-gradient(90deg,#1a2744,#1e3a6a);border-radius:var(--rl);margin-bottom:14px;align-items:center;gap:12px">
+          <i class="ti ti-sparkles" style="font-size:18px;color:#34d399;flex-shrink:0"></i>
+          <div style="flex:1;font-size:12.5px;color:rgba(255,255,255,.7)">Add AI key for perfect resume auto-fill</div>
+          <input id="banner-key" type="password" placeholder="Paste Gemini (AIza…) or Anthropic (sk-ant…) key" style="padding:6px 10px;border-radius:var(--r);border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:12px;outline:none;width:280px">
+          <button onclick="saveBannerKey()" style="padding:6px 12px;background:var(--grn);border:none;border-radius:var(--r);color:#fff;font-size:12px;font-weight:700;cursor:pointer">Save Key</button>
+          <i class="ti ti-x" onclick="document.getElementById('ai-banner').style.display='none'" style="color:rgba(255,255,255,.4);cursor:pointer;font-size:18px"></i>
+        </div>
+        <div id="cand-container"><div style="text-align:center;padding:40px;color:var(--ink5)"><i class="ti ti-users" style="font-size:36px;display:block;margin-bottom:8px;opacity:.3"></i>No candidates yet<br><small>Click "Add Candidate" to get started</small></div></div>
+      </div>
+
+      <!-- PIPELINE -->
+      <div id="pg-pipeline" class="screen">
+        <div class="ph">
+          <div class="ph-l"><div class="ph-title">Pipeline</div></div>
+          <div class="ph-r">
+            <select id="pipeline-job-filter" onchange="loadPipeline()" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12.5px;outline:none;color:var(--ink);background:#fff"><option value="">All Jobs</option></select>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;min-height:400px" id="kanban-board">
+          <div style="text-align:center;padding:40px;color:var(--ink5);width:100%"><i class="ti ti-layout-kanban" style="font-size:40px;display:block;margin-bottom:10px;opacity:.3"></i>Add candidates to see the pipeline</div>
+        </div>
+      </div>
+
+      <!-- JOBS -->
+      <div id="pg-jobs" class="screen">
+        <div class="ph">
+          <div class="ph-l"><div class="ph-title">Jobs</div><div class="ph-cnt" id="jobs-cnt">(0) Total</div></div>
+          <div class="ph-r"><button class="btn btn-p btn-sm" onclick="openModal('addjob')"><i class="ti ti-plus"></i>Post Job</button></div>
+        </div>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Job Title</th><th>Company</th><th>Location</th><th>Openings</th><th>Hiring Lead</th><th>Status</th><th>Posted</th></tr></thead><tbody id="jobs-tbody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--ink5)">No jobs posted yet</td></tr></tbody></table></div>
+      </div>
+
+      <!-- COMPANIES -->
+      <div id="pg-companies" class="screen">
+        <div class="ph">
+          <div class="ph-l"><div class="ph-title">Companies</div></div>
+          <div class="ph-r"><button class="btn btn-p btn-sm" onclick="openModal('addco')"><i class="ti ti-plus"></i>Add Company</button></div>
+        </div>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Company</th><th>Industry</th><th>GST Number</th><th>Contact</th><th>Designation</th><th>City</th><th>Phone</th></tr></thead><tbody id="cos-tbody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--ink5)">No companies yet</td></tr></tbody></table></div>
+      </div>
+
+      <!-- VENDORS -->
+      <div id="pg-vendors" class="screen">
+        <div class="ph">
+          <div class="ph-l"><div class="ph-title">Vendors</div><div class="ph-cnt" id="vendor-cnt">(0) Total</div></div>
+          <div class="ph-r"><button class="btn btn-p btn-sm" onclick="openModal('addvendor')"><i class="ti ti-plus"></i>Add Vendor</button></div>
+        </div>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Vendor Name</th><th>Contact Person</th><th>Email</th><th>Phone</th><th>City</th><th>Added</th></tr></thead><tbody id="vendors-tbody"><tr><td colspan="7" style="text-align:center;padding:28px;color:var(--ink5)">No vendors yet</td></tr></tbody></table></div>
+      </div>
+
+      <!-- CONSULTANTS -->
+      <div id="pg-consultants" class="screen">
+        <div class="ph">
+          <div class="ph-l"><div class="ph-title">Consultants</div><div class="ph-cnt" id="consultant-cnt">(0) Total</div></div>
+          <div class="ph-r"><button class="btn btn-p btn-sm" onclick="openModal('addconsultant')"><i class="ti ti-plus"></i>Add Consultant</button></div>
+        </div>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Name</th><th>Specialisation</th><th>Company</th><th>Email</th><th>Phone</th><th>Status</th></tr></thead><tbody id="consultants-tbody"><tr><td colspan="7" style="text-align:center;padding:28px;color:var(--ink5)">No consultants yet</td></tr></tbody></table></div>
+      </div>
+
+      <!-- INVOICES -->
+      <div id="pg-invoices" class="screen">
+        <div class="ph">
+          <div class="ph-l"><div class="ph-title">Invoices</div></div>
+          <div class="ph-r"><button class="btn btn-p btn-sm" onclick="openModal('addinv')"><i class="ti ti-plus"></i>New Invoice</button></div>
+        </div>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Invoice #</th><th>Company</th><th>Amount</th><th>GST</th><th>Total</th><th>Date</th><th>Status</th></tr></thead><tbody id="inv-tbody"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink5)">No invoices yet</td></tr></tbody></table></div>
+      </div>
+
+      <!-- USERS -->
+      <div id="pg-users" class="screen">
+        <div class="ph"><div class="ph-l"><div class="ph-title">Users</div></div></div>
+        <div class="section-box">
+          <div class="section-title"><i class="ti ti-users-group"></i>Team Members</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            ${[{n:'Teerath Garg',e:'teerath@reinforcementconsultants.com',r:'Admin',c:'#6366f1',i:'TG'},{n:'Niharika Srivastava',e:'niharika@reinforcementconsultants.com',r:'Recruiter',c:'#10b981',i:'NS'},{n:'Pragati Kharate',e:'pragati@reinforcementconsultants.com',r:'Recruiter',c:'#f59e0b',i:'PK'},{n:'Rinkal Kaur',e:'rinkal@reinforcementconsultants.com',r:'Recruiter',c:'#ef4444',i:'RK'}].map(u=>`<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg3);border-radius:var(--r)"><div style="width:36px;height:36px;border-radius:50%;background:${u.c};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff">${u.i}</div><div style="flex:1"><div style="font-weight:600;font-size:13px">${u.n}</div><div style="font-size:11.5px;color:var(--ink5)">${u.e}</div></div><span class="badge ${u.r==='Admin'?'b-purple':'b-grn'}">${u.r}</span></div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORTS -->
+      <div id="pg-reports" class="screen">
+        <div class="ph"><div class="ph-l"><div class="ph-title">Reports</div></div></div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="section-card">
+            <div class="section-title"><i class="ti ti-users" style="color:var(--acc)"></i>Candidate Reports</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:9px">
+              <div onclick="toast('Candidates By Source — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-file-analytics" style="color:var(--acc);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Candidates By Source</span></div><div onclick="toast('Hired Candidates Data — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-file-analytics" style="color:var(--acc);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Hired Candidates Data</span></div><div onclick="toast('Hired by Source — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-file-analytics" style="color:var(--acc);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Hired by Source</span></div><div onclick="toast('Upcoming Interviews — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-file-analytics" style="color:var(--acc);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Upcoming Interviews</span></div><div onclick="toast('Text Report — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-file-analytics" style="color:var(--acc);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Text Report</span></div><div onclick="toast('Candidates By Recruiter — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-file-analytics" style="color:var(--acc);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Candidates By Recruiter</span></div><div onclick="toast('Candidate Activity — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-file-analytics" style="color:var(--acc);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Candidate Activity</span></div>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title"><i class="ti ti-briefcase" style="color:var(--gold)"></i>Job Reports</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:9px">
+              <div onclick="toast('Job Activity Report — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-chart-line" style="color:var(--gold);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Job Activity Report</span></div><div onclick="toast('Job Performance Report — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-chart-line" style="color:var(--gold);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Job Performance Report</span></div><div onclick="toast('Open Jobs by Age — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-chart-line" style="color:var(--gold);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Open Jobs by Age</span></div><div onclick="toast('Jobs without Activity — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-chart-line" style="color:var(--gold);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Jobs without Activity</span></div><div onclick="toast('Job Timeline Report — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-chart-line" style="color:var(--gold);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Job Timeline Report</span></div>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title"><i class="ti ti-building" style="color:var(--grn)"></i>Company Reports</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:9px">
+              <div onclick="toast('Hired by Company — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-building" style="color:var(--grn);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Hired by Company</span></div><div onclick="toast('Revenue By Client — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-building" style="color:var(--grn);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Revenue By Client</span></div><div onclick="toast('Submissions by Company — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-building" style="color:var(--grn);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Submissions by Company</span></div><div onclick="toast('Closed Jobs by Company — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-building" style="color:var(--grn);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Closed Jobs by Company</span></div><div onclick="toast('New Jobs by Company — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-building" style="color:var(--grn);font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">New Jobs by Company</span></div>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title"><i class="ti ti-user-circle" style="color:#a855f7"></i>Recruiter & Sales Reports</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:9px">
+              <div onclick="toast('Hired by Recruiter — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-user" style="color:#a855f7;font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Hired by Recruiter</span></div><div onclick="toast('Submission by Recruiter — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-user" style="color:#a855f7;font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Submission by Recruiter</span></div><div onclick="toast('Hired by Sales Representative — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-user" style="color:#a855f7;font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Hired by Sales Representative</span></div><div onclick="toast('Daywise Login Usage — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-user" style="color:#a855f7;font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">Daywise Login Usage</span></div><div onclick="toast('CareerBuilder Report — coming soon','')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-user" style="color:#a855f7;font-size:16px;flex-shrink:0"></i><span style="font-size:12.5px;font-weight:500;color:var(--ink)">CareerBuilder Report</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CALENDAR -->
+      <div id="pg-calendar" class="screen">
+        <div class="ph">
+          <div class="ph-l"><div class="ph-title">Calendar</div><div class="ph-cnt" id="cal-month-lbl">June 2026</div></div>
+          <div class="ph-r">
+            <button class="btn btn-sm" onclick="calPrev()"><i class="ti ti-chevron-left"></i></button>
+            <button class="btn btn-sm" onclick="calToday()">Today</button>
+            <button class="btn btn-sm" onclick="calNext()"><i class="ti ti-chevron-right"></i></button>
+            <button class="btn btn-p btn-sm" onclick="openModal('addevent')"><i class="ti ti-plus"></i>Add Event</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0;margin-bottom:4px;background:#fff;border-radius:var(--rl) var(--rl) 0 0;border:1px solid var(--border);border-bottom:none;padding:8px 0">
+          <div style="text-align:center;font-size:11px;font-weight:700;color:var(--ink4)">SUN</div>
+          <div style="text-align:center;font-size:11px;font-weight:700;color:var(--ink4)">MON</div>
+          <div style="text-align:center;font-size:11px;font-weight:700;color:var(--ink4)">TUE</div>
+          <div style="text-align:center;font-size:11px;font-weight:700;color:var(--ink4)">WED</div>
+          <div style="text-align:center;font-size:11px;font-weight:700;color:var(--ink4)">THU</div>
+          <div style="text-align:center;font-size:11px;font-weight:700;color:var(--ink4)">FRI</div>
+          <div style="text-align:center;font-size:11px;font-weight:700;color:var(--ink4)">SAT</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:0 0 var(--rl) var(--rl);overflow:hidden" id="cal-grid"></div>
+      </div>
+
+      <!-- HOT LIST -->
+      <div id="pg-hotlist" class="screen">
+        <div class="ph"><div class="ph-l"><div class="ph-title">Hot List</div></div></div>
+        <div style="margin-bottom:14px;padding:11px 14px;background:var(--gold2);border:1px solid #fcd34d;border-radius:var(--rl);display:flex;align-items:center;gap:10px;font-size:12.5px;color:#92400e">
+          <i class="ti ti-flame" style="font-size:16px;color:var(--gold)"></i>
+          Hot List shows your top-priority candidates ready to place immediately. Hired candidates appear here automatically.
+        </div>
+        <div id="hotlist-container">
+          <div style="text-align:center;padding:48px;color:var(--ink5)"><i class="ti ti-flame" style="font-size:44px;display:block;margin-bottom:10px;opacity:.25"></i><div style="font-size:15px;font-weight:600;margin-bottom:6px">No candidates in Hot List yet</div><div style="font-size:13px">Hired candidates will appear here automatically</div></div>
+        </div>
+      </div>
+
+      <!-- INTEGRATIONS -->
+      <div id="pg-integrations" class="screen">
+        <div class="ph"><div class="ph-l"><div class="ph-title">Integrations</div></div></div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="section-card">
+            <div class="section-title"><i class="ti ti-mail" style="color:var(--acc)"></i>Email Apps</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 14px;background:var(--bg3);border-radius:var(--rl);border:1px solid var(--border)"><div style="width:38px;height:38px;border-radius:10px;background:var(--acc3);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-mail" style="color:var(--acc);font-size:18px"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:600">SMTP Integration</div><div style="font-size:11.5px;color:var(--ink5)">Email sending</div></div><span class="badge b-grn">Installed</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 14px;background:var(--bg3);border-radius:var(--rl);border:1px solid var(--border)"><div style="width:38px;height:38px;border-radius:10px;background:var(--acc3);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-inbox" style="color:var(--acc);font-size:18px"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:600">IMAP</div><div style="font-size:11.5px;color:var(--ink5)">Email receiving</div></div><span class="badge b-grn">Installed</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 14px;background:#fff;border-radius:var(--rl);border:1px solid var(--border)"><div style="width:38px;height:38px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-brand-office" style="color:var(--ink5);font-size:18px"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:600">Outlook 365</div><div style="font-size:11.5px;color:var(--ink5)">Microsoft integration</div></div><button class="btn btn-p btn-sm" onclick="toast('Coming soon','')">Connect</button></div>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title"><i class="ti ti-brand-google" style="color:#4285f4"></i>Google Apps</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 14px;background:var(--bg3);border-radius:var(--rl);border:1px solid var(--border)"><div style="width:38px;height:38px;border-radius:10px;background:#fef9c3;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-brand-chrome" style="color:#4285f4;font-size:18px"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:600">Google Chrome</div><div style="font-size:11.5px;color:var(--ink5)">Browser extension</div></div><span class="badge b-grn">Installed</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 14px;background:#fff;border-radius:var(--rl);border:1px solid var(--border)"><div style="width:38px;height:38px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-calendar" style="color:#4285f4;font-size:18px"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:600">Google Calendar</div><div style="font-size:11.5px;color:var(--ink5)">Sync interviews</div></div><button class="btn btn-sm" onclick="toast('Coming soon','')">Connect</button></div>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title"><i class="ti ti-social" style="color:#0077b5"></i>Job Boards & Social</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 14px;background:var(--bg3);border-radius:var(--rl);border:1px solid var(--border)"><div style="width:38px;height:38px;border-radius:10px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-brand-linkedin" style="color:#0077b5;font-size:18px"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:600">LinkedIn</div><div style="font-size:11.5px;color:var(--ink5)">Job posting & sourcing</div></div><span class="badge b-grn">Installed</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 14px;background:var(--bg3);border-radius:var(--rl);border:1px solid var(--border)"><div style="width:38px;height:38px;border-radius:10px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-briefcase" style="color:var(--gold);font-size:18px"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:600">Indeed</div><div style="font-size:11.5px;color:var(--ink5)">Job portal</div></div><span class="badge b-grn">Installed</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 14px;background:#fff;border-radius:var(--rl);border:1px solid var(--border)"><div style="width:38px;height:38px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-search" style="color:var(--ink5);font-size:18px"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:600">Naukri.com</div><div style="font-size:11.5px;color:var(--ink5)">Indian job portal</div></div><button class="btn btn-sm" onclick="toast('Coming soon','')">Connect</button></div>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title"><i class="ti ti-message" style="color:#e85d04"></i>Communication</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 14px;background:#fff;border-radius:var(--rl);border:1px solid var(--border)"><div style="width:38px;height:38px;border-radius:10px;background:#fff3e0;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-brand-slack" style="color:#e85d04;font-size:18px"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:600">Slack</div><div style="font-size:11.5px;color:var(--ink5)">Team notifications</div></div><button class="btn btn-sm" onclick="toast('Coming soon','')">Connect</button></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 14px;background:#fff;border-radius:var(--rl);border:1px solid var(--border)"><div style="width:38px;height:38px;border-radius:10px;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-brand-whatsapp" style="color:#16a34a;font-size:18px"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:600">WhatsApp Business</div><div style="font-size:11.5px;color:var(--ink5)">Candidate messaging</div></div><button class="btn btn-sm" onclick="toast('Coming soon','')">Connect</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="pg-settings" class="screen">
+        <div class="ph"><div class="ph-l"><div class="ph-title">Settings</div></div></div>
+        <div class="section-box" style="background:linear-gradient(135deg,#0f1929,#1a2744)">
+          <div class="section-title" style="color:#fff"><i class="ti ti-sparkles" style="color:#34d399"></i>AI Resume Parser</div>
+          <div style="font-size:12.5px;color:rgba(255,255,255,.6);margin-bottom:14px">Supports <strong style="color:#fff">Google Gemini (Free)</strong> — starts with AIza… &nbsp;|&nbsp; <strong style="color:#fff">Anthropic Claude</strong> — starts with sk-ant…</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="ai-key-inp" type="password" placeholder="Paste your API key here…" style="flex:1;padding:9px 12px;border-radius:var(--r);border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none;font-family:var(--f)">
+            <button onclick="saveAIKey()" style="padding:9px 16px;background:var(--grn);border:none;border-radius:var(--r);color:#fff;font-size:13px;font-weight:700;cursor:pointer">Save Key</button>
+            <button onclick="clearAIKey()" style="padding:9px 12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:var(--r);color:rgba(255,255,255,.6);font-size:12px;cursor:pointer">Clear</button>
+          </div>
+          <div id="ai-key-status" style="margin-top:8px;font-size:12px;color:rgba(255,255,255,.5)">Not configured</div>
+          <div style="margin-top:12px;font-size:11.5px;color:rgba(255,255,255,.4)">Get free Gemini key: <a href="https://aistudio.google.com" target="_blank" style="color:#93c5fd">aistudio.google.com</a> → Get API Key → Create API key</div>
+        </div>
+        <div class="section-box">
+          <div class="section-title"><i class="ti ti-building"></i>Account</div>
+          <div style="font-size:13px;color:var(--ink3)"><strong>Organisation:</strong> Reinforcement Consultants</div>
+          <div style="font-size:13px;color:var(--ink3);margin-top:6px"><strong>App:</strong> ZYROHR — Smart ATS v1.0</div>
+        </div>
+      </div>
+
+    </div><!-- /page -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══ MODALS ══ -->
+
+<!-- ADD CANDIDATE -->
+<div class="modal-bg" id="modal-addcand">
+  <div class="modal modal-xl">
+    <div class="mhd">
+      <h2><i class="ti ti-user-plus"></i>Add Candidate</h2>
+      <button class="btn btn-ghost btn-xs" onclick="closeModal('addcand')"><i class="ti ti-x"></i></button>
+    </div>
+    <div style="display:flex;border-bottom:1px solid var(--border);padding:0 18px;background:#fff;flex-shrink:0">
+      <div id="ctab-resume" onclick="switchTab('resume')" style="padding:10px 14px;font-size:13px;font-weight:600;color:var(--acc);border-bottom:2px solid var(--acc);margin-bottom:-1px;cursor:pointer;display:flex;align-items:center;gap:6px"><i class="ti ti-file-upload"></i>Upload Resume <span style="font-size:10px;background:var(--grn);color:#fff;padding:1px 6px;border-radius:10px">AUTO-FILL</span></div>
+      <div id="ctab-manual" onclick="switchTab('manual')" style="padding:10px 14px;font-size:13px;color:var(--ink4);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px">Manual Entry</div>
+    </div>
+    <div class="mbd">
+
+      <!-- RESUME TAB -->
+      <div id="tab-resume">
+        <!-- Upload zone -->
+        <div id="parse-step1">
+          <div style="font-size:12.5px;color:var(--acc4);padding:9px 12px;background:var(--acc3);border-radius:var(--r);margin-bottom:12px;display:flex;align-items:center;gap:7px"><i class="ti ti-sparkles"></i>Upload a resume — AI reads it and fills all fields automatically</div>
+          <div id="parse-dz" onclick="document.getElementById('parse-file').click()" ondragover="parseDrag(event)" ondragleave="parseOff()" ondrop="parseDrop(event)" style="border:2px dashed var(--border2);border-radius:var(--rl);padding:30px 20px;text-align:center;cursor:pointer;background:var(--bg3);transition:all .15s">
+            <input type="file" id="parse-file" accept=".pdf,.doc,.docx" style="display:none" onchange="startParse(event)">
+            <i class="ti ti-file-upload" style="font-size:42px;color:var(--ink6);display:block;margin-bottom:9px"></i>
+            <div style="font-size:14px;font-weight:700;color:var(--ink2)">Drop resume here or click to browse</div>
+            <div style="font-size:12px;color:var(--ink5);margin-top:5px">PDF, DOC, DOCX — works with or without AI key</div>
+          </div>
+          <div id="parse-progress" style="display:none;margin-top:12px">
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:5px">
+              <div style="width:14px;height:14px;border:2px solid var(--acc3);border-top-color:var(--acc);border-radius:50%;animation:spin .6s linear infinite"></div>
+              <span id="parse-lbl" style="font-size:13px;font-weight:600;color:var(--ink)">Reading…</span>
+            </div>
+            <div style="height:5px;background:var(--bg4);border-radius:3px;overflow:hidden"><div id="parse-bar" style="height:100%;background:var(--acc);border-radius:3px;transition:width .4s;width:0%"></div></div>
+          </div>
+        </div>
+
+        <!-- Filled form -->
+        <div id="parse-step2" style="display:none">
+          <div style="background:var(--grn2);border:1px solid #86efac;border-radius:var(--r);padding:9px 13px;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+            <i class="ti ti-check-circle" style="color:var(--grn);font-size:16px"></i>
+            <span style="font-size:12.5px;font-weight:600;color:#065f46;flex:1">Resume parsed! Review and save.</span>
+            <span id="pfn-label" style="font-size:11px;color:#065f46;background:rgba(16,185,129,.15);padding:2px 8px;border-radius:10px"></span>
+            <button onclick="resetParser()" style="background:none;border:none;cursor:pointer;color:var(--ink4);font-size:12px;display:flex;align-items:center;gap:3px"><i class="ti ti-refresh"></i>Change</button>
+          </div>
+          <div class="fr"><div class="field"><label>First Name *</label><input id="pf-fn" type="text"></div><div class="field"><label>Last Name</label><input id="pf-ln" type="text"></div></div>
+          <div class="fr"><div class="field"><label>Email *</label><input id="pf-em" type="email"></div><div class="field"><label>Mobile Number</label><input id="pf-ph" type="tel"></div></div>
+          <div class="fr"><div class="field"><label>Current Designation</label><input id="pf-title" type="text"></div><div class="field"><label>Current Company</label><input id="pf-co" type="text"></div></div>
+          <div class="fr"><div class="field"><label>Total Experience (Years)</label><input id="pf-exp" type="number" min="0" step="0.5"></div><div class="field"><label>Current CTC (INR)</label><input id="pf-ctc" type="text"></div></div>
+          <div class="fr"><div class="field"><label>Location</label><input id="pf-loc" type="text"></div><div class="field"><label>Source</label><select id="pf-src"><option>Naukri</option><option>LinkedIn</option><option>Indeed</option><option>Referral</option><option>Career Website</option><option>Other</option></select></div></div>
+          <!-- Skills Tags -->
+          <div class="field">
+            <label>Skills — <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--ink5)">type and press Enter to add</span></label>
+            <div class="skill-tag-wrap" id="pf-tags" onclick="document.getElementById('pf-skill-inp').focus()"></div>
+            <div style="display:flex;gap:6px;margin-top:5px"><input id="pf-skill-inp" type="text" placeholder="Type skill + Enter…" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12.5px;outline:none;font-family:var(--f)" onkeydown="if(event.key==='Enter'||event.key===','){event.preventDefault();addTag('pf',this.value);this.value='';}"><button type="button" onclick="addTag('pf',document.getElementById('pf-skill-inp').value);document.getElementById('pf-skill-inp').value=''" style="padding:6px 11px;background:var(--acc3);border:1px solid var(--acc);border-radius:var(--r);color:var(--acc);font-size:12px;font-weight:600;cursor:pointer">Add</button></div>
+            <input type="hidden" id="pf-skills">
+          </div>
+          <!-- Industry section -->
+          <div style="border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:10px">
+            <div style="background:var(--bg3);padding:8px 13px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink4);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:5px"><i class="ti ti-building"></i> Industry & Functional Details</div>
+            <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="field"><label>Industry</label><select id="pf-industry"><option value="">-- Select --</option><option>Technology / IT</option><option>FMCG</option><option>Healthcare / Pharma</option><option>Manufacturing</option><option>Retail / Fashion</option><option>Finance / BFSI</option><option>Consulting</option><option>Education</option><option>Hospitality / Hotels</option><option>Logistics / Supply Chain</option><option>Real Estate</option><option>Media / Advertising</option><option>Automobile</option><option>Telecom</option><option>Other</option></select></div>
+              <div class="field"><label>Functional Area</label><select id="pf-funcarea"><option value="">-- Select --</option><option>Sales & Business Development</option><option>Marketing & Communications</option><option>Human Resources</option><option>Finance & Accounts</option><option>Operations & Supply Chain</option><option>IT & Software</option><option>Customer Service</option><option>Production & Manufacturing</option><option>Retail & Store Management</option><option>Admin & Back Office</option><option>Legal & Compliance</option><option>Design & Creative</option><option>Top Management</option><option>Other</option></select></div>
+              <div class="field" style="grid-column:1/-1"><label>Apply for Job</label><select id="pf-job"><option value="">-- Select Job (Optional) --</option></select></div>
+            </div>
+          </div>
+          <div class="field"><label>Education</label><input id="pf-edu" type="text"></div>
+          <div class="field"><label>Notes / Summary</label><textarea id="pf-notes" rows="2"></textarea></div>
+        </div>
+      </div>
+
+      <!-- MANUAL TAB -->
+      <div id="tab-manual" style="display:none">
+        <div class="fr"><div class="field"><label>First Name *</label><input id="af-fn" type="text" placeholder="First name"></div><div class="field"><label>Last Name *</label><input id="af-ln" type="text" placeholder="Last name"></div></div>
+        <div class="fr"><div class="field"><label>Email *</label><input id="af-em" type="email" placeholder="email@example.com"></div><div class="field"><label>Mobile Number</label><input id="af-ph" type="tel" placeholder="+91 98765 43210"></div></div>
+        <div class="fr"><div class="field"><label>Current Designation</label><input id="af-title" type="text" placeholder="e.g. Sales Manager"></div><div class="field"><label>Current Company</label><input id="af-co" type="text" placeholder="Company name"></div></div>
+        <div class="fr"><div class="field"><label>Experience (years)</label><input id="af-exp" type="number" min="0" step="0.5" placeholder="4"></div><div class="field"><label>Current CTC (INR)</label><input id="af-ctc" type="text" placeholder="500000"></div></div>
+        <div class="fr"><div class="field"><label>Location</label><input id="af-loc" type="text" placeholder="City"></div><div class="field"><label>Source</label><select id="af-src"><option>Naukri</option><option>LinkedIn</option><option>Indeed</option><option>Referral</option><option>Career Website</option><option>Other</option></select></div></div>
+        <div class="field"><label>Skills — <span style="font-weight:400;text-transform:none;font-size:10px">type and press Enter</span></label>
+          <div class="skill-tag-wrap" id="af-tags" onclick="document.getElementById('af-skill-inp').focus()"></div>
+          <div style="display:flex;gap:6px;margin-top:5px"><input id="af-skill-inp" type="text" placeholder="Type skill + Enter…" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12.5px;outline:none;font-family:var(--f)" onkeydown="if(event.key==='Enter'||event.key===','){event.preventDefault();addTag('af',this.value);this.value='';}"><button type="button" onclick="addTag('af',document.getElementById('af-skill-inp').value);document.getElementById('af-skill-inp').value=''" style="padding:6px 11px;background:var(--acc3);border:1px solid var(--acc);border-radius:var(--r);color:var(--acc);font-size:12px;font-weight:600;cursor:pointer">Add</button></div>
+          <input type="hidden" id="af-skills">
+        </div>
+        <div style="border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:10px">
+          <div style="background:var(--bg3);padding:8px 13px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink4);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:5px"><i class="ti ti-building"></i> Industry & Functional Details</div>
+          <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="field"><label>Industry</label><select id="af-industry"><option value="">-- Select --</option><option>Technology / IT</option><option>FMCG</option><option>Healthcare / Pharma</option><option>Manufacturing</option><option>Retail / Fashion</option><option>Finance / BFSI</option><option>Consulting</option><option>Education</option><option>Hospitality / Hotels</option><option>Logistics / Supply Chain</option><option>Real Estate</option><option>Media / Advertising</option><option>Automobile</option><option>Telecom</option><option>Other</option></select></div>
+            <div class="field"><label>Functional Area</label><select id="af-funcarea"><option value="">-- Select --</option><option>Sales & Business Development</option><option>Marketing & Communications</option><option>Human Resources</option><option>Finance & Accounts</option><option>Operations & Supply Chain</option><option>IT & Software</option><option>Customer Service</option><option>Production & Manufacturing</option><option>Retail & Store Management</option><option>Admin & Back Office</option><option>Legal & Compliance</option><option>Top Management</option><option>Other</option></select></div>
+            <div class="field" style="grid-column:1/-1"><label>Apply for Job</label><select id="af-job"><option value="">-- Select Job (Optional) --</option></select></div>
+          </div>
+        </div>
+        <div class="field"><label>Notes</label><textarea id="af-notes" rows="2" placeholder="Recruiter notes…"></textarea></div>
+      </div>
+
+    </div>
+    <div class="mft"><button class="btn" onclick="closeModal('addcand')">Cancel</button><button class="btn btn-p" id="save-cand-btn" onclick="saveCandidate()"><i class="ti ti-check"></i>Save Candidate</button></div>
+  </div>
+</div>
+
+<!-- BULK RESUME IMPORT -->
+<div class="modal-bg" id="modal-bulkresume">
+  <div class="modal modal-xl">
+    <div class="mhd"><h2><i class="ti ti-files"></i>Bulk Resume Import — AI Auto-Fill</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('bulkresume');resetBulk()"><i class="ti ti-x"></i></button></div>
+    <div class="mbd" style="padding:0;display:flex;flex-direction:column;max-height:75vh">
+      <div style="padding:10px 16px;background:linear-gradient(90deg,#0f1929,#1a2744);display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <i class="ti ti-sparkles" style="color:#34d399;font-size:16px"></i>
+        <div style="font-size:12.5px;color:rgba(255,255,255,.7)">Upload multiple resumes — AI reads each one and saves all candidates automatically</div>
+        <span id="bulk-ai-status" style="margin-left:auto;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#fef3c7;color:#92400e;white-space:nowrap">No AI Key</span>
+      </div>
+      <div style="padding:16px;flex-shrink:0">
+        <div id="bulk-dz" ondragover="bulkDrag(event)" ondragleave="bulkOff()" ondrop="bulkDrop(event)" style="border:2px dashed var(--border2);border-radius:var(--rl);padding:28px;text-align:center;cursor:pointer;background:var(--bg3);position:relative;transition:all .15s">
+          <input type="file" id="bulk-file" accept=".pdf,.doc,.docx" multiple style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="bulkSelected(event)">
+          <i class="ti ti-file-upload" style="font-size:40px;color:var(--ink6);display:block;margin-bottom:9px"></i>
+          <div style="font-size:14px;font-weight:700;color:var(--ink2)">Drop multiple resume files here</div>
+          <div style="font-size:12px;color:var(--ink5);margin-top:5px">Select multiple PDF, DOC or DOCX files at once</div>
+        </div>
+      </div>
+      <div id="bulk-list" style="flex:1;overflow-y:auto;padding:0 16px 16px;display:none">
+        <div id="bulk-stats" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <div style="padding:6px 12px;background:#fff;border:1px solid var(--border);border-radius:var(--r);font-size:12.5px"><span id="bstat-total" style="font-weight:700">0</span> <span style="color:var(--ink5)">Total</span></div>
+          <div style="padding:6px 12px;background:var(--grn2);border:1px solid #86efac;border-radius:var(--r);font-size:12.5px"><span id="bstat-done" style="font-weight:700;color:var(--grn)">0</span> <span style="color:#065f46">Saved</span></div>
+          <div style="padding:6px 12px;background:var(--red2);border:1px solid #fca5a5;border-radius:var(--r);font-size:12.5px"><span id="bstat-fail" style="font-weight:700;color:var(--red)">0</span> <span style="color:#b91c1c">Failed</span></div>
+          <div style="flex:1;display:flex;align-items:center;gap:8px;min-width:150px"><div style="flex:1;height:7px;background:var(--bg4);border-radius:4px;overflow:hidden"><div id="bulk-bar" style="height:100%;background:var(--acc);border-radius:4px;transition:width .3s;width:0%"></div></div><span id="bulk-pct" style="font-size:12px;font-weight:700;color:var(--ink)">0%</span></div>
+        </div>
+        <div id="bulk-cards" style="display:flex;flex-direction:column;gap:7px"></div>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn" onclick="closeModal('bulkresume');resetBulk()">Cancel</button>
+      <button class="btn btn-p" id="bulk-start-btn" style="display:none" onclick="startBulkImport()"><i class="ti ti-rocket"></i>Start Import</button>
+      <button class="btn btn-grn" id="bulk-done-btn" style="display:none" onclick="closeModal('bulkresume');resetBulk();loadCandidates()"><i class="ti ti-check"></i>Done — View Candidates</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD JOB -->
+<div class="modal-bg" id="modal-addjob">
+  <div class="modal modal-xl">
+    <div class="mhd"><h2><i class="ti ti-briefcase"></i>Post New Job</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('addjob')"><i class="ti ti-x"></i></button></div>
+    <div class="mbd">
+      <div class="fr"><div class="field"><label>Job Title *</label><input id="jf-title" type="text" placeholder="e.g. Sales Manager"></div><div class="field"><label>Company *</label><div style="display:flex;gap:6px"><select id="jf-co-sel" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;outline:none"><option value="">-- Select Company --</option></select><button onclick="openModal('addco')" style="padding:8px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);cursor:pointer" title="Add company"><i class="ti ti-plus"></i></button></div></div></div>
+      <div class="fr"><div class="field"><label>Location</label><input id="jf-loc" type="text" placeholder="City, State"></div><div class="field"><label>Employment Type</label><select id="jf-type"><option>Full Time</option><option>Part Time</option><option>Contract</option><option>Internship</option></select></div></div>
+      <div class="fr"><div class="field"><label>No. of Openings</label><input id="jf-open" type="number" min="1" value="1"></div><div class="field"><label>Hiring Lead</label><select id="jf-lead"><option>Teerath Garg</option><option>Niharika Srivastava</option><option>Pragati Kharate</option><option>Rinkal Kaur</option></select></div></div>
+      <div class="field"><label>Required Skills</label><input id="jf-skills" type="text" placeholder="Sales, B2B, CRM…"></div>
+      <div class="field"><label>Job Description</label><textarea id="jf-desc" rows="3" placeholder="Role responsibilities…"></textarea></div>
+    </div>
+    <div class="mft"><button class="btn" onclick="closeModal('addjob')">Cancel</button><button class="btn btn-p" id="save-job-btn" onclick="saveJob()"><i class="ti ti-check"></i>Post Job</button></div>
+  </div>
+</div>
+
+<!-- ADD COMPANY -->
+<div class="modal-bg" id="modal-addco">
+  <div class="modal modal-lg">
+    <div class="mhd"><h2><i class="ti ti-building"></i>Add Company</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('addco')"><i class="ti ti-x"></i></button></div>
+    <div class="mbd">
+      <div class="field"><label>Company Name *</label><input id="cf-name" type="text" placeholder="e.g. ABC Pvt. Ltd."></div>
+      <div class="fr"><div class="field"><label>Industry</label><select id="cf-ind"><option>Technology</option><option>FMCG</option><option>Healthcare</option><option>Manufacturing</option><option>Retail</option><option>Finance / BFSI</option><option>Consulting</option><option>Education</option><option>Hospitality</option><option>Pharma</option><option>Logistics</option><option>Real Estate</option><option>Other</option></select></div><div class="field"><label>GST Number</label><input id="cf-gst" type="text" placeholder="27AAPFU0939F1ZV" style="text-transform:uppercase" maxlength="15"></div></div>
+      <div class="fr"><div class="field"><label>Contact Person *</label><input id="cf-ct" type="text" placeholder="Primary contact name"></div><div class="field"><label>Designation</label><input id="cf-desig" type="text" placeholder="e.g. HR Manager"></div></div>
+      <div class="fr"><div class="field"><label>Contact Email</label><input id="cf-em" type="email" placeholder="contact@company.com"></div><div class="field"><label>Phone</label><input id="cf-ph" type="tel" placeholder="+91 XXXXX XXXXX"></div></div>
+      <div class="fr"><div class="field"><label>City</label><input id="cf-city" type="text" placeholder="Mumbai"></div><div class="field"><label>State</label><input id="cf-state" type="text" placeholder="Maharashtra"></div></div>
+      <div class="field"><label>Notes</label><textarea id="cf-notes" rows="2" placeholder="Notes…"></textarea></div>
+    </div>
+    <div class="mft"><button class="btn" onclick="closeModal('addco')">Cancel</button><button class="btn btn-p" id="save-co-btn" onclick="saveCompany()"><i class="ti ti-check"></i>Save Company</button></div>
+  </div>
+</div>
+
+<!-- ADD INVOICE -->
+<div class="modal-bg" id="modal-addinv">
+  <div class="modal modal-lg">
+    <div class="mhd"><h2><i class="ti ti-receipt"></i>New Invoice</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('addinv')"><i class="ti ti-x"></i></button></div>
+    <div class="mbd">
+      <div class="fr"><div class="field"><label>Company *</label><select id="inv-co"><option value="">-- Select Company --</option></select></div><div class="field"><label>Sales Person</label><select id="inv-sp"><option>Teerath Garg</option><option>Niharika Srivastava</option><option>Pragati Kharate</option><option>Rinkal Kaur</option></select></div></div>
+      <div class="fr"><div class="field"><label>Gross Amount (INR) *</label><input id="inv-amt" type="number" min="0" placeholder="100000" oninput="calcInv()"></div><div class="field"><label>GST %</label><select id="inv-gst" onchange="calcInv()"><option value="18">18%</option><option value="12">12%</option><option value="5">5%</option><option value="0">0% (Exempt)</option></select></div></div>
+      <div class="fr"><div class="field"><label>Invoice Date</label><input id="inv-date" type="date"></div><div class="field"><label>Due Date</label><input id="inv-due" type="date"></div></div>
+      <div class="field"><label>Description</label><textarea id="inv-desc" rows="2" placeholder="Invoice description…"></textarea></div>
+      <div style="padding:12px;background:var(--bg3);border-radius:var(--r);margin-top:4px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;color:var(--ink4)">Total Amount (with GST):</span>
+        <span id="inv-total-disp" style="font-size:18px;font-weight:700;color:var(--grn)">₹0</span>
+      </div>
+    </div>
+    <div class="mft"><button class="btn" onclick="closeModal('addinv')">Cancel</button><button class="btn btn-p" onclick="saveInvoice()"><i class="ti ti-check"></i>Save Invoice</button></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════
+   ZYROHR — Smart ATS
+   Supabase + AI Resume Parser
+══════════════════════════════════════ */
+
+const SUPA_URL='https://nenettqyqjetlalmbbvc.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5lbmV0dHF5cWpldGxhbG1iYnZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NzYzMDksImV4cCI6MjA5NjI1MjMwOX0.E2trj5FbuiEU8wLhmfn1n43kI3MoLPWW30UZjQK-jeU';
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+const TEAM=[
+  {email:'teerath@reinforcementconsultants.com',name:'Teerath Garg',role:'Admin',initials:'TG',color:'#6366f1'},
+  {email:'niharika@reinforcementconsultants.com',name:'Niharika Srivastava',role:'Recruiter',initials:'NS',color:'#10b981'},
+  {email:'pragati@reinforcementconsultants.com',name:'Pragati Kharate',role:'Recruiter',initials:'PK',color:'#f59e0b'},
+  {email:'rinkal@reinforcementconsultants.com',name:'Rinkal Kaur',role:'Recruiter',initials:'RK',color:'#ef4444'},
+];
+
+let currentUser=null;
+let allCandidates=[];
+let candView='grid';
+let selectedResumeFile=null;
+let currentCandTab='resume';
+let bulkFiles=[];
+
+/* ══ INIT ══ */
+(async()=>{
+  const{data:{session}}=await sb.auth.getSession();
+  if(session?.user){
+    const tm=TEAM.find(t=>t.email===session.user.email)||{name:session.user.email,role:'User',initials:'U',color:'#6366f1'};
+    await afterLogin(session.user,tm);
+  }else{
+    document.getElementById('login-screen').style.display='flex';
+  }
+  updateAIStatus();
+})();
+
+/* ══ AUTH ══ */
+function fillLogin(email){document.getElementById('login-email').value=email;document.getElementById('login-pass').focus();}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim().toLowerCase();
+  const pass=document.getElementById('login-pass').value;
+  const btn=document.getElementById('login-btn');
+  const errEl=document.getElementById('login-err');
+  errEl.style.display='none';
+  if(!email||!pass){showErr('Please enter email and password.');return;}
+  const tm=TEAM.find(t=>t.email===email);
+  if(!tm){showErr('This email is not registered. Contact your admin.');return;}
+  btn.disabled=true;btn.textContent='Signing in…';
+  try{
+    const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(!error&&data.user){await afterLogin(data.user,tm);return;}
+    if(error){
+      const isNew=error.message.includes('Invalid')||error.message.includes('invalid_credentials')||error.message.includes('Email not confirmed');
+      if(isNew){
+        const{data:sd,error:se}=await sb.auth.signUp({email,password:pass,options:{data:{name:tm.name,role:tm.role}}});
+        if(se){showErr(se.message);return;}
+        const{data:sd2}=await sb.auth.signInWithPassword({email,password:pass});
+        if(sd2?.user){await afterLogin(sd2.user,tm);}
+        else{showErr('Account created! Run this SQL in Supabase and try again:\nUPDATE auth.users SET email_confirmed_at=now() WHERE email=\''+email+'\';');}
+      }else{showErr(error.message);}
+    }
+  }catch(e){showErr('Connection error: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='Sign In';}
+}
+
+function showErr(msg){const e=document.getElementById('login-err');e.textContent=msg;e.style.display='block';}
+
+async function afterLogin(user,tm){
+  currentUser={...tm,id:user.id};
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-screen').style.display='flex';
+  document.getElementById('sb-user-name').textContent=tm.name;
+  document.getElementById('sb-user-role').textContent=tm.role+' · Full Access';
+  document.getElementById('sb-avatar').textContent=tm.initials;
+  document.getElementById('sb-avatar').style.background=tm.color;
+  document.getElementById('topbar-avatar').textContent=tm.initials;
+  document.getElementById('topbar-avatar').style.background=tm.color;
+  await Promise.all([loadCandidates(),loadJobs(),loadCompanies(),loadInvoices()]);loadVendors();loadConsultants();
+  updateDashboard();
+  updateAIStatus();
+}
+
+async function doLogout(){await sb.auth.signOut();location.reload();}
+
+/* ══ NAVIGATION ══ */
+function nav(page){
+  document.querySelectorAll('.sb-item').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  document.querySelector(`.sb-item[onclick="nav('${page}')"]`)?.classList.add('active');
+  const pg=document.getElementById('pg-'+page);
+  if(pg)pg.classList.add('active');
+  if(page==='candidates'){
+    const banner=document.getElementById('ai-banner');
+    if(banner)banner.style.display=localStorage.getItem('zyro_ai')?'none':'flex';
+  }
+  if(page==='jobs')loadCompaniesIntoJobDropdown();
+  if(page==='settings')updateAIStatus();
+  if(page==='pipeline'){setTimeout(()=>{loadPipeline();const sel=document.getElementById('pipeline-job-filter');if(sel)sel.innerHTML='<option value="">All Jobs</option>'+(allJobs||[]).map(j=>`<option value="${j.id}">${j.title}</option>`).join('');},50);}
+  if(page==='calendar'){setTimeout(()=>{renderCalendar();},50);}
+  if(page==='hotlist'){setTimeout(renderHotlist,50);}
+}
+
+/* ══ MODALS ══ */
+function openModal(type){
+  const m=document.getElementById('modal-'+type);
+  if(m)m.classList.add('open');
+  if(type==='addcand'){
+    setTimeout(()=>{
+      switchTab('resume');resetParser();clearSkillTags('pf');clearSkillTags('af');
+      loadJobsIntoDropdown();
+    },10);
+  }
+  if(type==='addjob')loadCompaniesIntoJobDropdown();
+  if(type==='addinv')loadCompaniesIntoInvDropdown();
+  if(type==='bulkresume'){
+    const aiKey=localStorage.getItem('zyro_ai')||'';
+    const badge=document.getElementById('bulk-ai-status');
+    if(badge){badge.textContent=aiKey?'✓ AI Active':'Basic Extraction';badge.style.background=aiKey?'#d1fae5':'#fef3c7';badge.style.color=aiKey?'#065f46':'#92400e';}
+  }
+}
+function closeModal(type){const m=document.getElementById('modal-'+type);if(m)m.classList.remove('open');}
+
+function openAddNew(){openModal('addcand');}
+
+/* ══ TOAST ══ */
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._to);t._to=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+/* ══ SKILL TAGS ══ */
+function addTag(prefix,val){
+  if(!val||!val.trim())return;
+  val.split(',').map(s=>s.trim()).filter(Boolean).forEach(skill=>{
+    const container=document.getElementById(prefix+'-tags');
+    if(!container)return;
+    const existing=[...container.querySelectorAll('.st-lbl')].map(s=>s.textContent.toLowerCase());
+    if(existing.includes(skill.toLowerCase()))return;
+    const tag=document.createElement('span');
+    tag.className='skill-tag';
+    tag.innerHTML=`<span class="st-lbl">${skill}</span><span class="skill-tag-x" onclick="this.parentElement.remove();syncTags('${prefix}')">×</span>`;
+    container.appendChild(tag);
+  });
+  syncTags(prefix);
+}
+function syncTags(prefix){
+  const c=document.getElementById(prefix+'-tags');
+  const h=document.getElementById(prefix+'-skills');
+  if(c&&h)h.value=[...c.querySelectorAll('.st-lbl')].map(s=>s.textContent).join(', ');
+}
+function clearSkillTags(prefix){
+  const c=document.getElementById(prefix+'-tags');if(c)c.innerHTML='';
+  const h=document.getElementById(prefix+'-skills');if(h)h.value='';
+}
+function setSkillTags(prefix,str){
+  clearSkillTags(prefix);
+  if(str)str.split(',').map(s=>s.trim()).filter(Boolean).forEach(s=>addTag(prefix,s));
+}
+
+/* ══ CANDIDATE TAB ══ */
+function switchTab(tab){
+  currentCandTab=tab;
+  const isR=tab==='resume';
+  const rt=document.getElementById('ctab-resume');const mt=document.getElementById('ctab-manual');
+  if(rt){rt.style.color=isR?'var(--acc)':'var(--ink4)';rt.style.borderBottomColor=isR?'var(--acc)':'transparent';}
+  if(mt){mt.style.color=!isR?'var(--acc)':'var(--ink4)';mt.style.borderBottomColor=!isR?'var(--acc)':'transparent';}
+  document.getElementById('tab-resume').style.display=isR?'block':'none';
+  document.getElementById('tab-manual').style.display=!isR?'block':'none';
+}
+
+/* ══ RESUME PARSER ══ */
+function parseDrag(e){e.preventDefault();const d=document.getElementById('parse-dz');if(d){d.style.borderColor='var(--acc)';d.style.background='var(--acc3)';}}
+function parseOff(){const d=document.getElementById('parse-dz');if(d){d.style.borderColor='var(--border2)';d.style.background='var(--bg3)';}}
+function parseDrop(e){e.preventDefault();parseOff();const f=e.dataTransfer?.files?.[0];if(f)runParser(f);}
+function startParse(e){const f=e.target?.files?.[0];if(f)runParser(f);}
+
+function setProg(pct,msg){
+  document.getElementById('parse-bar').style.width=pct+'%';
+  document.getElementById('parse-lbl').textContent=msg;
+}
+
+async function fileToB64(file){
+  return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
+}
+async function readText(file){
+  return new Promise((res)=>{const r=new FileReader();r.onload=()=>res(r.result||'');r.onerror=()=>res('');r.readAsText(file);});
+}
+function fsz(b){return b<1048576?Math.round(b/1024)+'KB':(b/1048576).toFixed(1)+'MB';}
+function nameFromFile(n){
+  const p=n.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ').trim().split(/\s+/).filter(w=>w.length>1&&!/^\d+$/.test(w));
+  return{first_name:p[0]||'',last_name:p.slice(1,3).join(' ')||'',source:'Other'};
+}
+
+async function runParser(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(!['pdf','doc','docx'].includes(ext)){alert('Only PDF, DOC, DOCX supported.');return;}
+  if(file.size>5*1024*1024){alert('Max 5MB per file.');return;}
+  selectedResumeFile=file;
+  const prog=document.getElementById('parse-progress');
+  if(prog)prog.style.display='block';
+  setProg(10,'Reading file…');
+  const aiKey=localStorage.getItem('zyro_ai')||'';
+  try{
+    let parsed=null;
+    if(ext==='pdf'){
+      setProg(30,'Extracting PDF text…');
+      let txt='';
+      try{await loadPDFJS();txt=await extractPDFText(file);}catch(e){}
+      setProg(65,'Analysing…');
+      if(aiKey&&txt.length>30){try{parsed=await aiParseText(txt.slice(0,6000),aiKey);}catch(e){parsed=basicParse(txt);}}
+      else if(txt.length>30){parsed=basicParse(txt);}
+      else if(aiKey){try{const b=await fileToB64(file);parsed=await aiParsePDF(b,aiKey);}catch(e){parsed=nameFromFile(file.name);}}
+      else{parsed=nameFromFile(file.name);toast('Add AI key in Settings for better PDF extraction','');}
+    }else{
+      setProg(30,'Extracting Word text…');
+      let txt='';
+      try{await loadMammoth();const ab=await file.arrayBuffer();const r=await mammoth.extractRawText({arrayBuffer:ab});txt=r.value||'';}
+      catch(e){txt=await readText(file);txt=txt.split('').filter(c=>{const n=c.charCodeAt(0);return n>=32&&n<=126||n===10||n===13;}).join('').replace(/ +/g,' ').trim();}
+      setProg(65,'Analysing…');
+      if(aiKey&&txt.length>30){try{parsed=await aiParseText(txt.slice(0,6000),aiKey);}catch(e){parsed=basicParse(txt);}}
+      else if(txt.length>30){parsed=basicParse(txt);}
+      else{parsed=nameFromFile(file.name);}
+    }
+    setProg(100,'Done!');
+    await new Promise(r=>setTimeout(r,300));
+    fillFields(parsed||{},file);
+  }catch(e){
+    if(prog)prog.style.display='none';
+    fillFields({},file);
+    toast('Could not read — fill manually','');
+  }
+}
+
+function fillFields(d,file){
+  const s1=document.getElementById('parse-step1');const s2=document.getElementById('parse-step2');
+  const prog=document.getElementById('parse-progress');
+  if(s1)s1.style.display='none';if(s2)s2.style.display='block';if(prog)prog.style.display='none';
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
+  set('pf-fn',d.first_name||d.firstName||'');
+  set('pf-ln',d.last_name||d.lastName||d.surname||'');
+  set('pf-em',d.email||'');set('pf-ph',d.phone||d.mobile||'');
+  set('pf-title',d.current_title||d.title||d.designation||'');
+  set('pf-co',d.current_company||d.company||'');
+  set('pf-exp',d.total_experience_years||d.experience_years||'');
+  set('pf-ctc',d.current_ctc||d.ctc||d.salary||'');
+  set('pf-loc',d.location||d.city||'');
+  set('pf-edu',d.education||d.qualification||'');
+  set('pf-notes',d.summary||d.objective||'');
+  const skills=Array.isArray(d.skills)?d.skills.join(', '):(d.skills||'');
+  setSkillTags('pf',skills);
+  const src=document.getElementById('pf-src');
+  if(src&&d.source){const o=[...src.options].find(x=>x.text===d.source);if(o)src.value=o.value;}
+  const lbl=document.getElementById('pfn-label');if(lbl)lbl.textContent=file.name;
+  const filled=['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp'].filter(id=>{const el=document.getElementById(id);return el&&el.value.trim();}).length;
+  ['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp','pf-ctc','pf-loc'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&el.value){el.style.background='#f0fdf4';el.style.borderColor='#10b981';setTimeout(()=>{el.style.background='';el.style.borderColor='';},2500);}
+  });
+  if(filled>0)toast(filled+' fields filled ✓','success');
+  else toast('Resume uploaded — fill fields manually','');
+}
+
+function resetParser(){
+  selectedResumeFile=null;
+  const s1=document.getElementById('parse-step1');const s2=document.getElementById('parse-step2');
+  const prog=document.getElementById('parse-progress');const fi=document.getElementById('parse-file');
+  if(s1)s1.style.display='block';if(s2)s2.style.display='none';if(prog)prog.style.display='none';if(fi)fi.value='';
+  ['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp','pf-ctc','pf-loc','pf-edu','pf-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  clearSkillTags('pf');
+}
+
+/* ══ AI ══ */
+function detectProvider(k){if(!k)return null;if(k.startsWith('AIza'))return 'gemini';if(k.startsWith('gsk_'))return 'groq';return 'anthropic';}
+
+async function aiParseText(text,key){
+  const prompt=`Parse this resume. Return ONLY JSON:
+{"first_name":"","last_name":"","email":"","phone":"","current_title":"","current_company":"","total_experience_years":0,"current_ctc":"","location":"","skills":"comma,separated","education":"","source":"Naukri/LinkedIn/Other","summary":""}
+Resume:\n${text}`;
+  const txt=await callAI(prompt,key);
+  return parseJSON(txt);
+}
+
+async function aiParsePDF(b64,key){
+  const prompt=`Parse this resume PDF. Return ONLY JSON:
+{"first_name":"","last_name":"","email":"","phone":"","current_title":"","current_company":"","total_experience_years":0,"current_ctc":"","location":"","skills":"comma,separated","education":"","source":"Other","summary":""}`;
+  const txt=await callAI(prompt,key,b64);
+  return parseJSON(txt);
+}
+
+async function callAI(prompt,key,pdfB64){
+  const p=detectProvider(key);
+  if(p==='gemini'){
+    const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+    const parts=pdfB64?[{inlineData:{mimeType:'application/pdf',data:pdfB64}},{text:prompt}]:[{text:prompt}];
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts}],generationConfig:{maxOutputTokens:1000,temperature:0.1}})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||'Gemini '+r.status);}
+    const d=await r.json();return d.candidates?.[0]?.content?.parts?.[0]?.text||'{}';
+  }else{
+    const content=pdfB64?[{type:'document',source:{type:'base64',media_type:'application/pdf',data:pdfB64}},{type:'text',text:prompt}]:[{type:'text',text:prompt}];
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1000,messages:[{role:'user',content}]})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||'Anthropic '+r.status);}
+    const d=await r.json();return d.content?.[0]?.text||'{}';
+  }
+}
+
+function parseJSON(txt){
+  txt=(txt||'{}').replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
+  const m=txt.match(/\{[\s\S]*\}/);
+  try{return m?JSON.parse(m[0]):{};}catch(e){return{};}
+}
+
+function basicParse(text){
+  const r={source:'Other'};
+  if(/naukri\.com/i.test(text))r.source='Naukri';
+  else if(/linkedin\.com/i.test(text))r.source='LinkedIn';
+  const em=text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);if(em)r.email=em[0];
+  const ph=text.match(/(?:\+91[\s\-]?)?[6-9]\d{4}[\s\-]?\d{5}/);if(ph)r.phone=ph[0].replace(/\s/g,'');
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l.length>1);
+  for(const line of lines.slice(0,8)){
+    if(line.includes('@')||/\d{5,}/.test(line)||/http|www\./i.test(line)||line.length>60)continue;
+    if(/^(name|resume|cv|profile|contact|mobile|phone|email|address|objective|summary)/i.test(line))continue;
+    const words=line.replace(/^(Mr\.?|Ms\.?|Mrs\.?|Dr\.?)\s*/i,'').split(/\s+/);
+    if(words.length>=1&&words.length<=4&&/^[A-Z]/.test(words[0])){r.first_name=words[0];r.last_name=words.slice(1).join(' ')||'';break;}
+  }
+  const exp=text.match(/(\d+\.?\d*)\+?\s*[Yy]ears?(?:\s+of)?\s+(?:work\s+)?[Ee]xperience/);if(exp)r.total_experience_years=parseFloat(exp[1]);
+  const cities=['Mumbai','Delhi','Bengaluru','Bangalore','Hyderabad','Chennai','Pune','Kolkata','Ahmedabad','Gurugram','Gurgaon','Noida','Chandigarh','Jaipur','Lucknow','Indore','Kochi','Coimbatore','Bhopal'];
+  for(const c of cities){if(text.includes(c)){r.location=c;break;}}
+  const si=text.search(/\n\s*(?:Skills?|Technical\s+Skills?|Key\s+Skills?)\s*:?\s*\n/i);
+  if(si>-1){const block=text.slice(si,si+400).split('\n').slice(1,6).map(l=>l.replace(/^[•\-*]\s*/,'').trim()).filter(l=>l.length>1&&l.length<80).join(', ');if(block.length>3)r.skills=block;}
+  return r;
+}
+
+/* ══ PDF.JS ══ */
+function loadPDFJS(){
+  return new Promise((res,rej)=>{
+    if(window.pdfjsLib){res();return;}
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+    s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';res();};
+    s.onerror=()=>rej(new Error('PDF.js load failed'));
+    document.head.appendChild(s);
+  });
+}
+async function extractPDFText(file){
+  const ab=await file.arrayBuffer();
+  const pdf=await window.pdfjsLib.getDocument({data:ab}).promise;
+  let txt='';
+  for(let i=1;i<=Math.min(pdf.numPages,10);i++){
+    const page=await pdf.getPage(i);
+    const content=await page.getTextContent();
+    txt+=content.items.map(item=>item.str).join(' ')+'\n';
+  }
+  return txt.replace(/\s+/g,' ').trim();
+}
+
+/* ══ MAMMOTH ══ */
+function loadMammoth(){
+  return new Promise((res,rej)=>{
+    if(window.mammoth){res();return;}
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js';
+    s.onload=res;s.onerror=()=>rej(new Error('Mammoth load failed'));
+    document.head.appendChild(s);
+  });
+}
+
+/* ══ SAVE CANDIDATE ══ */
+async function saveCandidate(){
+  const isR=currentCandTab==='resume';
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';}
+  const fn=isR?g('pf-fn'):g('af-fn');
+  const em=isR?g('pf-em'):g('af-em');
+  if(!fn&&!em){alert('Please enter at least first name or email.');return;}
+  const btn=document.getElementById('save-cand-btn');
+  btn.disabled=true;btn.textContent='Saving…';
+  syncTags(isR?'pf':'af');
+  const skillsRaw=isR?g('pf-skills'):g('af-skills');
+  const skills=skillsRaw.split(',').map(s=>s.trim()).filter(Boolean);
+  const payload={
+    first_name:fn,last_name:isR?g('pf-ln'):g('af-ln'),email:em,
+    phone:isR?g('pf-ph'):g('af-ph'),title:isR?g('pf-title'):g('af-title'),
+    company:isR?g('pf-co'):g('af-co'),
+    experience_years:parseFloat(isR?g('pf-exp'):g('af-exp'))||0,
+    current_ctc:isR?g('pf-ctc'):g('af-ctc'),location:isR?g('pf-loc'):g('af-loc'),
+    source:document.getElementById(isR?'pf-src':'af-src')?.value||'Other',
+    skills,notes:isR?g('pf-notes'):g('af-notes'),
+    industry:document.getElementById(isR?'pf-industry':'af-industry')?.value||'',
+    functional_area:document.getElementById(isR?'pf-funcarea':'af-funcarea')?.value||'',
+    applied_job:document.getElementById(isR?'pf-job':'af-job')?.value||'',
+    status:'Sourced',created_by:currentUser?.name||'Admin',
+  };
+  try{
+    const{data,error}=await sb.from('hp_candidates').insert([payload]).select();
+    if(error)throw error;
+    const candId=data?.[0]?.id;
+    if(selectedResumeFile&&candId){
+      btn.textContent='Uploading resume…';
+      await uploadResume(candId,selectedResumeFile);
+    }
+    closeModal('addcand');
+    toast((fn||em)+' saved!','success');
+    resetParser();clearSkillTags('pf');clearSkillTags('af');
+    ['af-fn','af-ln','af-em','af-ph','af-title','af-co','af-exp','af-ctc','af-loc','af-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    await loadCandidates();updateDashboard();
+  }catch(e){alert('Error: '+e.message);}
+  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i>Save Candidate';}
+}
+
+async function uploadResume(candId,file){
+  try{
+    const ext=file.name.split('.').pop().toLowerCase();
+    const path=`resumes/${candId}.${ext}`;
+    await sb.storage.createBucket('resumes',{public:false}).catch(()=>{});
+    const{error}=await sb.storage.from('resumes').upload(path,file,{upsert:true,contentType:file.type});
+    if(!error)await sb.from('hp_candidates').update({resume_name:file.name}).eq('id',candId).catch(()=>{});
+  }catch(e){console.warn('Resume upload failed:',e.message);}
+}
+
+/* ══ LOAD CANDIDATES ══ */
+async function loadCandidates(){
+  try{
+    const banner=document.getElementById('ai-banner');
+    if(banner)banner.style.display=localStorage.getItem('zyro_ai')?'none':'flex';
+    const{data,error}=await sb.from('hp_candidates').select('*').order('created_at',{ascending:false});
+    if(error)throw error;
+    allCandidates=data||[];
+    document.getElementById('cand-cnt').textContent='('+allCandidates.length+') Total';
+    const badge=document.getElementById('sb-cand-cnt');
+    if(badge){badge.textContent=allCandidates.length;badge.style.display=allCandidates.length?'':'none';}
+    renderCandidates(allCandidates);
+  }catch(e){console.error('Load candidates:',e);}
+}
+
+function renderCandidates(list){
+  const cont=document.getElementById('cand-container');
+  if(!cont)return;
+  if(!list.length){cont.innerHTML='<div style="text-align:center;padding:48px;color:var(--ink5)"><i class="ti ti-users" style="font-size:40px;display:block;margin-bottom:10px;opacity:.3"></i>No candidates found</div>';return;}
+  const colors=['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#84cc16','#f97316'];
+  const sColors={Sourced:'#6366f1',Screening:'#f59e0b',Interviewing:'#06b6d4',Offered:'#84cc16',Hired:'#10b981',Rejected:'#ef4444'};
+  if(candView==='grid'){
+    cont.innerHTML='<div class="cand-grid">'+list.map((c,i)=>{
+      const initials=((c.first_name||'?')[0]+(c.last_name||' ')[0]).toUpperCase();
+      const col=colors[i%colors.length];
+      const sc=sColors[c.status||'Sourced']||'#94a3b8';
+      const skills=(c.skills||[]).slice(0,3);
+      return `<div class="ccard" onclick="">
+        <div class="ccard-head">
+          <div class="cav" style="background:${col}">${initials}</div>
+          <div><div class="ccard-name">${c.first_name||''} ${c.last_name||''}</div><div class="ccard-title">${c.title||'—'}</div></div>
+        </div>
+        <div class="ccard-meta">
+          ${c.company?`<span class="cmeta"><i class="ti ti-building" style="font-size:12px"></i>${c.company}</span>`:''}
+          ${c.experience_years?`<span class="cmeta"><i class="ti ti-briefcase" style="font-size:12px"></i>${c.experience_years}yr</span>`:''}
+          ${c.location?`<span class="cmeta"><i class="ti ti-map-pin" style="font-size:12px"></i>${c.location}</span>`:''}
+        </div>
+        ${skills.length?'<div class="ccard-skills">'+skills.map(s=>`<span class="skill-chip">${s}</span>`).join('')+'</div>':''}
+        <div class="ccard-foot">
+          <span class="src-tag"><i class="ti ti-briefcase" style="font-size:11px"></i>${c.source||'Other'}</span>
+          <div style="display:flex;align-items:center;gap:4px">
+            ${c.resume_name?`<span style="font-size:11px;color:var(--acc);cursor:pointer" onclick="viewResume('${c.id}','${c.resume_name}')"><i class="ti ti-file-text" style="font-size:13px"></i></span>`:''}
+            <div style="width:7px;height:7px;border-radius:50%;background:${sc}"></div>
+            <span style="font-size:11px;font-weight:600;color:${sc}">${c.status||'Sourced'}</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('')+'</div>';
+  }else{
+    cont.innerHTML='<div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Name</th><th>Title</th><th>Company</th><th>Email</th><th>Phone</th><th>Exp</th><th>Source</th><th>Status</th></tr></thead><tbody>'+
+      list.map((c,i)=>`<tr><td style="color:var(--ink5)">${i+1}</td><td style="font-weight:600">${c.first_name||''} ${c.last_name||''}</td><td style="color:var(--ink4)">${c.title||'—'}</td><td>${c.company||'—'}</td><td style="color:var(--ink5);font-size:12px">${c.email||'—'}</td><td style="color:var(--ink5)">${c.phone||'—'}</td><td style="text-align:center">${c.experience_years||0}yr</td><td>${c.source||'Other'}</td><td><span class="badge" style="background:${(sColors[c.status||'Sourced']||'#94a3b8')}20;color:${sColors[c.status||'Sourced']||'#94a3b8'}">${c.status||'Sourced'}</span></td></tr>`).join('')+
+      '</tbody></table></div>';
+  }
+}
+
+function setCandView(v){candView=v;document.getElementById('vt-g').classList.toggle('active',v==='grid');document.getElementById('vt-l').classList.toggle('active',v==='list');renderCandidates(allCandidates);}
+function filterCands(q){if(!q)return renderCandidates(allCandidates);const ql=q.toLowerCase();renderCandidates(allCandidates.filter(c=>`${c.first_name} ${c.last_name} ${c.title||''} ${c.company||''} ${c.email||''} ${(c.skills||[]).join(' ')}`.toLowerCase().includes(ql)));}
+
+async function viewResume(candId,resumeName){
+  const ext=resumeName.split('.').pop().toLowerCase();
+  const path=`resumes/${candId}.${ext}`;
+  const{data,error}=await sb.storage.from('resumes').createSignedUrl(path,120);
+  if(error||!data?.signedUrl){toast('Could not load resume','error');return;}
+  window.open(data.signedUrl,'_blank');
+}
+
+/* ══ LOAD JOBS ══ */
+let allJobs=[];
+async function loadJobs(){
+  try{
+    const{data}=await sb.from('hp_jobs').select('*').order('created_at',{ascending:false});
+    allJobs=data||[];
+    document.getElementById('jobs-cnt').textContent='('+allJobs.length+') Total';
+    const badge=document.getElementById('sb-jobs-cnt');
+    if(badge){badge.textContent=allJobs.filter(j=>j.status==='Open').length;badge.style.display=allJobs.length?'':'none';}
+    document.getElementById('jobs-tbody').innerHTML=allJobs.length?allJobs.map((j,i)=>`<tr><td style="color:var(--ink5)">${j.job_num||i+1}</td><td style="font-weight:600;color:var(--acc)">${j.title}</td><td>${j.company||'—'}</td><td style="color:var(--ink4)">${j.location||'—'}</td><td style="text-align:center">${j.openings||1}</td><td>${j.hiring_lead||'—'}</td><td><span class="badge ${j.status==='Open'?'b-grn':'b-gray'}">${j.status||'Open'}</span></td><td style="color:var(--ink5);font-size:12px">${new Date(j.created_at).toLocaleDateString('en-IN')}</td></tr>`).join(''):'<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--ink5)">No jobs posted yet</td></tr>';
+  }catch(e){console.error('Load jobs:',e);}
+}
+
+async function loadJobsIntoDropdown(){
+  try{
+    const{data}=await sb.from('hp_jobs').select('id,title,company').eq('status','Open');
+    const opts='<option value="">-- Select Job (Optional) --</option>'+
+      (data||[]).map(j=>`<option value="${j.id}">${j.title}${j.company?' @ '+j.company:''}</option>`).join('');
+    ['pf-job','af-job'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+  }catch(e){}
+}
+
+async function saveJob(){
+  const title=document.getElementById('jf-title').value.trim();
+  const co=document.getElementById('jf-co-sel')?.value||'';
+  if(!title){alert('Job title is required');return;}
+  if(!co){alert('Please select a company');return;}
+  const btn=document.getElementById('save-job-btn');btn.disabled=true;btn.textContent='Saving…';
+  const skills=document.getElementById('jf-skills').value.split(',').map(s=>s.trim()).filter(Boolean);
+  try{
+    const{error}=await sb.from('hp_jobs').insert([{title,company:co,location:document.getElementById('jf-loc').value,employment_type:document.getElementById('jf-type').value,openings:parseInt(document.getElementById('jf-open').value)||1,hiring_lead:document.getElementById('jf-lead').value,skills,description:document.getElementById('jf-desc').value,status:'Open',submitted:0,hired:0,created_by:currentUser?.name||'Admin'}]);
+    if(error)throw error;
+    closeModal('addjob');toast(title+' posted!','success');
+    ['jf-title','jf-loc','jf-skills','jf-desc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    await loadJobs();updateDashboard();
+  }catch(e){alert('Error: '+e.message);}
+  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i>Post Job';}
+}
+
+/* ══ COMPANIES ══ */
+let allCompanies=[];
+async function loadCompanies(){
+  try{
+    const{data}=await sb.from('hp_companies').select('*').order('name');
+    allCompanies=data||[];
+    document.getElementById('cos-tbody').innerHTML=allCompanies.length?allCompanies.map((c,i)=>`<tr><td style="color:var(--ink5)">${i+1}</td><td style="font-weight:600">${c.name}</td><td style="color:var(--ink4)">${c.industry||'—'}</td><td style="font-size:12px;color:var(--ink5)">${c.gst_number||'—'}</td><td>${c.contact_person||'—'}</td><td style="color:var(--ink4)">${c.designation||'—'}</td><td>${c.city||'—'}</td><td style="color:var(--ink5)">${c.phone||'—'}</td></tr>`).join(''):'<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--ink5)">No companies yet</td></tr>';
+  }catch(e){console.error('Load companies:',e);}
+}
+
+async function loadCompaniesIntoJobDropdown(){
+  try{
+    const{data}=await sb.from('hp_companies').select('name').order('name');
+    const opts='<option value="">-- Select Company --</option>'+(data||[]).map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+    const sel=document.getElementById('jf-co-sel');if(sel)sel.innerHTML=opts;
+  }catch(e){}
+}
+
+async function loadCompaniesIntoInvDropdown(){
+  try{
+    const{data}=await sb.from('hp_companies').select('name').order('name');
+    const sel=document.getElementById('inv-co');
+    if(sel)sel.innerHTML='<option value="">-- Select Company --</option>'+(data||[]).map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+  }catch(e){}
+}
+
+async function saveCompany(){
+  const name=document.getElementById('cf-name').value.trim();
+  if(!name){alert('Company name is required');return;}
+  const btn=document.getElementById('save-co-btn');btn.disabled=true;btn.textContent='Saving…';
+  const payload={name,industry:document.getElementById('cf-ind').value,gst_number:document.getElementById('cf-gst').value.toUpperCase().trim(),contact_person:document.getElementById('cf-ct').value,designation:document.getElementById('cf-desig').value,contact_email:document.getElementById('cf-em').value,phone:document.getElementById('cf-ph').value,city:document.getElementById('cf-city').value,state:document.getElementById('cf-state').value,notes:document.getElementById('cf-notes').value};
+  try{
+    const{error}=await sb.from('hp_companies').insert([payload]);
+    if(error){
+      if(error.message.includes('column')||error.message.includes('gst')){
+        delete payload.gst_number;delete payload.designation;delete payload.state;
+        const{error:e2}=await sb.from('hp_companies').insert([payload]);
+        if(e2)throw e2;
+      }else throw error;
+    }
+    closeModal('addco');toast(name+' saved!','success');
+    ['cf-name','cf-gst','cf-ct','cf-desig','cf-em','cf-ph','cf-city','cf-state','cf-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    await loadCompanies();await loadCompaniesIntoJobDropdown();
+  }catch(e){alert('Error: '+e.message);}
+  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i>Save Company';}
+}
+
+/* ══ INVOICES ══ */
+function calcInv(){
+  const amt=parseFloat(document.getElementById('inv-amt')?.value)||0;
+  const gst=parseFloat(document.getElementById('inv-gst')?.value)||0;
+  const total=amt+(amt*gst/100);
+  const el=document.getElementById('inv-total-disp');
+  if(el)el.textContent='₹'+total.toLocaleString('en-IN');
+}
+
+async function saveInvoice(){
+  const co=document.getElementById('inv-co').value;
+  const amt=parseFloat(document.getElementById('inv-amt').value)||0;
+  if(!co){alert('Please select a company');return;}
+  if(!amt){alert('Please enter amount');return;}
+  const gst=parseFloat(document.getElementById('inv-gst').value)||0;
+  const total=amt+(amt*gst/100);
+  const year=new Date().getFullYear();const yr2=(year%100);const yr3=yr2+1;
+  const{data:existing}=await sb.from('hp_invoices').select('id').order('created_at',{ascending:false}).limit(1);
+  const num='REF'+yr2+'-'+yr3+'/'+(String((existing?.length||0)+1).padStart(3,'0'));
+  try{
+    const{error}=await sb.from('hp_invoices').insert([{invoice_number:num,company:co,sales_person:document.getElementById('inv-sp').value,gross_amount:amt,gst_percent:gst,total_amount:total,invoice_date:document.getElementById('inv-date').value||null,due_date:document.getElementById('inv-due').value||null,description:document.getElementById('inv-desc').value,status:'Draft'}]);
+    if(error)throw error;
+    closeModal('addinv');toast('Invoice '+num+' created!','success');
+    loadInvoices();updateDashboard();
+  }catch(e){alert('Error: '+e.message);}
+}
+
+async function loadInvoices(){
+  try{
+    const{data}=await sb.from('hp_invoices').select('*').order('created_at',{ascending:false});
+    const invs=data||[];
+    document.getElementById('inv-tbody').innerHTML=invs.length?invs.map(inv=>`<tr><td style="font-weight:600;color:var(--acc)">${inv.invoice_number||'—'}</td><td>${inv.company||'—'}</td><td>₹${(inv.gross_amount||0).toLocaleString('en-IN')}</td><td>${inv.gst_percent||0}%</td><td style="font-weight:700;color:var(--grn)">₹${(inv.total_amount||0).toLocaleString('en-IN')}</td><td style="color:var(--ink5);font-size:12px">${inv.invoice_date||'—'}</td><td><span class="badge ${inv.status==='Paid'?'b-grn':inv.status==='Draft'?'b-gray':'b-gold'}">${inv.status||'Draft'}</span></td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink5)">No invoices yet</td></tr>';
+  }catch(e){}
+}
+
+/* ══ DASHBOARD ══ */
+async function updateDashboard(){
+  try{
+    document.getElementById('kpi-total').textContent=allCandidates.length||0;
+    document.getElementById('kpi-jobs').textContent=(allJobs||[]).filter(j=>j.status==='Open').length||0;
+    const{data:invs}=await sb.from('hp_invoices').select('total_amount,status');
+    const rev=(invs||[]).filter(i=>i.status==='Paid').reduce((s,i)=>s+(i.total_amount||0),0);
+    document.getElementById('kpi-rev').textContent='₹'+rev.toLocaleString('en-IN');
+    document.getElementById('kpi-hired').textContent=(allCandidates||[]).filter(c=>c.status==='Hired').length||0;
+  }catch(e){}
+}
+
+/* ══ BULK RESUME IMPORT ══ */
+function bulkDrag(e){e.preventDefault();const d=document.getElementById('bulk-dz');if(d){d.style.borderColor='var(--acc)';d.style.background='var(--acc3)';}}
+function bulkOff(){const d=document.getElementById('bulk-dz');if(d){d.style.borderColor='var(--border2)';d.style.background='var(--bg3)';}}
+function bulkDrop(e){e.preventDefault();bulkOff();bulkSetFiles(Array.from(e.dataTransfer?.files||[]));}
+function bulkSelected(e){bulkSetFiles(Array.from(e.target?.files||[]));}
+
+function bulkSetFiles(files){
+  const valid=files.filter(f=>{const ext=f.name.split('.').pop().toLowerCase();return['pdf','doc','docx'].includes(ext)&&f.size<=5*1024*1024;});
+  if(!valid.length){toast('No valid resume files. Use PDF/DOC/DOCX under 5MB.','');return;}
+  bulkFiles=valid;
+  document.getElementById('bulk-list').style.display='block';
+  document.getElementById('bstat-total').textContent=valid.length;
+  document.getElementById('bstat-done').textContent='0';
+  document.getElementById('bstat-fail').textContent='0';
+  document.getElementById('bulk-bar').style.width='0%';
+  document.getElementById('bulk-pct').textContent='0%';
+  document.getElementById('bulk-cards').innerHTML=valid.map((f,i)=>`
+    <div id="bcard-${i}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border:1px solid var(--border);border-radius:var(--r)">
+      <i class="ti ti-file-text" style="font-size:18px;color:var(--ink5);flex-shrink:0"></i>
+      <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</div><div style="font-size:11px;color:var(--ink5)">${fsz(f.size)}</div></div>
+      <div id="bcard-st-${i}" style="font-size:11.5px;font-weight:600;color:var(--ink5)">Pending</div>
+      <i id="bcard-ic-${i}" class="ti ti-clock" style="color:var(--ink5);font-size:16px"></i>
+    </div>`).join('');
+  document.getElementById('bulk-dz').innerHTML=`<div style="text-align:center;padding:8px"><i class="ti ti-check-circle" style="font-size:28px;color:var(--grn);display:block;margin-bottom:6px"></i><div style="font-weight:700">${valid.length} files ready</div><label style="display:inline-block;margin-top:8px;padding:5px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:12px"><input type="file" accept=".pdf,.doc,.docx" multiple style="display:none" onchange="bulkSelected(event)">Add more files</label></div>`;
+  document.getElementById('bulk-start-btn').style.display='flex';
+  document.getElementById('bulk-done-btn').style.display='none';
+}
+
+async function startBulkImport(){
+  const btn=document.getElementById('bulk-start-btn');btn.disabled=true;btn.innerHTML='<div class="spinner"></div>Processing…';
+  const aiKey=localStorage.getItem('zyro_ai')||'';
+  let done=0,failed=0;
+  for(let i=0;i<bulkFiles.length;i++){
+    const f=bulkFiles[i];
+    document.getElementById('bcard-st-'+i).textContent='Processing…';document.getElementById('bcard-st-'+i).style.color='var(--gold)';
+    document.getElementById('bcard-ic-'+i).className='ti ti-loader-2';document.getElementById('bcard-ic-'+i).style.color='var(--gold)';
+    try{
+      let parsed=null;const ext=f.name.split('.').pop().toLowerCase();
+      if(ext==='pdf'){
+        let txt='';try{await loadPDFJS();txt=await extractPDFText(f);}catch(e){}
+        if(aiKey&&txt.length>30){try{parsed=await aiParseText(txt.slice(0,6000),aiKey);}catch(e){parsed=basicParse(txt);}}
+        else if(txt.length>30){parsed=basicParse(txt);}
+        else if(aiKey){try{const b=await fileToB64(f);parsed=await aiParsePDF(b,aiKey);}catch(e){parsed=nameFromFile(f.name);}}
+        else{parsed=nameFromFile(f.name);}
+      }else{
+        let txt='';try{await loadMammoth();const ab=await f.arrayBuffer();const r=await mammoth.extractRawText({arrayBuffer:ab});txt=r.value||'';}catch(e){txt=await readText(f);txt=txt.split('').filter(c=>{const n=c.charCodeAt(0);return n>=32&&n<=126||n===10||n===13;}).join('').replace(/ +/g,' ').trim();}
+        if(aiKey&&txt.length>30){try{parsed=await aiParseText(txt.slice(0,6000),aiKey);}catch(e){parsed=basicParse(txt);}}
+        else if(txt.length>30){parsed=basicParse(txt);}
+        else{parsed=nameFromFile(f.name);}
+      }
+      if(!parsed)parsed={};
+      const fn=parsed.first_name||parsed.firstName||'';const em=parsed.email||'';
+      if(!fn&&!em)throw new Error('No name or email found');
+      const skills=Array.isArray(parsed.skills)?parsed.skills:(parsed.skills||'').split(',').map(s=>s.trim()).filter(Boolean);
+      const{error}=await sb.from('hp_candidates').insert([{first_name:fn,last_name:parsed.last_name||'',email:em,phone:parsed.phone||'',title:parsed.current_title||parsed.title||'',company:parsed.current_company||parsed.company||'',experience_years:parseFloat(parsed.total_experience_years)||0,current_ctc:parsed.current_ctc||'',location:parsed.location||'',source:parsed.source||'Other',skills,notes:parsed.summary||'',status:'Sourced',created_by:currentUser?.name||'Admin'}]);
+      if(error)throw error;
+      done++;
+      const name=fn?fn+(parsed.last_name?' '+parsed.last_name:''):'Saved';
+      document.getElementById('bcard-st-'+i).textContent=name;document.getElementById('bcard-st-'+i).style.color='var(--grn)';
+      document.getElementById('bcard-ic-'+i).className='ti ti-check-circle';document.getElementById('bcard-ic-'+i).style.color='var(--grn)';
+      document.getElementById('bcard-'+i).style.background='#f0fdf4';
+    }catch(e){
+      failed++;
+      document.getElementById('bcard-st-'+i).textContent='Failed: '+e.message.slice(0,40);document.getElementById('bcard-st-'+i).style.color='var(--red)';
+      document.getElementById('bcard-ic-'+i).className='ti ti-x-circle';document.getElementById('bcard-ic-'+i).style.color='var(--red)';
+      document.getElementById('bcard-'+i).style.background='#fef2f2';
+    }
+    document.getElementById('bstat-done').textContent=done;
+    document.getElementById('bstat-fail').textContent=failed;
+    const pct=Math.round(((i+1)/bulkFiles.length)*100);
+    document.getElementById('bulk-bar').style.width=pct+'%';
+    document.getElementById('bulk-pct').textContent=pct+'%';
+    if(i<bulkFiles.length-1)await new Promise(r=>setTimeout(r,500));
+  }
+  btn.style.display='none';
+  document.getElementById('bulk-done-btn').style.display='flex';
+  toast('✓ '+done+' candidates imported!'+(failed?' '+failed+' failed':''),'success');
+}
+
+function resetBulk(){
+  bulkFiles=[];
+  document.getElementById('bulk-list').style.display='none';
+  document.getElementById('bulk-cards').innerHTML='';
+  document.getElementById('bulk-start-btn').style.display='none';
+  document.getElementById('bulk-done-btn').style.display='none';
+}
+
+/* ══ AI KEY ══ */
+function updateAIStatus(){
+  const key=localStorage.getItem('zyro_ai')||'';
+  const p=detectProvider(key);
+  const status=document.getElementById('ai-key-status');
+  if(status)status.textContent=key?'✓ Active — '+(p==='gemini'?'Google Gemini':'Anthropic Claude'):'Not configured';
+  if(status)status.style.color=key?'#34d399':'rgba(255,255,255,.4)';
+  const inp=document.getElementById('ai-key-inp');
+  if(inp&&key)inp.placeholder='Key saved (••••'+key.slice(-6)+')';
+}
+function saveAIKey(){
+  const key=document.getElementById('ai-key-inp')?.value.trim();
+  if(!key){alert('Please paste your API key');return;}
+  localStorage.setItem('zyro_ai',key);updateAIStatus();
+  const banner=document.getElementById('ai-banner');if(banner)banner.style.display='none';
+  toast('✓ AI key saved! Resume parsing will now use AI.','success');
+  document.getElementById('ai-key-inp').value='';
+}
+function clearAIKey(){localStorage.removeItem('zyro_ai');updateAIStatus();toast('AI key removed','');}
+function saveBannerKey(){
+  const key=document.getElementById('banner-key')?.value.trim();
+  if(!key)return;
+  localStorage.setItem('zyro_ai',key);
+  document.getElementById('banner-key').value='';
+  document.getElementById('ai-banner').style.display='none';
+  updateAIStatus();
+  toast('✓ AI key saved!','success');
+}
+</script>
+
+<!-- ADD EVENT -->
+<div class="modal-bg" id="modal-addevent">
+  <div class="modal modal-lg">
+    <div class="mhd"><h2><i class="ti ti-calendar-plus"></i>Add Event</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('addevent')"><i class="ti ti-x"></i></button></div>
+    <div class="mbd">
+      <div class="field"><label>Event Title *</label><input id="ef-title" type="text" placeholder="e.g. Interview with Rahul Sharma"></div>
+      <div class="fr"><div class="field"><label>Date *</label><input id="ef-date" type="date"></div><div class="field"><label>Time</label><input id="ef-time" type="time" value="10:00"></div></div>
+      <div class="fr"><div class="field"><label>Event Type</label><select id="ef-type"><option>Interview</option><option>Follow-up</option><option>Meeting</option><option>Deadline</option><option>Other</option></select></div><div class="field"><label>Candidate / Person</label><input id="ef-person" type="text" placeholder="Name"></div></div>
+      <div class="field"><label>Notes</label><textarea id="ef-notes" rows="2" placeholder="Notes…"></textarea></div>
+    </div>
+    <div class="mft"><button class="btn" onclick="closeModal('addevent')">Cancel</button><button class="btn btn-p" onclick="saveEvent()"><i class="ti ti-check"></i>Save Event</button></div>
+  </div>
+</div>
+
+
+<!-- ADD VENDOR -->
+<div class="modal-bg" id="modal-addvendor">
+  <div class="modal modal-lg">
+    <div class="mhd"><h2><i class="ti ti-building-store"></i>Add Vendor</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('addvendor')"><i class="ti ti-x"></i></button></div>
+    <div class="mbd">
+      <div class="field"><label>Vendor Name *</label><input id="vf-name" type="text" placeholder="Vendor company name"></div>
+      <div class="fr"><div class="field"><label>Contact Person</label><input id="vf-ct" type="text" placeholder="Contact name"></div><div class="field"><label>Email</label><input id="vf-em" type="email" placeholder="vendor@email.com"></div></div>
+      <div class="fr"><div class="field"><label>Phone</label><input id="vf-ph" type="tel" placeholder="+91 XXXXX XXXXX"></div><div class="field"><label>City</label><input id="vf-city" type="text" placeholder="Mumbai"></div></div>
+      <div class="field"><label>Notes</label><textarea id="vf-notes" rows="2"></textarea></div>
+    </div>
+    <div class="mft"><button class="btn" onclick="closeModal('addvendor')">Cancel</button><button class="btn btn-p" onclick="saveVendor()"><i class="ti ti-check"></i>Save Vendor</button></div>
+  </div>
+</div>
+
+<!-- ADD CONSULTANT -->
+<div class="modal-bg" id="modal-addconsultant">
+  <div class="modal modal-lg">
+    <div class="mhd"><h2><i class="ti ti-user-check"></i>Add Consultant</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('addconsultant')"><i class="ti ti-x"></i></button></div>
+    <div class="mbd">
+      <div class="fr"><div class="field"><label>First Name *</label><input id="conf-fn" type="text"></div><div class="field"><label>Last Name *</label><input id="conf-ln" type="text"></div></div>
+      <div class="fr"><div class="field"><label>Specialisation</label><input id="conf-spec" type="text" placeholder="e.g. IT Recruitment"></div><div class="field"><label>Company</label><input id="conf-co" type="text"></div></div>
+      <div class="fr"><div class="field"><label>Email</label><input id="conf-em" type="email"></div><div class="field"><label>Phone</label><input id="conf-ph" type="tel"></div></div>
+      <div class="field"><label>Notes</label><textarea id="conf-notes" rows="2"></textarea></div>
+    </div>
+    <div class="mft"><button class="btn" onclick="closeModal('addconsultant')">Cancel</button><button class="btn btn-p" onclick="saveConsultant()"><i class="ti ti-check"></i>Save Consultant</button></div>
+  </div>
+</div>
+
+</body>
+</html>
