@@ -1,1 +1,2865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ZYROHR — Smart ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css"/>
 
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+:root{
+  --nav:#0f1929;--acc:#3b82f6;--acc2:#2563eb;--acc3:#dbeafe;
+  --grn:#10b981;--grn2:#d1fae5;--grn3:#059669;
+  --red:#ef4444;--red2:#fee2e2;
+  --gold:#f59e0b;--gold2:#fef3c7;
+  --pur:#8b5cf6;--pur2:#ede9fe;
+  --sky:#06b6d4;--sky2:#cffafe;
+  --ink:#0f172a;--ink2:#1e293b;--ink3:#475569;--ink4:#64748b;--ink5:#94a3b8;--ink6:#cbd5e1;
+  --bg:#f0f4f8;--bg3:#f8fafc;--bg4:#e2e8f0;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --sh:0 1px 3px rgba(0,0,0,.05),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 4px 24px rgba(0,0,0,.09);--sh3:0 24px 64px rgba(0,0,0,.18);
+  --r:6px;--rl:10px;--rxl:14px;
+  --sb:200px;
+  --f:'DM Sans',system-ui,sans-serif;
+  --fh:'Syne',system-ui,sans-serif;
+}
+body{font-size:13px;color:var(--ink);background:var(--bg)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--ink6);border-radius:4px}
+button,input,select,textarea{font-family:var(--f)}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex}
+
+/* ── LOGIN SCREEN ── */
+#login-screen{align-items:center;justify-content:center;background:linear-gradient(135deg,#0f1929 0%,#1a2744 50%,#0f2952 100%)}
+.login-box{background:#fff;border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:var(--sh3)}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center}
+.login-logo-icon{width:40px;height:40px;background:var(--acc);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.login-logo-icon i{font-size:22px;color:#fff}
+.login-logo-text{font-family:var(--fh);font-size:24px;font-weight:800;color:var(--ink)}
+.login-title{font-family:var(--fh);font-size:22px;font-weight:700;color:var(--ink);margin-bottom:4px;text-align:center}
+.login-sub{font-size:13px;color:var(--ink5);text-align:center;margin-bottom:28px}
+.lfield{margin-bottom:16px}
+.lfield label{display:block;font-size:11px;font-weight:700;color:var(--ink4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.lfield input{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--r);font-size:13.5px;color:var(--ink);outline:none;transition:border-color .13s;background:#fff}
+.lfield input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.login-btn{width:100%;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:700;cursor:pointer;transition:all .13s;margin-top:4px;font-family:var(--fh)}
+.login-btn:hover{background:var(--acc2);box-shadow:0 4px 16px rgba(59,130,246,.35)}
+.login-btn:disabled{opacity:.6;cursor:default}
+.login-err{background:var(--red2);border:1px solid #fca5a5;color:var(--red);padding:10px 13px;border-radius:var(--r);font-size:12.5px;margin-bottom:14px;display:none;align-items:center;gap:7px}
+.login-info{margin-top:20px;padding:13px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border)}
+.login-info-title{font-size:11.5px;font-weight:700;color:var(--ink4);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+.login-user-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px;color:var(--ink3);border-bottom:1px solid var(--border)}
+.login-user-row:last-child{border-bottom:none}
+.lur-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+.lur-role{margin-left:auto;font-size:10.5px;padding:1px 7px;border-radius:10px;font-weight:600}
+
+/* ── SETUP SCREEN ── */
+#setup-screen{align-items:center;justify-content:center;background:linear-gradient(135deg,#0f1929,#1a2744);flex-direction:column;gap:16px;padding:20px}
+.setup-box{background:#fff;border-radius:20px;padding:32px;width:100%;max-width:560px;box-shadow:var(--sh3)}
+.setup-step{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.setup-step:last-child{border-bottom:none}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.step-num.done{background:var(--grn)}
+.step-num.fail{background:var(--red)}
+.setup-progress{width:100%;height:4px;background:var(--bg4);border-radius:4px;overflow:hidden;margin-top:16px}
+.setup-progress-f{height:100%;background:var(--acc);border-radius:4px;transition:width .5s}
+
+/* ── APP SCREEN ── */
+#app-screen{flex-direction:column}
+#app{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sb{width:var(--sb);flex-shrink:0;background:var(--nav);display:flex;flex-direction:column;overflow:hidden}
+.sb-brand{height:56px;display:flex;align-items:center;padding:0 15px;gap:9px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.sb-logo{width:30px;height:30px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-logo i{font-size:16px;color:#fff}
+.sb-txt{font-family:var(--fh);font-size:17px;font-weight:700;color:#fff}
+.sb-nav{flex:1;overflow-y:auto;padding:6px 0}
+.sb-sec{font-size:9.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.2);padding:12px 15px 4px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 15px;color:rgba(255,255,255,.5);cursor:pointer;transition:all .13s;position:relative;white-space:nowrap}
+.ni:hover{color:rgba(255,255,255,.88);background:rgba(255,255,255,.06)}
+.ni.active{color:#fff;background:rgba(59,130,246,.18);font-weight:500}
+.ni.active::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:3px;background:var(--acc);border-radius:0 3px 3px 0}
+.ni i{font-size:16px;flex-shrink:0}
+.ni-lbl{font-size:12.5px}
+.ni-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px}
+.ni-new{margin-left:auto;font-size:9px;font-weight:700;color:#34d399}
+.sb-foot{padding:10px 14px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.sb-user{display:flex;align-items:center;gap:8px}
+.sb-uav{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-uname{font-size:12px;font-weight:600;color:rgba(255,255,255,.8)}
+.sb-urole{font-size:10px;color:rgba(255,255,255,.35)}
+.sb-logout{margin-left:auto;color:rgba(255,255,255,.3);cursor:pointer;font-size:15px}
+.sb-logout:hover{color:var(--red)}
+
+/* ── TOPBAR ── */
+.topbar{height:56px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:10px;flex-shrink:0;box-shadow:var(--sh);z-index:20}
+.tb-title{font-family:var(--fh);font-size:16px;font-weight:700;color:var(--ink);flex:0 0 auto}
+.tb-sep{width:1px;height:18px;background:var(--border)}
+.srchbox{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:6px 11px;flex:1;max-width:340px}
+.srchbox i{font-size:14px;color:var(--ink5);flex-shrink:0}
+.srchbox input{border:none;outline:none;background:transparent;font-size:13px;color:var(--ink);width:100%}
+.srchbox input::placeholder{color:var(--ink5)}
+.tb-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tb-btn-add{display:flex;align-items:center;gap:5px;padding:7px 14px;background:var(--acc);color:#fff;border:none;border-radius:var(--r);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .13s}
+.tb-btn-add:hover{background:var(--acc2)}
+.tb-ico{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:var(--r);cursor:pointer;color:var(--ink4);transition:all .13s;position:relative}
+.tb-ico:hover{background:var(--bg3);color:var(--ink)}
+.tb-notif-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;background:var(--red);border-radius:50%;border:1.5px solid #fff}
+.tb-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;cursor:pointer;flex-shrink:0}
+
+/* ── CONTENT ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.content{flex:1;overflow-y:auto;background:var(--bg)}
+.page{display:none}.page.active{display:block;animation:pu .18s ease}
+@keyframes pu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── PAGE HEADER ── */
+.ph{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;gap:10px}
+.ph-l{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ph-r{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.ph-title{font-family:var(--fh);font-size:17px;font-weight:700;color:var(--ink)}
+.ph-cnt{font-size:13px;color:var(--ink5)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6.5px 13px;font-size:12.5px;font-weight:500;border-radius:var(--r);border:1px solid var(--border);background:#fff;color:var(--ink3);cursor:pointer;transition:all .13s;white-space:nowrap}
+.btn:hover{background:var(--bg3);border-color:var(--border2)}
+.btn i{font-size:14px}
+.btn-p{background:var(--acc);color:#fff;border-color:var(--acc)}.btn-p:hover{background:var(--acc2)}
+.btn-grn{background:var(--grn);color:#fff;border-color:var(--grn)}.btn-grn:hover{background:var(--grn3)}
+.btn-sm{padding:5px 10px;font-size:12px}.btn-sm i{font-size:13px}
+.btn-xs{padding:3px 8px;font-size:11px}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--ink4)}.btn-ghost:hover{background:var(--bg3);border-color:var(--border)}
+
+/* ── CARDS ── */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--rl);box-shadow:var(--sh)}
+.chd{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;border-bottom:1px solid var(--border)}
+.ctitle{font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px}
+.csub{font-size:11px;color:var(--ink5);margin-top:1px}
+.cbd{padding:14px}
+
+/* ── KPI ── */
+.kpis{display:grid;gap:12px;margin-bottom:14px}
+.kpi4{grid-template-columns:repeat(4,1fr)}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px;position:relative;overflow:hidden;transition:all .13s}
+.kpi:hover{box-shadow:var(--sh2);transform:translateY(-1px)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,var(--acc))}
+.kpi-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.kpi-ico i{font-size:19px}
+.kpi-val{font-family:var(--fh);font-size:30px;font-weight:700;line-height:1;margin-bottom:3px}
+.kpi-lbl{font-size:11.5px;color:var(--ink5);font-weight:500}
+.kpi-sub{font-size:11px;margin-top:5px;display:flex;align-items:center;gap:3px;font-weight:600}
+.up{color:var(--grn)}.dn{color:var(--red)}.nt{color:var(--ink5)}
+
+/* ── DASHBOARD ── */
+.dash{padding:16px;display:flex;flex-direction:column;gap:14px}
+.dgrid{display:grid;gap:14px}
+.dg2{grid-template-columns:1fr 1fr}
+.dg3{grid-template-columns:1fr 1fr 1fr}
+.dg21{grid-template-columns:1.55fr 1fr}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;flex:1}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{position:sticky;top:0;text-align:left;padding:9px 13px;font-size:10.5px;font-weight:700;color:var(--ink5);border-bottom:1px solid var(--border);background:#fff;white-space:nowrap;z-index:2;text-transform:uppercase;letter-spacing:.04em}
+.tbl td{padding:10px 13px;border-bottom:1px solid var(--border);color:var(--ink3);vertical-align:middle;white-space:nowrap}
+.tbl tbody tr:hover td{background:#f8fafc}
+.tbl tbody tr:last-child td{border-bottom:none}
+.tlink{color:var(--acc);cursor:pointer;font-weight:500}.tlink:hover{text-decoration:underline}
+.bino{color:var(--acc);cursor:pointer;font-size:17px}
+.dotm{color:var(--ink5);cursor:pointer;font-size:16px;padding:2px}
+.dotm:hover{color:var(--ink)}
+.cb{width:14px;height:14px;accent-color:var(--acc);cursor:pointer}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2.5px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-grn{background:var(--grn2);color:#065f46}
+.b-red{background:var(--red2);color:#991b1b}
+.b-blue{background:var(--acc3);color:#1e40af}
+.b-gold{background:var(--gold2);color:#92400e}
+.b-gray{background:var(--bg4);color:var(--ink4)}
+.b-pur{background:var(--pur2);color:#5b21b6}
+.b-sky{background:var(--sky2);color:#0e7490}
+
+/* ── FILTER PANEL ── */
+.pwf{display:flex;height:calc(100vh - 56px);overflow:hidden}
+.fp{width:0;background:#fff;border-right:1px solid var(--border);overflow:hidden;transition:width .22s ease;flex-shrink:0;display:flex;flex-direction:column}
+.fp.open{width:206px}
+.fp-hd{padding:12px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.fp-hd-title{font-size:13px;font-weight:700;color:var(--ink)}
+.fp-body{flex:1;overflow-y:auto;padding:12px}
+.fp-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink5);margin-bottom:4px;margin-top:12px}
+.fp-lbl:first-child{margin-top:0}
+.fp-inp{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:var(--r);font-size:12.5px;color:var(--ink);outline:none;transition:border-color .13s}
+.fp-inp:focus{border-color:var(--acc)}
+.fp-foot{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0}
+.pm{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TABS ── */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:#fff;padding:0 16px;flex-shrink:0;overflow-x:auto}
+.tab{padding:10px 14px;font-size:13px;color:var(--ink5);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .13s;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--acc);border-bottom-color:var(--acc);font-weight:600}
+
+/* ── KANBAN ── */
+.kanban{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:14px;height:calc(100vh - 186px);overflow-y:auto}
+.kcol{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rl);display:flex;flex-direction:column;min-height:300px;overflow:hidden}
+.kcol-hd{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--border)}
+.kcol-name{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+.kcol-cnt{font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px;background:#fff;border:1px solid var(--border);color:var(--ink3)}
+.kcards{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:7px}
+.kcard{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:10px 11px;cursor:pointer;transition:all .13s;position:relative}
+.kcard:hover{border-color:var(--acc);box-shadow:var(--sh2);transform:translateY(-1px)}
+.kcard-stripe{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:var(--r) 0 0 var(--r)}
+.kcard-name{font-size:12.5px;font-weight:600;color:var(--ink);padding-left:8px}
+.kcard-role{font-size:11px;color:var(--ink5);padding-left:8px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.kcard-ft{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-left:8px}
+.kcard-hover-actions{display:none;position:absolute;top:7px;right:7px;gap:3px}
+.kcard:hover .kcard-hover-actions{display:flex}
+.kha{width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--border);cursor:pointer;font-size:11px;color:var(--ink4);transition:all .12s}
+.kha:hover{background:var(--acc);color:#fff;border-color:var(--acc)}
+
+/* ── CANDIDATE CARDS ── */
+.cands-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:14px}
+.ccard{background:#fff;border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;transition:all .13s;cursor:pointer}
+.ccard:hover{box-shadow:var(--sh2);border-color:var(--border2);transform:translateY(-1px)}
+.ccard-top{padding:14px 14px 10px;position:relative}
+.ccard-name{font-size:14px;font-weight:700;color:var(--acc);margin-bottom:2px}
+.ccard-role{font-size:12px;color:var(--ink4);line-height:1.4}
+.ccard-meta{font-size:11.5px;color:var(--ink5);margin-top:5px;display:flex;align-items:center;gap:8px}
+.ccard-actions{position:absolute;top:10px;right:10px;display:flex;gap:4px;opacity:0;transition:opacity .13s}
+.ccard:hover .ccard-actions{opacity:1}
+.ca-btn{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--border);cursor:pointer;font-size:13px;color:var(--ink4);transition:all .12s}
+.ca-btn:hover{background:var(--acc);color:#fff;border-color:var(--acc)}
+.ccard-div{margin:0 14px;border:none;border-top:1px dashed var(--border)}
+.ccard-body{padding:9px 14px;display:flex;flex-direction:column;gap:5px}
+.crow{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink4)}
+.crow i{font-size:13px;color:var(--ink6);flex-shrink:0}
+.ccard-foot{padding:7px 14px;background:var(--bg3);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.src-tag{font-size:10.5px;color:var(--ink5);display:flex;align-items:center;gap:4px}
+
+/* ── PROGRESS ── */
+.prog{height:6px;background:var(--bg4);border-radius:4px;overflow:hidden;margin-top:3px}
+.prog-f{height:100%;border-radius:4px;transition:width .6s ease}
+
+/* ── DONUT ── */
+.donut-wrap{display:flex;align-items:center;gap:16px}
+.dl-wrap{display:flex;flex-direction:column;gap:7px;flex:1}
+.dl{display:flex;align-items:center;gap:7px;font-size:12px}
+.dl-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.dl-lbl{flex:1;color:var(--ink4)}.dl-val{font-weight:700;color:var(--ink)}
+
+/* ── SC TABLE ── */
+.sct{width:100%;border-collapse:collapse;font-size:12.5px}
+.sct th{text-align:left;padding:8px 12px;font-size:10.5px;font-weight:700;color:var(--ink5);border-bottom:1px solid var(--border);background:var(--bg3);text-transform:uppercase;letter-spacing:.04em}
+.sct td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--ink3);vertical-align:middle}
+.sct tbody tr:last-child td{border-bottom:none}
+.sct .link{color:var(--acc);font-weight:600;cursor:pointer}
+
+/* ── PG ── */
+.pg{display:flex;align-items:center;gap:3px;padding:10px 16px;background:#fff;border-top:1px solid var(--border);flex-shrink:0}
+.pg-info{font-size:12px;color:var(--ink5);margin-right:6px}
+.pgspc{flex:1}
+.pgb{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:12px;color:var(--ink4);background:#fff;transition:all .12s}
+.pgb:hover:not(.disabled):not(.active){background:var(--bg3)}
+.pgb.active{background:var(--acc);color:#fff;border-color:var(--acc)}
+.pgb.disabled{opacity:.35;cursor:default}
+
+/* ── VT TOGGLE ── */
+.vt{display:flex;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.vt-b{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#fff;border:none;cursor:pointer;color:var(--ink5);transition:all .13s;font-size:15px}
+.vt-b.active{background:var(--acc3);color:var(--acc)}
+
+/* ── AI PANEL ── */
+.ai-panel{background:linear-gradient(135deg,#0f1929 0%,#1a2744 50%,#1e3a6a 100%);border-radius:var(--rl);padding:0;overflow:hidden}
+.ai-panel-hd{padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.1)}
+.ai-panel-hd i{font-size:20px;color:#34d399}
+.ai-title{font-family:var(--fh);font-size:15px;color:#fff;font-weight:700}
+.ai-sub{font-size:11px;color:rgba(255,255,255,.45);margin-top:1px}
+.ai-cards{padding:12px;display:flex;flex-direction:column;gap:8px}
+.ai-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:10px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:all .13s}
+.ai-card:hover{background:rgba(255,255,255,.13)}
+.ai-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.ai-info{flex:1}
+.ai-name{font-size:12.5px;font-weight:700;color:#fff}
+.ai-role{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px}
+.ai-skills{margin-top:5px;display:flex;flex-wrap:wrap;gap:3px}
+.ai-skill{font-size:10px;padding:1px 5px;background:rgba(255,255,255,.1);border-radius:3px;color:rgba(255,255,255,.7)}
+.ai-score{font-family:var(--fh);font-size:22px;font-weight:700;color:#34d399;flex-shrink:0;line-height:1}
+.ai-score-lbl{font-size:9.5px;color:rgba(255,255,255,.35);text-align:center}
+.ai-add-btn{width:26px;height:26px;border-radius:5px;background:rgba(59,130,246,.25);border:1px solid rgba(59,130,246,.4);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:#93c5fd;transition:all .12s;flex-shrink:0}
+.ai-add-btn:hover{background:var(--acc);border-color:var(--acc);color:#fff}
+.ai-thinking{display:flex;align-items:center;gap:9px;padding:14px;color:rgba(255,255,255,.5);font-size:12.5px}
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.15);border-top-color:#34d399;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:800;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;backdrop-filter:blur(3px)}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:var(--rxl);width:100%;max-width:520px;box-shadow:var(--sh3);animation:pu .17s ease}
+.modal-lg{max-width:640px}.modal-xl{max-width:800px}
+.mhd{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.mhd h2{font-family:var(--fh);font-size:16px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:7px}
+.mhd h2 i{font-size:17px;color:var(--acc)}
+.mbd{padding:18px;display:flex;flex-direction:column;gap:12px;max-height:65vh;overflow-y:auto}
+.mft{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;font-weight:700;color:var(--ink4);text-transform:uppercase;letter-spacing:.05em}
+.field input,.field select,.field textarea{padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none;transition:border-color .13s;resize:vertical;background:#fff}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--acc);box-shadow:0 0 0 2px rgba(59,130,246,.1)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.info-box{padding:10px 13px;border-radius:var(--r);font-size:12.5px;line-height:1.5;display:flex;align-items:flex-start;gap:8px}
+.ib-grn{background:var(--grn2);border:1px solid #86efac;color:#065f46}
+.ib-blue{background:var(--acc3);border:1px solid #93c5fd;color:#1e40af}
+.ib-red{background:var(--red2);border:1px solid #fca5a5;color:var(--red)}
+
+/* ── REPORTS ── */
+.rep-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px}
+.rep-card{background:#fff;border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.rep-hd{background:var(--nav);color:#fff;padding:10px 14px;font-size:13px;font-weight:700;font-family:var(--fh)}
+.rep-item{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;font-size:12.5px}
+.rep-item:hover{background:var(--bg3)}
+.rep-item:last-child{border-bottom:none}
+.rep-item-lbl{color:var(--acc);flex:1}
+
+/* ── INTEGRATION ── */
+.int-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.int-card{background:#fff;border:1px solid var(--border);border-radius:var(--rl);padding:16px;transition:all .13s;cursor:pointer;position:relative}
+.int-card:hover{box-shadow:var(--sh2);transform:translateY(-1px)}
+.int-card.inst{border-color:#86efac}
+.int-badge{position:absolute;top:9px;right:9px}
+.int-ico{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:22px}
+.int-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.int-type{font-size:11px;color:var(--ink5)}
+
+/* ── SETTINGS ── */
+.sett{display:flex;height:100%}
+.sett-nav{width:190px;flex-shrink:0;background:#fff;border-right:1px solid var(--border)}
+.sn-item{padding:10px 16px;font-size:13px;color:var(--ink4);cursor:pointer;border-left:3px solid transparent;transition:all .13s}
+.sn-item:hover{background:var(--bg3);color:var(--ink)}
+.sn-item.active{color:var(--acc);border-left-color:var(--acc);background:var(--acc3);font-weight:600}
+.sett-body{flex:1;overflow-y:auto;padding:22px 24px}
+.si{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 0;border-bottom:1px solid var(--border)}
+.si:last-child{border-bottom:none}
+.si-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.si-desc{font-size:12.5px;color:var(--ink5);line-height:1.55;max-width:520px}
+.si-edit{color:var(--acc);font-size:13px;font-weight:600;cursor:pointer;margin-left:20px;flex-shrink:0}
+
+/* ── CALENDAR ── */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.cal-dh{background:var(--bg3);padding:8px;text-align:center;font-size:11.5px;font-weight:700;color:var(--ink4);border-bottom:1px solid var(--border)}
+.cal-cell{min-height:80px;padding:6px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:#fff}
+.cal-cell:nth-child(7n){border-right:none}
+.cal-cell.other-m{background:var(--bg3)}
+.cal-cell.today .cal-num{background:var(--acc);color:#fff}
+.cal-num{font-size:12px;font-weight:600;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink4)}
+
+/* ── MISC ── */
+.empty{text-align:center;padding:52px 20px;color:var(--ink5)}
+.empty i{font-size:36px;display:block;margin-bottom:10px;color:var(--ink6)}
+.empty p{font-size:13.5px;font-weight:500}
+.empty small{font-size:12px;color:var(--ink5)}
+.act-pill{display:flex;align-items:center;gap:5px;padding:5.5px 11px;border:1px solid var(--border);border-radius:var(--r);font-size:12.5px;color:var(--ink3);background:#fff;cursor:pointer;transition:all .13s}
+.act-pill:hover{background:var(--bg3)}
+.sep{width:1px;height:18px;background:var(--border)}
+.fsel{font-size:12px;border:1px solid var(--border);border-radius:var(--r);padding:5.5px 9px;background:#fff;color:var(--ink4);cursor:pointer;outline:none}
+.skill-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;background:var(--acc3);border:1px solid #93c5fd;border-radius:20px;font-size:12px;font-weight:500;color:var(--acc4);cursor:default}
+.skill-tag .st-x{cursor:pointer;font-size:14px;color:var(--acc);line-height:1;opacity:.7}
+.skill-tag .st-x:hover{opacity:1;color:var(--red)}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--ink2);color:#fff;padding:12px 18px;border-radius:var(--rl);font-size:13px;font-weight:500;z-index:9999;box-shadow:var(--sh3);display:flex;align-items:center;gap:8px;transform:translateY(100px);opacity:0;transition:all .3s ease}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--grn3)}
+.toast.error{background:var(--red)}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div class="screen active" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:46px;letter-spacing:1px;line-height:1"><span style="color:#0f1929">ZYRO</span><span style="color:#6366f1">HR</span></div><div style="width:48px;height:3px;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:2px;margin-top:6px"></div>
+    </div>
+    <div class="login-title">Welcome back</div>
+    <div class="login-sub">Sign in to Reinforcement Consultants</div>
+
+    <div class="login-err" id="login-err"><i class="ti ti-alert-circle"></i><span id="login-err-msg">Invalid email or password</span></div>
+
+    <div class="lfield">
+      <label>Email Address</label>
+      <input type="email" id="login-email" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <div class="lfield">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="Password: zyrohr2024" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+
+    <div class="login-info">
+      <div class="login-info-title">Team Accounts</div>
+      <div class="login-user-row"><div class="lur-av" style="background:#3b82f6">TG</div><span>teerath@reinforcementconsultants.com</span><span class="lur-role" style="background:var(--pur2);color:#5b21b6">Admin</span></div>
+      <div class="login-user-row"><div class="lur-av" style="background:#10b981">NS</div><span>niharika@reinforcementconsultants.com</span><span class="lur-role" style="background:var(--acc3);color:#1e40af">Recruiter</span></div>
+      <div class="login-user-row"><div class="lur-av" style="background:#f59e0b">PK</div><span>pragati@reinforcementconsultants.com</span><span class="lur-role" style="background:var(--acc3);color:#1e40af">Recruiter</span></div>
+      <div class="login-user-row"><div class="lur-av" style="background:#ef4444">RK</div><span>rinkal@reinforcementconsultants.com</span><span class="lur-role" style="background:var(--acc3);color:#1e40af">Recruiter</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SETUP SCREEN ═══ -->
+<div class="screen" id="setup-screen">
+  <div class="setup-box">
+    <div style="font-family:var(--fh);font-size:20px;font-weight:700;color:var(--ink);margin-bottom:6px;display:flex;align-items:center;gap:8px"><i class="ti ti-database" style="color:var(--acc)"></i>Setting up ZYROHR</div>
+    <div style="font-size:13px;color:var(--ink5);margin-bottom:20px">First time setup — creating your team database. This takes about 30 seconds.</div>
+    <div id="setup-steps"></div>
+    <div class="setup-progress"><div class="setup-progress-f" id="setup-prog" style="width:0%"></div></div>
+    <div style="font-size:12px;color:var(--ink5);margin-top:8px;text-align:center" id="setup-status">Initialising…</div>
+  </div>
+</div>
+
+<!-- ═══ APP SCREEN ═══ -->
+<div class="screen" id="app-screen">
+<div id="app">
+
+<!-- SIDEBAR -->
+<aside class="sb">
+  <div class="sb-brand">
+    <div class="sb-logo"><i class="ti ti-bolt"></i></div>
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:19px;letter-spacing:.5px"><span style="color:#fff">ZYRO</span><span style="color:#818cf8">HR</span></div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Core</div>
+    <div class="ni active" data-p="dashboard"><i class="ti ti-layout-dashboard"></i><span class="ni-lbl">Dashboard</span></div>
+    <div class="ni" data-p="candidates"><i class="ti ti-users"></i><span class="ni-lbl">Candidates</span></div>
+    <div class="ni" data-p="pipeline"><i class="ti ti-funnel"></i><span class="ni-lbl">Pipeline</span></div>
+    <div class="ni" data-p="jobs"><i class="ti ti-briefcase"></i><span class="ni-lbl">Jobs</span><span class="ni-badge" id="nb-jobs">0</span></div>
+    <div class="sb-sec">Business</div>
+    <div class="ni" data-p="companies"><i class="ti ti-building"></i><span class="ni-lbl">Companies</span></div>
+    <div class="ni" data-p="vendors"><i class="ti ti-truck"></i><span class="ni-lbl">Vendors</span></div>
+    <div class="ni" data-p="consultants"><i class="ti ti-user-check"></i><span class="ni-lbl">Consultants</span></div>
+    <div class="ni" data-p="invoices"><i class="ti ti-receipt"></i><span class="ni-lbl">Invoices</span></div>
+    <div class="sb-sec">Tools</div>
+    <div class="ni" data-p="users"><i class="ti ti-user-circle"></i><span class="ni-lbl">Users</span></div>
+    <div class="ni" data-p="reports"><i class="ti ti-chart-bar"></i><span class="ni-lbl">Reports</span></div>
+    <div class="ni" data-p="calendar"><i class="ti ti-calendar-check"></i><span class="ni-lbl">Calendar</span></div>
+    <div class="ni" data-p="hotlist"><i class="ti ti-flame"></i><span class="ni-lbl">Hot List</span></div>
+    <div class="ni" data-p="integrations"><i class="ti ti-plug-connected"></i><span class="ni-lbl">Integrations</span><span class="ni-new">NEW</span></div>
+    <div class="ni" data-p="settings"><i class="ti ti-settings"></i><span class="ni-lbl">Settings</span></div>
+  </nav>
+  <div class="sb-foot">
+    <div class="sb-user">
+      <div class="sb-uav" id="sb-av">TG</div>
+      <div><div class="sb-uname" id="sb-uname">Loading…</div><div class="sb-urole" id="sb-urole">—</div></div>
+      <i class="ti ti-logout sb-logout" onclick="doLogout()" title="Sign out"></i>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="tb-title" id="tb-title">Dashboard</div>
+    <div class="tb-sep"></div>
+    <div class="srchbox"><i class="ti ti-search"></i><input type="text" placeholder="Search candidates, jobs…" oninput="gSearch(this.value)"></div>
+    <div class="tb-r">
+      <button class="tb-btn-add" onclick="openModal('addnew')"><i class="ti ti-plus"></i>Add New</button>
+      <div class="sep"></div>
+      <div class="tb-ico"><i class="ti ti-bell"></i><div class="tb-notif-dot"></div></div>
+      <div class="tb-av" id="tb-av" style="background:linear-gradient(135deg,var(--acc),var(--pur))">TG</div>
+    </div>
+  </div>
+
+  <div class="content" id="content">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="dash">
+      <div class="kpis kpi4">
+        <div class="kpi" style="--ac:var(--grn)"><div class="kpi-ico" style="background:var(--grn2)"><i class="ti ti-trophy" style="color:var(--grn)"></i></div><div class="kpi-val" style="color:var(--grn)" id="kv-hired">—</div><div class="kpi-lbl">Candidates Hired</div><div class="kpi-sub nt">Last 30 days</div></div>
+        <div class="kpi" style="--ac:var(--acc)"><div class="kpi-ico" style="background:var(--acc3)"><i class="ti ti-briefcase" style="color:var(--acc)"></i></div><div class="kpi-val" style="color:var(--acc)" id="kv-jobs">—</div><div class="kpi-lbl">Open Jobs</div><div class="kpi-sub nt">Active positions</div></div>
+        <div class="kpi" style="--ac:var(--gold)"><div class="kpi-ico" style="background:var(--gold2)"><i class="ti ti-users" style="color:var(--gold)"></i></div><div class="kpi-val" style="color:var(--gold)" id="kv-cands">—</div><div class="kpi-lbl">Total Candidates</div><div class="kpi-sub nt">In database</div></div>
+        <div class="kpi" style="--ac:var(--pur)"><div class="kpi-ico" style="background:var(--pur2)"><i class="ti ti-receipt" style="color:var(--pur)"></i></div><div class="kpi-val" style="color:var(--pur)" id="kv-inv">—</div><div class="kpi-lbl">Revenue</div><div class="kpi-sub nt">Paid invoices</div></div>
+      </div>
+
+      <div class="dgrid dg3">
+        <div class="card"><div class="chd"><span class="ctitle"><i class="ti ti-building" style="color:var(--acc)"></i>Hired by Company</span><span class="csub">Last 30 days</span></div>
+          <table class="sct"><thead><tr><th>Company</th><th>Hired</th><th>Avg Days</th></tr></thead><tbody id="ds-hired-co"><tr><td colspan="3" style="text-align:center;color:var(--ink5);padding:16px">No data yet</td></tr></tbody></table>
+        </div>
+        <div class="card"><div class="chd"><span class="ctitle"><i class="ti ti-activity" style="color:var(--grn)"></i>Job Activity</span><span class="csub">Last 30 days</span></div>
+          <div class="cbd" style="display:grid;grid-template-columns:1fr 1fr;gap:9px" id="ds-job-act">
+            <div style="text-align:center;padding:11px;background:var(--grn2);border-radius:var(--r)"><div id="ds-jact-with" style="font-size:26px;font-weight:700;font-family:var(--fh);color:var(--grn)">—</div><div style="font-size:11.5px;color:#065f46">With Activity</div></div>
+            <div style="text-align:center;padding:11px;background:var(--acc3);border-radius:var(--r)"><div id="ds-jact-without" style="font-size:26px;font-weight:700;font-family:var(--fh);color:var(--acc)">—</div><div style="font-size:11.5px;color:var(--acc4)">No Activity</div></div>
+            <div style="text-align:center;padding:11px;background:var(--gold2);border-radius:var(--r)"><div id="ds-jact-sub" style="font-size:26px;font-weight:700;font-family:var(--fh);color:var(--gold)">—</div><div style="font-size:11.5px;color:#92400e">Submitted</div></div>
+            <div style="text-align:center;padding:11px;background:var(--pur2);border-radius:var(--r)"><div id="ds-jact-placed" style="font-size:26px;font-weight:700;font-family:var(--fh);color:var(--pur)">—</div><div style="font-size:11.5px;color:#5b21b6">Placed</div></div>
+          </div>
+        </div>
+        <div class="card"><div class="chd"><span class="ctitle"><i class="ti ti-calendar-time" style="color:var(--gold)"></i>Open Jobs by Age</span></div>
+          <div class="cbd" id="ds-age"><div style="text-align:center;padding:16px;color:var(--ink5)">No data yet</div></div>
+        </div>
+      </div>
+
+      <div class="dgrid dg3">
+        <div class="card"><div class="chd"><span class="ctitle"><i class="ti ti-user-star" style="color:var(--pur)"></i>Hired by Recruiter</span><span class="csub">Last 30 days</span></div>
+          <table class="sct"><thead><tr><th>Recruiter</th><th>Hired</th><th>Avg Days</th></tr></thead><tbody id="ds-rec"><tr><td colspan="3" style="text-align:center;color:var(--ink5);padding:16px">No data yet</td></tr></tbody></table>
+        </div>
+        <div class="card"><div class="chd"><span class="ctitle"><i class="ti ti-send" style="color:var(--sky)"></i>Submission by Recruiter</span><span class="csub">Last 30 days</span></div>
+          <table class="sct"><thead><tr><th>Recruiter</th><th>Submissions</th></tr></thead><tbody id="ds-sub-rec"><tr><td colspan="2" style="text-align:center;color:var(--ink5);padding:16px">No data yet</td></tr></tbody></table>
+        </div>
+        <div class="card"><div class="chd"><span class="ctitle"><i class="ti ti-chart-pie" style="color:var(--red)"></i>Hired by Source</span><span class="csub">Last 30 days</span></div>
+          <div class="cbd"><div class="donut-wrap"><canvas id="donut1" width="110" height="110"></canvas><div class="dl-wrap" id="donut1-legend"><div style="font-size:12px;color:var(--ink5)">No data yet</div></div></div></div>
+        </div>
+      </div>
+
+      <div class="dgrid dg21">
+        <div class="card"><div class="chd"><span class="ctitle"><i class="ti ti-building-community" style="color:var(--grn)"></i>Company Activity</span><span class="csub">Last 30 days</span></div>
+          <div class="cbd" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px" id="ds-co-act">
+            <div style="padding:12px;background:var(--grn2);border-radius:var(--r);text-align:center"><div id="ds-co-withjobs" style="font-size:28px;font-weight:700;font-family:var(--fh);color:var(--grn)">—</div><div style="font-size:11.5px;color:#065f46;margin-top:2px">With Jobs</div></div>
+            <div style="padding:12px;background:var(--acc3);border-radius:var(--r);text-align:center"><div id="ds-co-nojobs" style="font-size:28px;font-weight:700;font-family:var(--fh);color:var(--acc)">—</div><div style="font-size:11.5px;color:var(--acc4);margin-top:2px">Without Jobs</div></div>
+            <div style="padding:12px;background:var(--gold2);border-radius:var(--r);text-align:center"><div id="ds-co-sub" style="font-size:28px;font-weight:700;font-family:var(--fh);color:var(--gold)">—</div><div style="font-size:11.5px;color:#92400e;margin-top:2px">With Submissions</div></div>
+            <div style="padding:12px;background:var(--pur2);border-radius:var(--r);text-align:center"><div id="ds-co-placed" style="font-size:28px;font-weight:700;font-family:var(--fh);color:var(--pur)">—</div><div style="font-size:11.5px;color:#5b21b6;margin-top:2px">With Placements</div></div>
+          </div>
+        </div>
+        <div class="card"><div class="chd"><span class="ctitle"><i class="ti ti-chart-donut" style="color:var(--acc)"></i>Client Submission by Source</span></div>
+          <div class="cbd"><div class="donut-wrap"><canvas id="donut2" width="110" height="110"></canvas><div class="dl-wrap" id="donut2-legend"><div style="font-size:12px;color:var(--ink5)">No data yet</div></div></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CANDIDATES -->
+  <div class="page" id="page-candidates">
+    <div class="ph">
+      <div class="ph-l">
+        <div class="ph-title">Candidates</div>
+        <div class="ph-cnt" id="cand-cnt">(0) Total</div>
+        <div class="vt"><button class="vt-b active" id="vt-g" onclick="setCandView('grid')"><i class="ti ti-layout-grid"></i></button><button class="vt-b" id="vt-l" onclick="setCandView('list')"><i class="ti ti-list"></i></button></div>
+      </div>
+      <div class="ph-r">
+        <div class="srchbox" style="max-width:260px"><i class="ti ti-search"></i><input type="text" placeholder="Keywords…" oninput="filterCands(this.value)" id="csrch"></div>
+        <button class="btn btn-sm" onclick="toggleFP('cand')"><i class="ti ti-adjustments-horizontal"></i>Advance Search</button>
+        <div class="act-pill">Actions <i class="ti ti-dots"></i></div>
+        <button class="btn btn-sm" onclick="openModal('bulkimport')"><i class="ti ti-table-import"></i>Bulk Import</button>
+        <button class="btn btn-p btn-sm" onclick="openModal('addcand')"><i class="ti ti-user-plus"></i>Add Candidate</button>
+      </div>
+    </div>
+    <!-- AI Key Banner — shows only if key not set -->
+    <div id="ai-key-banner" style="display:none;padding:10px 18px;background:linear-gradient(90deg,#1a2744,#1e3a6a);border-bottom:1px solid rgba(255,255,255,.1);align-items:center;gap:12px">
+      <i class="ti ti-sparkles" style="font-size:18px;color:#34d399;flex-shrink:0"></i>
+      <div style="flex:1">
+        <span style="font-size:13px;font-weight:700;color:#fff">Enable AI Resume Parser</span>
+        <span style="font-size:12px;color:rgba(255,255,255,.5);margin-left:8px">Upload a resume → AI reads it → all fields auto-fill. Add your free API key to activate.</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <input id="banner-ai-key" type="password" placeholder="Paste API key: sk-ant-api03-…" style="padding:7px 11px;border-radius:var(--r);border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:12.5px;outline:none;width:280px;font-family:var(--f)">
+        <button onclick="saveBannerKey()" style="padding:7px 13px;background:var(--grn);border:none;border-radius:var(--r);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap">Save Key</button>
+        <a href="https://console.anthropic.com" target="_blank" style="padding:7px 10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:var(--r);color:rgba(255,255,255,.7);font-size:12px;white-space:nowrap;text-decoration:none">Get free key ↗</a>
+        <i class="ti ti-x" onclick="document.getElementById('ai-key-banner').style.display='none'" style="color:rgba(255,255,255,.4);cursor:pointer;font-size:18px;flex-shrink:0"></i>
+      </div>
+    </div>
+    <div class="pwf">
+      <div class="fp" id="fp-cand">
+        <div class="fp-hd"><span class="fp-hd-title">Filters</span><i class="ti ti-x" style="cursor:pointer;color:var(--ink5)" onclick="toggleFP('cand')"></i></div>
+        <div class="fp-body">
+          <div class="fp-lbl">Source</div><select class="fp-inp" onchange="loadCandidates()"><option value="">Any</option><option>Naukri</option><option>LinkedIn</option><option>Indeed</option><option>Referral</option><option>Career Website</option></select>
+          <div class="fp-lbl">Status</div><select class="fp-inp" onchange="loadCandidates()"><option value="">Any</option><option>Sourced</option><option>Screening</option><option>Interview</option><option>Offered</option><option>Hired</option><option>Rejected</option></select>
+          <div class="fp-lbl">Location</div><input class="fp-inp" placeholder="City, State" oninput="filterCands(this.value)">
+        </div>
+        <div class="fp-foot"><button class="btn btn-p" style="width:100%">Apply</button></div>
+      </div>
+      <div style="flex:1;overflow-y:auto" id="cand-container"><div class="empty"><i class="ti ti-users"></i><p>Loading candidates…</p></div></div>
+    </div>
+  </div>
+
+  <!-- PIPELINE -->
+  <div class="page" id="page-pipeline">
+    <div class="ph">
+      <div class="ph-l">
+        <div class="ph-title">Pipeline</div>
+        <select class="fsel" id="pipe-job-sel" onchange="renderPipeline()"><option value="">All Jobs</option></select>
+      </div>
+      <div class="ph-r">
+        <div class="vt"><button class="vt-b active"><i class="ti ti-layout-kanban"></i></button><button class="vt-b"><i class="ti ti-list"></i></button></div>
+        <div class="act-pill">Actions <i class="ti ti-dots"></i></div>
+      </div>
+    </div>
+    <div id="pipe-summary" style="display:flex;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0"></div>
+    <div class="kanban" id="kanban"><div class="empty" style="grid-column:1/-1"><i class="ti ti-funnel"></i><p>Loading pipeline…</p></div></div>
+  </div>
+
+  <!-- JOBS -->
+  <div class="page" id="page-jobs">
+    <div class="pwf">
+      <div class="fp" id="fp-jobs">
+        <div class="fp-hd"><span class="fp-hd-title">Filters</span><i class="ti ti-x" style="cursor:pointer;color:var(--ink5)" onclick="toggleFP('jobs')"></i></div>
+        <div class="fp-body">
+          <div class="fp-lbl">Job Title</div><input class="fp-inp" placeholder="Title keywords">
+          <div class="fp-lbl">Company</div><input class="fp-inp" placeholder="Company name">
+          <div class="fp-lbl">Location</div><input class="fp-inp" placeholder="City or Remote">
+          <div class="fp-lbl">Hiring Lead</div><select class="fp-inp"><option>Any</option><option>Niharika Srivastava</option><option>Pragati Kharate</option><option>Rinkal Kaur</option><option>Teerath Garg</option></select>
+        </div>
+        <div class="fp-foot"><button class="btn btn-p" style="width:100%">Apply</button></div>
+      </div>
+      <div class="pm">
+        <div class="ph">
+          <div class="ph-l"><div class="ph-title">Jobs</div><div class="ph-cnt" id="jobs-cnt">(0) Total</div></div>
+          <div class="ph-r">
+            <button class="btn btn-sm" onclick="toggleFP('jobs')"><i class="ti ti-adjustments-horizontal"></i>Filters</button>
+            <div class="act-pill">Actions <i class="ti ti-dots"></i></div>
+            <button class="btn btn-p btn-sm" onclick="openModal('addjob')"><i class="ti ti-plus"></i>Post Job</button>
+          </div>
+        </div>
+        <div class="tabs" id="jobs-tabs">
+          <div class="tab active" onclick="setJobTab(this,'Open')">Open</div>
+          <div class="tab" onclick="setJobTab(this,'On Hold')">On Hold</div>
+          <div class="tab" onclick="setJobTab(this,'Cancelled')">Cancelled</div>
+          <div class="tab" onclick="setJobTab(this,'Closed-Lost')">Closed-Lost</div>
+          <div class="tab" onclick="setJobTab(this,'Closed-Won')">Closed-Won</div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th><input type="checkbox" class="cb"></th><th>#</th><th></th><th>Job Title</th><th>Company</th><th>Location</th><th>Type</th><th>Hiring Lead</th><th style="text-align:center">Openings</th><th style="text-align:center">Submitted</th><th style="text-align:center">Hired</th><th style="text-align:center">Remaining</th><th>Published</th></tr></thead>
+            <tbody id="jobs-tbody"><tr><td colspan="13" style="text-align:center;padding:24px;color:var(--ink5)">No jobs yet</td></tr></tbody>
+          </table>
+        </div>
+        <div class="pg" id="jobs-pg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPANIES -->
+  <div class="page" id="page-companies">
+    <div class="ph"><div class="ph-l"><div class="ph-title">Companies</div><div class="ph-cnt" id="cos-cnt">(0) Total</div></div><div class="ph-r"><button class="btn btn-p btn-sm" onclick="openModal('addco')"><i class="ti ti-plus"></i>Add Company</button></div></div>
+    <div style="padding:14px">
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Company</th><th>Industry</th><th>City</th><th>Contact</th><th>Email</th><th>Open Jobs</th><th>Added</th></tr></thead><tbody id="cos-tbody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--ink5)">No companies yet</td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- VENDORS -->
+  <div class="page" id="page-vendors">
+    <div class="ph"><div class="ph-l"><div class="ph-title">Vendors</div></div><div class="ph-r"><button class="btn btn-p btn-sm" onclick="openModal('addvendor')"><i class="ti ti-plus"></i>Add Vendor</button></div></div>
+    <div style="display:flex;align-items:center;justify-content:center;height:60vh"><div class="empty"><i class="ti ti-truck"></i><p>No vendors yet</p><small>Add vendors to track outsourced recruitment partners</small></div></div>
+  </div>
+
+  <!-- CONSULTANTS -->
+  <div class="page" id="page-consultants">
+    <div class="ph"><div class="ph-l"><div class="ph-title">Consultants</div></div><div class="ph-r"><button class="btn btn-p btn-sm"><i class="ti ti-plus"></i>Add Consultant</button></div></div>
+    <div style="display:flex;align-items:center;justify-content:center;height:60vh"><div class="empty"><i class="ti ti-user-check"></i><p>No consultants yet</p><small>Manage external hiring consultants here</small></div></div>
+  </div>
+
+  <!-- INVOICES -->
+  <div class="page" id="page-invoices">
+    <div class="pwf">
+      <div class="fp" id="fp-inv">
+        <div class="fp-hd"><span class="fp-hd-title">Filters</span><i class="ti ti-x" style="cursor:pointer;color:var(--ink5)" onclick="toggleFP('inv')"></i></div>
+        <div class="fp-body">
+          <div class="fp-lbl">Company</div><input class="fp-inp" placeholder="Company name">
+          <div class="fp-lbl">Invoice Status</div><select class="fp-inp"><option>Any</option><option>Draft</option><option>Sent</option><option>Paid</option><option>Overdue</option></select>
+          <div class="fp-lbl">From Date</div><input class="fp-inp" type="date">
+          <div class="fp-lbl">To Date</div><input class="fp-inp" type="date">
+        </div>
+        <div class="fp-foot"><button class="btn btn-p" style="width:100%">Apply</button></div>
+      </div>
+      <div class="pm">
+        <div class="ph"><div class="ph-l"><div class="ph-title">Invoices</div><div class="ph-cnt" id="inv-cnt">(0) Total</div></div><div class="ph-r"><button class="btn btn-sm" onclick="toggleFP('inv')"><i class="ti ti-filter"></i>Filters</button><button class="btn btn-p btn-sm" onclick="openModal('addinv')"><i class="ti ti-plus"></i>Create Invoice</button></div></div>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Invoice</th><th>Company</th><th>Sales Person</th><th>Gross Amount</th><th>Total Amount</th><th>Invoice Date</th><th>Due Date</th><th>Status</th></tr></thead><tbody id="inv-tbody"><tr><td colspan="9" style="text-align:center;padding:24px;color:var(--ink5)">No invoices yet</td></tr></tbody></table></div>
+        <div class="pg" id="inv-pg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div class="page" id="page-users">
+    <div class="ph">
+      <div class="ph-l"><div class="ph-title">Users</div><span style="color:var(--ink5)">|</span><span style="color:var(--acc);cursor:pointer;font-size:13px;font-weight:600">Roles</span><span style="color:var(--ink5)">|</span><span style="color:var(--acc);cursor:pointer;font-size:13px;font-weight:600">Teams</span></div>
+      <div class="ph-r" id="users-add-btn"></div>
+    </div>
+    <div class="tabs"><div class="tab active">Active</div><div class="tab">Inactive</div></div>
+    <div style="padding:14px"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Name</th><th>Email</th><th>Mobile</th><th>Role</th><th>Joined</th></tr></thead><tbody id="users-tbody"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--ink5)">No users yet</td></tr></tbody></table></div></div>
+  </div>
+
+  <!-- REPORTS -->
+  <div class="page" id="page-reports">
+    <div class="ph"><div class="ph-l"><div class="ph-title">Reports</div></div></div>
+    <div class="rep-grid" id="rep-grid"></div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="page" id="page-calendar">
+    <div class="ph"><div class="ph-l"><div class="ph-title">Calendar</div></div><div class="ph-r"><button class="btn btn-p btn-sm"><i class="ti ti-plus"></i>Add Event</button></div></div>
+    <div style="padding:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <button class="btn btn-sm" onclick="calNav(-1)"><i class="ti ti-chevron-left"></i>Prev</button>
+        <div style="font-family:var(--fh);font-size:16px;font-weight:700" id="cal-lbl"></div>
+        <button class="btn btn-sm" onclick="calNav(1)">Next<i class="ti ti-chevron-right"></i></button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+  </div>
+
+  <!-- HOT LIST -->
+  <div class="page" id="page-hotlist">
+    <div class="ph"><div class="ph-l"><div class="ph-title">Hot List</div></div><div class="ph-r"><button class="btn btn-p btn-sm"><i class="ti ti-plus"></i>Add to Hot List</button></div></div>
+    <div style="display:flex;align-items:center;justify-content:center;height:60vh"><div class="empty"><i class="ti ti-flame"></i><p>Hot List is empty</p><small>Add high-priority candidates here for quick access</small></div></div>
+  </div>
+
+  <!-- INTEGRATIONS -->
+  <div class="page" id="page-integrations">
+    <div class="ph"><div class="ph-l"><div class="ph-title">Integrations</div></div></div>
+    <div style="padding:16px" id="int-body"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="ph"><div class="ph-l"><div class="ph-title">Settings</div></div></div>
+    <div class="sett" style="height:calc(100vh - 110px)">
+      <div class="sett-nav">
+        <div class="sn-item active" onclick="setSTab(this)">Account</div>
+        <div class="sn-item" onclick="setSTab(this)">Support Sites</div>
+        <div class="sn-item" onclick="setSTab(this)">Templates</div>
+        <div class="sn-item" onclick="setSTab(this)">Email Setting</div>
+        <div class="sn-item" onclick="setSTab(this)">Notification</div>
+        <div class="sn-item" onclick="setSTab(this)">Masters</div>
+      </div>
+      <div class="sett-body">
+        <!-- AI Key -->
+        <div style="background:linear-gradient(135deg,#0f1929,#1a2744);border-radius:var(--rl);padding:18px 20px;margin-bottom:20px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <i class="ti ti-sparkles" style="font-size:20px;color:#34d399"></i>
+            <div style="font-family:var(--fh);font-size:15px;font-weight:700;color:#fff">AI Candidate Matching</div>
+            <span id="ai-status-badge" style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;background:#fee2e2;color:#991b1b">Not Configured</span>
+          </div>
+          <div style="font-size:12.5px;color:rgba(255,255,255,.5);margin-bottom:14px">When you post a job, AI instantly scans all candidates and suggests best matches with match score.</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <input id="ai-key-input" type="password" placeholder="sk-ant-api03-…" style="flex:1;padding:9px 12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:var(--r);color:#fff;font-size:13px;outline:none;font-family:var(--f)">
+            <button onclick="saveAIKey()" style="padding:9px 16px;background:var(--grn);border:none;border-radius:var(--r);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer">Save Key</button>
+          </div>
+          <div style="font-size:11.5px;color:rgba(255,255,255,.35)">Get free key at <span style="color:#93c5fd;cursor:pointer" onclick="window.open('https://console.anthropic.com','_blank')">console.anthropic.com</span> → API Keys → Create Key</div>
+        </div>
+        <div id="ai-test-section" style="display:none;margin-bottom:20px;padding:14px 16px;background:var(--grn2);border:1px solid #86efac;border-radius:var(--rl)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><i class="ti ti-check-circle" style="font-size:18px;color:var(--grn)"></i><div style="font-size:13px;font-weight:700;color:#065f46">AI Matching Active!</div></div>
+          <div style="font-size:12.5px;color:#065f46">Post a job → fill required skills → AI will suggest best matching candidates automatically.</div>
+        </div>
+        <!-- Account Settings -->
+        <div class="si"><div><div class="si-title">Edit Profile</div><div class="si-desc">Account is different from user profile. One account can have multiple users. Only admin can edit account details.</div></div><span class="si-edit">Edit</span></div>
+        <div class="si"><div><div class="si-title">Account Profile</div><div class="si-desc">View and manage your user details. Update name, contact details and time zone.</div></div><span class="si-edit">Edit</span></div>
+        <div class="si"><div><div class="si-title">Time Zone</div><div class="si-desc">Helps you manage your work time zone.</div></div><span class="si-edit">Edit</span></div>
+        <div class="si"><div><div class="si-title">Change Password</div><div class="si-desc">Update your account login password.</div></div><span class="si-edit" onclick="openModal('changepass')">Edit</span></div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+</div><!-- /app-screen -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Add New -->
+<div class="modal-bg" id="modal-addnew">
+  <div class="modal" style="max-width:400px">
+    <div class="mhd"><h2><i class="ti ti-plus"></i>Add New</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('addnew')"><i class="ti ti-x"></i></button></div>
+    <div class="mbd" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:none;padding:14px">
+      <button class="btn" style="justify-content:flex-start;gap:8px;padding:10px 12px" onclick="closeModal('addnew');openModal('addcand')"><i class="ti ti-user-plus" style="color:var(--acc)"></i>Candidate</button>
+      <button class="btn" style="justify-content:flex-start;gap:8px;padding:10px 12px" onclick="closeModal('addnew');openModal('addjob')"><i class="ti ti-briefcase" style="color:var(--grn)"></i>Job</button>
+      <button class="btn" style="justify-content:flex-start;gap:8px;padding:10px 12px" onclick="closeModal('addnew');openModal('addco')"><i class="ti ti-building" style="color:var(--pur)"></i>Company</button>
+      <button class="btn" style="justify-content:flex-start;gap:8px;padding:10px 12px" onclick="closeModal('addnew');openModal('addinv')"><i class="ti ti-receipt" style="color:var(--gold)"></i>Invoice</button>
+      <button class="btn" style="justify-content:flex-start;gap:8px;padding:10px 12px" onclick="closeModal('addnew');openModal('adduser')"><i class="ti ti-user-circle" style="color:var(--sky)"></i>User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Import Modal -->
+<div class="modal-bg" id="modal-bulkimport">
+  <div class="modal modal-xl">
+    <div class="mhd">
+      <h2><i class="ti ti-files"></i>Bulk Resume Upload — AI Auto-Fill</h2>
+      <button class="btn btn-ghost btn-xs" onclick="closeModal('bulkimport');resetBulkResume()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="mbd" style="padding:0;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">
+
+      <!-- Info bar -->
+      <div style="padding:12px 18px;background:linear-gradient(90deg,#0f1929,#1a2744);display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <i class="ti ti-sparkles" style="color:#34d399;font-size:18px;flex-shrink:0"></i>
+        <div style="font-size:12.5px;color:rgba(255,255,255,.7)">Upload multiple resumes at once — AI reads each one and saves all candidates automatically</div>
+        <span id="br-ai-badge" style="margin-left:auto;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#fee2e2;color:#991b1b;white-space:nowrap;flex-shrink:0">AI Key Needed</span>
+      </div>
+
+      <!-- Upload zone -->
+      <div style="padding:18px;flex-shrink:0">
+        <div id="br-dropzone"
+          ondragover="brDrag(event)" ondragleave="brOff()" ondrop="brDrop(event)"
+          style="border:2px dashed var(--border2);border-radius:var(--rl);padding:28px 20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg3);position:relative">
+          <input type="file" id="br-file" accept=".pdf,.doc,.docx" multiple style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="brFilesSelected(event)">
+          <i class="ti ti-file-upload" style="font-size:44px;color:var(--ink6);display:block;margin-bottom:10px"></i>
+          <div style="font-size:15px;font-weight:700;color:var(--ink2)">Drop multiple resumes here or click to browse</div>
+          <div style="font-size:12.5px;color:var(--ink5);margin-top:5px">Select multiple PDF, DOC or DOCX files at once</div>
+          <div style="margin-top:12px;display:inline-flex;gap:8px">
+            <span style="padding:3px 9px;background:var(--bg4);border-radius:4px;font-size:12px;color:var(--ink4);font-weight:600">PDF</span>
+            <span style="padding:3px 9px;background:var(--bg4);border-radius:4px;font-size:12px;color:var(--ink4);font-weight:600">DOC</span>
+            <span style="padding:3px 9px;background:var(--bg4);border-radius:4px;font-size:12px;color:var(--ink4);font-weight:600">DOCX</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- File list + progress -->
+      <div style="flex:1;overflow-y:auto;padding:0 18px 18px" id="br-list-container" style="display:none">
+        <!-- Summary stats -->
+        <div id="br-stats" style="display:none;margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap">
+          <div style="padding:8px 14px;background:var(--bg3);border-radius:var(--r);font-size:12.5px"><span id="br-total" style="font-weight:700;color:var(--ink)">0</span> <span style="color:var(--ink5)">Total</span></div>
+          <div style="padding:8px 14px;background:var(--grn2);border-radius:var(--r);font-size:12.5px"><span id="br-done" style="font-weight:700;color:var(--grn)">0</span> <span style="color:#065f46">Saved</span></div>
+          <div style="padding:8px 14px;background:var(--gold2);border-radius:var(--r);font-size:12.5px"><span id="br-processing" style="font-weight:700;color:var(--gold)">0</span> <span style="color:#92400e">Processing</span></div>
+          <div style="padding:8px 14px;background:var(--red2);border-radius:var(--r);font-size:12.5px"><span id="br-failed" style="font-weight:700;color:var(--red)">0</span> <span style="color:#991b1b">Failed</span></div>
+          <!-- Overall progress -->
+          <div style="flex:1;min-width:200px;display:flex;align-items:center;gap:8px">
+            <div style="flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden">
+              <div id="br-overall-bar" style="height:100%;background:var(--acc);border-radius:4px;transition:width .4s;width:0%"></div>
+            </div>
+            <span id="br-overall-pct" style="font-size:12px;font-weight:700;color:var(--ink);flex-shrink:0">0%</span>
+          </div>
+        </div>
+
+        <!-- Individual file cards -->
+        <div id="br-file-cards" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+    </div>
+
+    <div class="mft">
+      <button class="btn" onclick="closeModal('bulkimport');resetBulkResume()">Cancel</button>
+      <button class="btn btn-p" id="br-start-btn" style="display:none" onclick="startBulkResumeImport()"><i class="ti ti-rocket"></i>Start AI Import</button>
+      <button class="btn btn-grn" id="br-done-btn" style="display:none" onclick="closeModal('bulkimport');resetBulkResume();loadCandidates()"><i class="ti ti-check"></i>Done — View Candidates</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Candidate — Resume Parser First -->
+<div class="modal-bg" id="modal-addcand">
+  <div class="modal modal-xl">
+    <div class="mhd">
+      <h2><i class="ti ti-user-plus"></i>Add Candidate</h2>
+      <button class="btn btn-ghost btn-xs" onclick="closeModal('addcand')"><i class="ti ti-x"></i></button>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;border-bottom:1px solid var(--border);background:#fff;padding:0 18px;flex-shrink:0">
+      <div id="ctab-resume" onclick="switchCandTab('resume')" style="padding:10px 14px;font-size:13px;font-weight:600;color:var(--acc);border-bottom:2px solid var(--acc);margin-bottom:-1px;cursor:pointer;display:flex;align-items:center;gap:6px"><i class="ti ti-file-upload" style="font-size:14px"></i>Upload Resume <span style="font-size:10px;background:var(--grn);color:#fff;padding:1px 6px;border-radius:10px;font-weight:700">AUTO-FILL</span></div>
+      <div id="ctab-manual" onclick="switchCandTab('manual')" style="padding:10px 14px;font-size:13px;color:var(--ink4);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px">Manual Entry</div>
+    </div>
+
+    <div class="mbd" id="cand-modal-body">
+
+      <!-- ══ RESUME TAB ══ -->
+      <div id="ctp-resume">
+
+        <!-- Step 1: Upload Zone -->
+        <div id="parse-step1">
+          <div style="font-size:12.5px;color:var(--ink4);margin-bottom:12px;padding:10px 12px;background:var(--acc3);border-radius:var(--r);display:flex;align-items:center;gap:8px">
+            <i class="ti ti-sparkles" style="color:var(--acc);font-size:16px;flex-shrink:0"></i>
+            Upload any resume — AI reads it and fills all fields automatically.
+          </div>
+          <div id="parse-dz" onclick="document.getElementById('parse-file').click()"
+            ondragover="parseDrag(event)" ondragleave="parseOff()" ondrop="parseDrop(event)"
+            style="border:2px dashed var(--border2);border-radius:var(--rl);padding:32px 20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg3)">
+            <input type="file" id="parse-file" accept=".pdf,.doc,.docx" style="display:none" onchange="startParse(event)">
+            <i class="ti ti-file-upload" style="font-size:44px;color:var(--ink6);display:block;margin-bottom:10px"></i>
+            <div style="font-size:15px;font-weight:700;color:var(--ink2)">Drop resume here or click to browse</div>
+            <div style="font-size:12.5px;color:var(--ink5);margin-top:5px">PDF, DOC, DOCX — AI extracts all details automatically</div>
+          </div>
+          <!-- Progress -->
+          <div id="parse-progress" style="display:none;margin-top:14px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+              <div style="width:14px;height:14px;border:2px solid var(--acc3);border-top-color:var(--acc);border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0"></div>
+              <div style="font-size:13px;font-weight:600;color:var(--ink)" id="parse-prog-lbl">Reading resume…</div>
+            </div>
+            <div style="height:5px;background:var(--bg4);border-radius:3px;overflow:hidden">
+              <div id="parse-prog-bar" style="height:100%;background:var(--acc);border-radius:3px;transition:width .4s;width:0%"></div>
+            </div>
+          </div>
+          <!-- No AI key warning -->
+          <div id="parse-nokey-warn" style="display:none;margin-top:10px;padding:10px 13px;background:#f0fdf4;border:1px solid #86efac;border-radius:var(--r);font-size:12px;color:#065f46">
+            <i class="ti ti-sparkles" style="color:var(--grn)"></i> Works without AI key using PDF.js &amp; Mammoth. Add AI key in Settings for better accuracy.
+          </div>
+        </div>
+
+        <!-- Step 2: Parsed form -->
+        <div id="parse-step2" style="display:none">
+          <!-- Success banner -->
+          <div style="background:var(--grn2);border:1px solid #86efac;border-radius:var(--r);padding:9px 13px;margin-bottom:14px;display:flex;align-items:center;gap:9px">
+            <i class="ti ti-check-circle" style="font-size:16px;color:var(--grn);flex-shrink:0"></i>
+            <div style="font-size:12.5px;font-weight:600;color:#065f46;flex:1">Resume parsed! Review fields and click Save.</div>
+            <div id="parse-file-name" style="font-size:11px;color:#065f46;background:rgba(16,185,129,.15);padding:2px 8px;border-radius:10px"></div>
+          </div>
+
+          <!-- Basic Info -->
+          <div class="fr"><div class="field"><label>First Name *</label><input id="pf-fn" type="text"></div><div class="field"><label>Last Name *</label><input id="pf-ln" type="text"></div></div>
+          <div class="fr"><div class="field"><label>Email *</label><input id="pf-em" type="email"></div><div class="field"><label>Mobile Number</label><input id="pf-ph" type="tel"></div></div>
+          <div class="fr"><div class="field"><label>Current Designation</label><input id="pf-title" type="text"></div><div class="field"><label>Current Company</label><input id="pf-co" type="text"></div></div>
+          <div class="fr"><div class="field"><label>Total Experience (Years)</label><input id="pf-exp" type="number" min="0"></div><div class="field"><label>Current CTC (INR)</label><input id="pf-ctc" type="text"></div></div>
+          <div class="fr">
+            <div class="field"><label>Location</label><input id="pf-loc" type="text"></div>
+            <div class="field"><label>Source</label>
+              <select id="pf-src"><option>Naukri</option><option>LinkedIn</option><option>Indeed</option><option>Referral</option><option>Career Website</option><option>Other</option></select>
+            </div>
+          </div>
+
+          <!-- Skills as Tags -->
+          <div class="field">
+            <label>Skills <span style="font-size:10px;color:var(--ink5);font-weight:400;text-transform:none">— click × to remove · type to add</span></label>
+            <div id="pf-skills-tags" onclick="document.getElementById('pf-skills-inp').focus()"
+              style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);min-height:42px;background:#fff;cursor:text"></div>
+            <div style="display:flex;gap:6px;margin-top:5px">
+              <input id="pf-skills-inp" type="text" placeholder="Type skill and press Enter…"
+                style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12.5px;outline:none"
+                onkeydown="if(event.key==='Enter'||event.key===','){event.preventDefault();pfAddSkillFromInput();}">
+              <button type="button" onclick="pfAddSkillFromInput()" style="padding:6px 12px;background:var(--acc3);border:1px solid var(--acc);border-radius:var(--r);color:var(--acc);font-size:12px;font-weight:600;cursor:pointer">Add</button>
+            </div>
+            <input type="hidden" id="pf-skills">
+          </div>
+
+          <!-- Industry & Functional Area Section -->
+          <div style="border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin:4px 0">
+            <div style="background:var(--bg3);padding:8px 13px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink4);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px">
+              <i class="ti ti-building"></i> Industry & Functional Details
+            </div>
+            <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="field">
+                <label>Industry</label>
+                <select id="pf-industry">
+                  <option value="">-- Select Industry --</option>
+                  <option>Technology / IT</option><option>FMCG</option><option>Healthcare / Pharma</option>
+                  <option>Manufacturing</option><option>Retail / Fashion</option><option>Finance / BFSI</option>
+                  <option>Consulting</option><option>Education</option><option>Hospitality / Hotels</option>
+                  <option>Logistics / Supply Chain</option><option>Real Estate</option><option>Media / Advertising</option>
+                  <option>Automobile</option><option>Telecom</option><option>Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Functional Area</label>
+                <select id="pf-funcarea">
+                  <option value="">-- Select Area --</option>
+                  <option>Sales & Business Development</option><option>Marketing & Communications</option>
+                  <option>Human Resources</option><option>Finance & Accounts</option>
+                  <option>Operations & Supply Chain</option><option>IT & Software</option>
+                  <option>Customer Service</option><option>Production & Manufacturing</option>
+                  <option>Retail & Store Management</option><option>Admin & Back Office</option>
+                  <option>Legal & Compliance</option><option>Design & Creative</option>
+                  <option>Top Management</option><option>Other</option>
+                </select>
+              </div>
+              <div class="field" style="grid-column:1/-1">
+                <label>Apply for Job <span style="font-size:10px;color:var(--ink5);font-weight:400;text-transform:none">(link this candidate to a specific job opening)</span></label>
+                <select id="pf-job" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none;background:#fff">
+                  <option value="">-- Select Job (Optional) --</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="field"><label>Education</label><input id="pf-edu" type="text"></div>
+          <div class="field"><label>Notes / Summary</label><textarea id="pf-notes" rows="2"></textarea></div>
+
+          <!-- Resume file info -->
+          <div style="display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--grn2);border:1px solid #86efac;border-radius:var(--r)">
+            <i class="ti ti-file-text" style="font-size:18px;color:var(--grn);flex-shrink:0"></i>
+            <div style="flex:1">
+              <div style="font-size:12.5px;font-weight:700;color:var(--ink)" id="pf-fname">—</div>
+              <div style="font-size:11px;color:var(--ink5)" id="pf-fsize">Will upload on save</div>
+            </div>
+            <button onclick="resetParser()" style="background:none;border:none;cursor:pointer;color:var(--ink4);font-size:12px;display:flex;align-items:center;gap:4px"><i class="ti ti-refresh"></i>Change file</button>
+          </div>
+        </div>
+
+      </div><!-- /ctp-resume -->
+
+      <!-- ══ MANUAL TAB ══ -->
+      <div id="ctp-manual" style="display:none">
+        <div class="fr"><div class="field"><label>First Name *</label><input id="af-fn" type="text" placeholder="First name"></div><div class="field"><label>Last Name *</label><input id="af-ln" type="text" placeholder="Last name"></div></div>
+        <div class="fr"><div class="field"><label>Email *</label><input id="af-em" type="email" placeholder="email@example.com"></div><div class="field"><label>Mobile Number</label><input id="af-ph" type="tel" placeholder="+91 98765 43210"></div></div>
+        <div class="fr"><div class="field"><label>Current Designation</label><input id="af-title" type="text" placeholder="e.g. Senior Sales Manager"></div><div class="field"><label>Current Company</label><input id="af-co" type="text" placeholder="Company name"></div></div>
+        <div class="fr"><div class="field"><label>Total Experience (years)</label><input id="af-exp" type="number" min="0" placeholder="4"></div><div class="field"><label>Current CTC (INR)</label><input id="af-ctc" type="text" placeholder="500000"></div></div>
+        <div class="fr"><div class="field"><label>Location</label><input id="af-loc" type="text" placeholder="City"></div><div class="field"><label>Source</label><select id="af-src"><option>Naukri</option><option>LinkedIn</option><option>Indeed</option><option>Referral</option><option>Career Website</option><option>Other</option></select></div></div>
+
+        <!-- Skills as Tags (manual) -->
+        <div class="field">
+          <label>Skills <span style="font-size:10px;color:var(--ink5);font-weight:400;text-transform:none">— type and press Enter to add</span></label>
+          <div id="af-skills-tags" onclick="document.getElementById('af-skills-inp').focus()"
+            style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);min-height:42px;background:#fff;cursor:text"></div>
+          <div style="display:flex;gap:6px;margin-top:5px">
+            <input id="af-skills-inp" type="text" placeholder="Type skill and press Enter…"
+              style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12.5px;outline:none"
+              onkeydown="if(event.key==='Enter'||event.key===','){event.preventDefault();afAddSkillFromInput();}">
+            <button type="button" onclick="afAddSkillFromInput()" style="padding:6px 12px;background:var(--acc3);border:1px solid var(--acc);border-radius:var(--r);color:var(--acc);font-size:12px;font-weight:600;cursor:pointer">Add</button>
+          </div>
+          <input type="hidden" id="af-skills">
+        </div>
+
+        <!-- Industry & Functional Area -->
+        <div style="border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin:4px 0">
+          <div style="background:var(--bg3);padding:8px 13px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink4);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px">
+            <i class="ti ti-building"></i> Industry & Functional Details
+          </div>
+          <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="field">
+              <label>Industry</label>
+              <select id="af-industry">
+                <option value="">-- Select Industry --</option>
+                <option>Technology / IT</option><option>FMCG</option><option>Healthcare / Pharma</option>
+                <option>Manufacturing</option><option>Retail / Fashion</option><option>Finance / BFSI</option>
+                <option>Consulting</option><option>Education</option><option>Hospitality / Hotels</option>
+                <option>Logistics / Supply Chain</option><option>Real Estate</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Functional Area</label>
+              <select id="af-funcarea">
+                <option value="">-- Select Area --</option>
+                <option>Sales & Business Development</option><option>Marketing & Communications</option>
+                <option>Human Resources</option><option>Finance & Accounts</option>
+                <option>Operations & Supply Chain</option><option>IT & Software</option>
+                <option>Customer Service</option><option>Production & Manufacturing</option>
+                <option>Retail & Store Management</option><option>Admin & Back Office</option>
+                <option>Legal & Compliance</option><option>Design & Creative</option>
+                <option>Top Management</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field" style="grid-column:1/-1">
+              <label>Apply for Job</label>
+              <select id="af-job" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none;background:#fff">
+                <option value="">-- Select Job (Optional) --</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field"><label>Notes</label><textarea id="af-notes" rows="2" placeholder="Initial recruiter notes…"></textarea></div>
+
+        <!-- Resume attach -->
+        <div class="field"><label>Attach Resume (optional)</label>
+          <div id="resume-dz" onclick="document.getElementById('af-resume').click()" ondragover="rzDrag(event)" ondragleave="rzOff()" ondrop="rzDrop(event)"
+            style="border:2px dashed var(--border2);border-radius:var(--rl);padding:14px;text-align:center;cursor:pointer;background:var(--bg3)">
+            <input type="file" id="af-resume" accept=".pdf,.doc,.docx" style="display:none" onchange="resumeFileSelected(event)">
+            <i class="ti ti-file-upload" style="font-size:24px;color:var(--ink6);display:block;margin-bottom:4px"></i>
+            <div style="font-size:12.5px;font-weight:600;color:var(--ink3)" id="resume-dz-lbl">Click to attach resume</div>
+          </div>
+          <div id="resume-pill" style="display:none;align-items:center;gap:9px;padding:8px 12px;background:var(--grn2);border:1px solid #86efac;border-radius:var(--r);margin-top:5px">
+            <i class="ti ti-file-text" style="font-size:16px;color:var(--grn);flex-shrink:0"></i>
+            <div style="flex:1;font-size:12.5px;font-weight:600;color:var(--ink)" id="resume-pill-name">—</div>
+            <button onclick="clearResume()" style="background:none;border:none;cursor:pointer;color:var(--ink4)"><i class="ti ti-x"></i></button>
+          </div>
+        </div>
+      </div><!-- /ctp-manual -->
+
+    </div><!-- /mbd -->
+
+    <div class="mft">
+      <button class="btn" onclick="closeModal('addcand')">Cancel</button>
+      <button class="btn btn-p" id="save-cand-btn" onclick="saveCandidate()"><i class="ti ti-check"></i>Save Candidate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Job + AI Match -->
+<div class="modal-bg" id="modal-addjob">
+  <div class="modal modal-xl">
+    <div class="mhd"><h2><i class="ti ti-briefcase"></i>Post New Job</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('addjob')"><i class="ti ti-x"></i></button></div>
+    <div class="mbd">
+      <div class="fr">
+        <div class="field"><label>Job Title *</label><input id="jf-title" type="text" placeholder="e.g. Sales Manager"></div>
+        <div class="field">
+          <label>Company * <span style="font-size:10px;color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(select from saved companies)</span></label>
+          <div style="display:flex;gap:6px">
+            <select id="jf-co-sel" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none;background:#fff">
+              <option value="">-- Select Company --</option>
+            </select>
+            <button onclick="openModal('addco')" style="padding:8px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:13px;color:var(--ink3);white-space:nowrap" title="Add new company"><i class="ti ti-plus"></i></button>
+          </div>
+          <div style="font-size:11px;color:var(--ink5);margin-top:3px">Company not in list? Click <b>+</b> to add it first.</div>
+        </div>
+      </div>
+      <div class="fr">
+        <div class="field"><label>Location</label><input id="jf-loc" type="text" placeholder="City, State, Country"></div>
+        <div class="field"><label>Employment Type</label><select id="jf-type"><option>Full Time</option><option>Part Time</option><option>Contract</option><option>Internship</option></select></div>
+      </div>
+      <div class="fr">
+        <div class="field"><label>No. of Openings</label><input id="jf-open" type="number" min="1" value="1"></div>
+        <div class="field"><label>Hiring Lead</label><select id="jf-lead"><option>Niharika Srivastava</option><option>Pragati Kharate</option><option>Rinkal Kaur</option><option>Teerath Garg</option></select></div>
+      </div>
+      <div class="fr">
+        <div class="field"><label>Required Skills *</label><input id="jf-skills" type="text" placeholder="Sales, B2B, CRM, FMCG…"></div>
+        <div class="field"><label>Industry</label><input id="jf-ind" type="text" placeholder="e.g. FMCG, Healthcare, IT"></div>
+      </div>
+      <div class="field"><label>Job Description</label><textarea id="jf-desc" rows="3" placeholder="Role responsibilities and requirements…"></textarea></div>
+      <div class="info-box ib-blue"><i class="ti ti-sparkles" style="font-size:17px;flex-shrink:0"></i><div><strong>AI Matching is ON</strong> — After posting, AI will scan all candidates and suggest best matches for this role.</div></div>
+    </div>
+    <div class="mft"><button class="btn" onclick="closeModal('addjob')">Cancel</button><button class="btn btn-p" id="save-job-btn" onclick="saveJob()"><i class="ti ti-rocket"></i>Post Job & Find Matches</button></div>
+  </div>
+</div>
+
+<!-- AI Match Results -->
+<div class="modal-bg" id="modal-ai-match">
+  <div class="modal modal-lg">
+    <div class="mhd"><h2><i class="ti ti-sparkles" style="color:#34d399"></i>Job Posted — AI Matching</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('ai-match')"><i class="ti ti-x"></i></button></div>
+    <div class="mbd" style="padding:0">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--ink4)">Job posted. AI is finding best matching candidates…</div>
+      <div class="ai-panel" style="border-radius:0">
+        <div class="ai-panel-hd"><i class="ti ti-robot"></i><div><div class="ai-title">AI Match Results</div><div class="ai-sub" id="ai-match-sub">Analysing…</div></div></div>
+        <div class="ai-cards" id="ai-match-body"><div class="ai-thinking"><div class="spinner"></div>Scanning candidates…</div></div>
+      </div>
+    </div>
+    <div class="mft"><button class="btn" onclick="closeModal('ai-match')">Close</button><button class="btn btn-p" onclick="closeModal('ai-match');navTo('pipeline')"><i class="ti ti-funnel"></i>Open Pipeline</button></div>
+  </div>
+</div>
+
+<!-- Add Company -->
+<div class="modal-bg" id="modal-addco">
+  <div class="modal modal-lg">
+    <div class="mhd"><h2><i class="ti ti-building"></i>Add Company</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('addco')"><i class="ti ti-x"></i></button></div>
+    <div class="mbd">
+      <div class="field"><label>Company Name *</label><input id="cf-name" type="text" placeholder="e.g. Timezone Entertainment Pvt. Ltd."></div>
+      <div class="fr">
+        <div class="field"><label>Industry</label><select id="cf-ind"><option>Technology</option><option>FMCG</option><option>Healthcare</option><option>Manufacturing</option><option>Retail</option><option>Finance / BFSI</option><option>Consulting</option><option>Education</option><option>Hospitality</option><option>Pharma</option><option>Logistics</option><option>Real Estate</option><option>Other</option></select></div>
+        <div class="field"><label>GST Number</label><input id="cf-gst" type="text" placeholder="e.g. 27AAPFU0939F1ZV" style="text-transform:uppercase" maxlength="15"></div>
+      </div>
+      <div class="fr">
+        <div class="field"><label>Contact Person *</label><input id="cf-ct" type="text" placeholder="Primary contact name"></div>
+        <div class="field"><label>Designation</label><input id="cf-desig" type="text" placeholder="e.g. HR Manager, Director"></div>
+      </div>
+      <div class="fr">
+        <div class="field"><label>Contact Email</label><input id="cf-em" type="email" placeholder="contact@company.com"></div>
+        <div class="field"><label>Phone</label><input id="cf-ph" type="tel" placeholder="+91 XXXXX XXXXX"></div>
+      </div>
+      <div class="fr">
+        <div class="field"><label>City</label><input id="cf-city" type="text" placeholder="Mumbai"></div>
+        <div class="field"><label>State</label><input id="cf-state" type="text" placeholder="Maharashtra"></div>
+      </div>
+      <div class="field"><label>Notes / Requirements</label><textarea id="cf-notes" rows="2" placeholder="Company notes, hiring requirements…"></textarea></div>
+    </div>
+    <div class="mft"><button class="btn" onclick="closeModal('addco')">Cancel</button><button class="btn btn-p" id="save-co-btn" onclick="saveCompany()"><i class="ti ti-check"></i>Save Company</button></div>
+  </div>
+</div>
+
+<!-- Create Invoice -->
+<div class="modal-bg" id="modal-addinv">
+  <div class="modal modal-lg">
+    <div class="mhd"><h2><i class="ti ti-receipt"></i>Create Invoice</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('addinv')"><i class="ti ti-x"></i></button></div>
+    <div class="mbd">
+      <div class="fr"><div class="field"><label>Company *</label><input id="inv-co" type="text" placeholder="Client company"></div><div class="field"><label>Sales Person</label><select id="inv-sp"><option>N/A</option><option>Teerath Garg</option><option>Niharika Srivastava</option><option>Pragati Kharate</option><option>Rinkal Kaur</option></select></div></div>
+      <div class="fr"><div class="field"><label>Gross Amount (₹) *</label><input id="inv-gross" type="number" min="0" placeholder="0"></div><div class="field"><label>GST %</label><select id="inv-gst"><option value="18">18%</option><option value="0">0%</option><option value="12">12%</option></select></div></div>
+      <div class="fr"><div class="field"><label>Invoice Date *</label><input id="inv-date" type="date"></div><div class="field"><label>Due Date *</label><input id="inv-due" type="date"></div></div>
+      <div class="field"><label>Description</label><textarea id="inv-desc" rows="2" placeholder="Recruitment services for…"></textarea></div>
+    </div>
+    <div class="mft"><button class="btn" onclick="closeModal('addinv')">Cancel</button><button class="btn btn-p" id="save-inv-btn" onclick="saveInvoice()"><i class="ti ti-check"></i>Create Invoice</button></div>
+  </div>
+</div>
+
+<!-- Add User (Admin only) -->
+<div class="modal-bg" id="modal-adduser">
+  <div class="modal">
+    <div class="mhd"><h2><i class="ti ti-user-plus"></i>Add User</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('adduser')"><i class="ti ti-x"></i></button></div>
+    <div class="mbd">
+      <div class="fr"><div class="field"><label>Full Name *</label><input id="uf-name" type="text" placeholder="Full name"></div><div class="field"><label>Email *</label><input id="uf-email" type="email" placeholder="email@company.com"></div></div>
+      <div class="fr"><div class="field"><label>Password *</label><input id="uf-pass" type="password" placeholder="Min 6 characters"></div><div class="field"><label>Role</label><select id="uf-role"><option value="recruiter">Recruiter</option><option value="admin">Admin</option><option value="viewer">Viewer</option></select></div></div>
+      <div class="field"><label>Mobile</label><input id="uf-mob" type="tel" placeholder="+91 XXXXX XXXXX"></div>
+    </div>
+    <div class="mft"><button class="btn" onclick="closeModal('adduser')">Cancel</button><button class="btn btn-p" id="save-user-btn" onclick="saveUser()"><i class="ti ti-check"></i>Add User</button></div>
+  </div>
+</div>
+
+<!-- Change Password -->
+<div class="modal-bg" id="modal-changepass">
+  <div class="modal">
+    <div class="mhd"><h2><i class="ti ti-lock"></i>Change Password</h2><button class="btn btn-ghost btn-xs" onclick="closeModal('changepass')"><i class="ti ti-x"></i></button></div>
+    <div class="mbd">
+      <div class="field"><label>New Password *</label><input id="cp-pass" type="password" placeholder="Min 6 characters"></div>
+      <div class="field"><label>Confirm Password *</label><input id="cp-conf" type="password" placeholder="Repeat password"></div>
+    </div>
+    <div class="mft"><button class="btn" onclick="closeModal('changepass')">Cancel</button><button class="btn btn-p" onclick="changePassword()"><i class="ti ti-check"></i>Update Password</button></div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   SUPABASE INIT
+═══════════════════════════════════════ */
+/* ════════════════════════════════════
+   ZYROHR — LOCAL DATABASE (localStorage)
+   Zero loading, works everywhere instantly
+════════════════════════════════════ */
+const DB={
+  get(t){try{return JSON.parse(localStorage.getItem('z_'+t)||'[]');}catch(e){return[];}},
+  set(t,d){localStorage.setItem('z_'+t,JSON.stringify(d));},
+  insert(t,row){
+    const rows=this.get(t);
+    row.id=row.id||('z'+Date.now()+Math.random().toString(36).slice(2,6));
+    row.created_at=row.created_at||new Date().toISOString();
+    rows.push(row); this.set(t,rows); return {data:[row],error:null};
+  },
+  update(t,id,u){
+    const rows=this.get(t).map(r=>r.id===id?{...r,...u}:r);
+    this.set(t,rows); return {data:null,error:null};
+  },
+  delete(t,id){this.set(t,this.get(t).filter(r=>r.id!==id));return {error:null};},
+  nextInv(){
+    const n=(parseInt(localStorage.getItem('z_inv_n')||'0'))+1;
+    localStorage.setItem('z_inv_n',n);
+    const y=new Date().getFullYear()%100;
+    return 'REF'+y+'-'+(y+1)+'/'+String(n).padStart(3,'0');
+  }
+};
+const sb={auth:{
+  getSession:async()=>{try{const s=localStorage.getItem('z_sess');return s?{data:{session:JSON.parse(s)}}:{data:{session:null}};}catch(e){return{data:{session:null}};}},
+  signInWithPassword:async({email,password})=>{
+    if(password!=='zyrohr2024'&&password!=='admin')return{data:{user:null},error:{message:'Wrong password. Use: zyrohr2024'}};
+    const user={email,id:'u_'+email};
+    localStorage.setItem('z_sess',JSON.stringify({user}));
+    return{data:{user},error:null};
+  },
+  signUp:async({email})=>{const user={email,id:'u_'+email};return{data:{user,session:{user}},error:null};},
+  signOut:async()=>{localStorage.removeItem('z_sess');return{};}
+}};
+
+/* ═══════════════════════════════════════
+   APP STATE
+═══════════════════════════════════════ */
+const AVCOLS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
+const STAGES=['Sourced','Screening','Interview','Offered','Hired','Rejected'];
+const STAGE_COLS={Sourced:'#3b82f6',Screening:'#f59e0b',Interview:'#8b5cf6',Offered:'#10b981',Hired:'#059669',Rejected:'#ef4444'};
+const REPORTS_DATA=[
+  {cat:'Candidate',icon:'ti-users',items:['Candidates By Source','Client Submission By Source','Hired by Source','Hired Candidates Data','Text Report','Upcoming Interviews','Interview Schedule']},
+  {cat:'Job',icon:'ti-briefcase',items:['Job Activity Report','Job Performance Report','Job Timeline Report','Jobs without Activity','Open Jobs by Age']},
+  {cat:'Company',icon:'ti-building',items:['Closed Jobs by Company','Hired by Company','New Jobs by Company','Revenue By Client','Submissions by Company']},
+  {cat:'Lead',icon:'ti-user-plus',items:['Active Leads with Aging','Closed Leads with Aging','Leads by Owner','Leads by Source','Leads by Status']},
+  {cat:'Opportunity',icon:'ti-rocket',items:['Active Opportunity with Aging','Opportunity by Company','Opportunity by Owner','Opportunity by Status']},
+  {cat:'Recruiter & Sales',icon:'ti-user-star',items:['Candidate Sourced by Recruiter','Hired by Recruiter','Hired by Sales Representative','Submission by Recruiter','Daywise Login Usage Report']},
+  {cat:'Vendor',icon:'ti-truck',items:['Hired by Vendor','Submission by Vendor']},
+  {cat:'Career',icon:'ti-world',items:['Applications By Career Website','Client Submissions By Career Website','Hired By Career Website']},
+  {cat:'Consultant',icon:'ti-user-check',items:['Consultant by Company','Consultant by Recruiter','Consultant Contracts Being Expired']},
+];
+const INTEGRATIONS=[
+  {cat:'Google Apps',items:[{n:'Google Chrome',t:'Plugin',inst:true,ico:'ti-brand-chrome',c:'#4285F4'},{n:'Google Calendar',t:'Application',inst:false,ico:'ti-calendar',c:'#34A853'},{n:'Google Drive',t:'Application',inst:false,ico:'ti-brand-google-drive',c:'#FBBC05'}]},
+  {cat:'Email Apps',items:[{n:'Outlook 365',t:'Application',inst:false,ico:'ti-brand-windows',c:'#0072C6'},{n:'SMTP Integration',t:'Application',inst:true,ico:'ti-mail',c:'#374151'},{n:'IMAP',t:'Application',inst:true,ico:'ti-mail',c:'#475569'}]},
+  {cat:'Social Media',items:[{n:'LinkedIn',t:'Network',inst:true,ico:'ti-brand-linkedin',c:'#0077B5'},{n:'Twitter',t:'Network',inst:true,ico:'ti-brand-twitter',c:'#1DA1F2'}]},
+  {cat:'Mass Email',items:[{n:'Amazon SES',t:'Email Service',inst:false,ico:'ti-brand-amazon',c:'#FF9900'},{n:'SendGrid',t:'Email Service',inst:false,ico:'ti-send',c:'#1a82e2'},{n:'Other',t:'Email Service',inst:true,ico:'ti-mail',c:'#374151'}]},
+  {cat:'Communication',items:[{n:'Slack',t:'Slack',inst:false,ico:'ti-brand-slack',c:'#4A154B'},{n:'Twilio',t:'Twilio',inst:false,ico:'ti-phone',c:'#f22f46'}]},
+  {cat:'Job Boards',items:[{n:'Indeed',t:'Job Board',inst:true,ico:'ti-search',c:'#003A9B'},{n:'Jooble',t:'Job Board',inst:true,ico:'ti-world',c:'#2563eb'},{n:'Trovit',t:'Job Board',inst:true,ico:'ti-world',c:'#16a34a'},{n:'Career Jet',t:'Job Board',inst:true,ico:'ti-rocket',c:'#f97316'},{n:'GoogleJobs',t:'Job Board',inst:true,ico:'ti-brand-google',c:'#4285F4'}]},
+];
+
+let currentUser=null,currentRole='recruiter',candView='grid',jobStatus='Open';
+let allCandidates=[],allJobs=[];window.calYear=new Date().getFullYear();window.calMonth=new Date().getMonth();
+let nextInvNum=parseInt(localStorage.getItem('hg_inv_num')||'53');
+
+/* ═══════════════════════════════════════
+   AUTH
+═══════════════════════════════════════ */
+
+// Team accounts — pre-defined
+const TEAM=[
+  {email:'teerath@reinforcementconsultants.com',name:'Teerath Garg',role:'admin',initials:'TG',color:'#8b5cf6'},
+  {email:'niharika@reinforcementconsultants.com',name:'Niharika Srivastava',role:'recruiter',initials:'NS',color:'#10b981'},
+  {email:'pragati@reinforcementconsultants.com',name:'Pragati Kharate',role:'recruiter',initials:'PK',color:'#f59e0b'},
+  {email:'rinkal@reinforcementconsultants.com',name:'Rinkal Kaur',role:'recruiter',initials:'RK',color:'#ef4444'},
+];
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim().toLowerCase();
+  const pass=document.getElementById('login-pass').value;
+  const btn=document.getElementById('login-btn');
+  const err=document.getElementById('login-err');
+  err.style.display='none';
+  if(!email||!pass){showErr('Please enter email and password.');return;}
+  const teamMember=TEAM.find(t=>t.email===email);
+  if(!teamMember){showErr('This email is not registered. Contact your admin.');return;}
+  btn.disabled=true;btn.textContent='Signing in…';
+  try{
+    // Try sign in first
+    const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(!error&&data.user){
+      await afterLogin(data.user,teamMember);
+      return;
+    }
+    // If sign in failed — try creating account first
+    showErr(error?.message||'Sign in failed');
+  }catch(e){showErr('Connection error: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='Sign In';}
+}
+
+// ── AUTO SESSION RESTORE ──
+(async function(){
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    if(session?.user){
+      const tm=TEAM.find(t=>t.email===session.user.email)||TEAM[0];
+      currentUser={...session.user,...tm};currentRole=tm?.role||'recruiter';
+      showApp();
+    }
+  }catch(e){}
+})();
+
+async function afterLogin(user,teamMember){
+  currentUser={...user,...teamMember};
+  currentRole=teamMember?.role||'recruiter';
+  showApp();
+}
+function showErr(msg){
+  const err=document.getElementById('login-err');
+  document.getElementById('login-err-msg').textContent=msg;
+  err.style.display='flex';
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  currentUser=null;
+  showScreen('login-screen');
+}
+
+/* ═══════════════════════════════════════
+   FIRST-TIME SETUP
+═══════════════════════════════════════ */
+async function runSetup(){
+  showApp();return;
+  showScreen('setup-screen');
+  const steps=[
+    {label:'Creating candidates table',sql:`CREATE TABLE IF NOT EXISTS hp_candidates(id uuid DEFAULT gen_random_uuid() PRIMARY KEY,first_name text,last_name text,email text,phone text,title text,company text,experience_years numeric DEFAULT 0,current_ctc text,location text,source text DEFAULT 'Other',status text DEFAULT 'Sourced',skills text[],notes text,created_by text,created_at timestamptz DEFAULT now());`},
+    {label:'Creating jobs table',sql:`CREATE TABLE IF NOT EXISTS hp_jobs(id uuid DEFAULT gen_random_uuid() PRIMARY KEY,job_num serial,title text NOT NULL,company text,location text,employment_type text DEFAULT 'Full Time',openings integer DEFAULT 1,hiring_lead text,industry text,skills text[],description text,status text DEFAULT 'Open',submitted integer DEFAULT 0,hired integer DEFAULT 0,created_by text,created_at timestamptz DEFAULT now());`},
+    {label:'Creating companies table',sql:`CREATE TABLE IF NOT EXISTS hp_companies(id uuid DEFAULT gen_random_uuid() PRIMARY KEY,name text NOT NULL,industry text,size text,contact_person text,contact_email text,phone text,city text,notes text,created_at timestamptz DEFAULT now());`},
+    {label:'Creating invoices table',sql:`CREATE TABLE IF NOT EXISTS hp_invoices(id uuid DEFAULT gen_random_uuid() PRIMARY KEY,invoice_number text,company text,sales_person text DEFAULT 'N/A',gross_amount numeric DEFAULT 0,gst_percent numeric DEFAULT 18,total_amount numeric,invoice_date date,due_date date,description text,status text DEFAULT 'Draft',created_at timestamptz DEFAULT now());`},
+    {label:'Creating activity log table',sql:`CREATE TABLE IF NOT EXISTS hp_activity(id uuid DEFAULT gen_random_uuid() PRIMARY KEY,action text,entity text,entity_id text,done_by text,created_at timestamptz DEFAULT now());`},
+    {label:'Enabling real-time sync',sql:`ALTER TABLE hp_candidates REPLICA IDENTITY FULL; ALTER TABLE hp_jobs REPLICA IDENTITY FULL; ALTER TABLE hp_invoices REPLICA IDENTITY FULL;`},
+  ];
+  renderSetupSteps(steps.map(s=>({label:s.label,status:'pending'})));
+  for(let i=0;i<steps.length;i++){
+    updateStep(i,'running');
+    setProgress((i/steps.length)*100,steps[i].label+'…');
+    try{
+      const error=null; // setup skipped
+      // If rpc doesn't exist, try direct — tables will be created via SQL editor
+      updateStep(i,'done');
+    }catch(e){updateStep(i,'done');} // Continue even if step fails — tables may already exist
+    await new Promise(r=>setTimeout(r,400));
+  }
+  setProgress(100,'Setup complete!');
+  await new Promise(r=>setTimeout(r,800));
+  showApp();
+}
+
+function renderSetupSteps(steps){
+  document.getElementById('setup-steps').innerHTML=steps.map((s,i)=>`
+    <div class="setup-step" id="step-${i}">
+      <div class="step-num" id="step-num-${i}">${i+1}</div>
+      <div><div style="font-size:13px;font-weight:600;color:var(--ink)">${s.label}</div><div style="font-size:12px;color:var(--ink5)" id="step-sub-${i}">Waiting…</div></div>
+    </div>`).join('');
+}
+
+function updateStep(i,status){
+  const num=document.getElementById('step-num-'+i);
+  const sub=document.getElementById('step-sub-'+i);
+  if(!num)return;
+  if(status==='running'){num.style.background='var(--acc)';sub.textContent='Running…';}
+  else if(status==='done'){num.className='step-num done';num.innerHTML='<i class="ti ti-check" style="font-size:12px"></i>';sub.textContent='Done ✓';}
+  else if(status==='fail'){num.className='step-num fail';sub.textContent='Failed (continuing…)';}
+}
+
+function setProgress(pct,msg){
+  document.getElementById('setup-prog').style.width=pct+'%';
+  document.getElementById('setup-status').textContent=msg;
+}
+
+/* ═══════════════════════════════════════
+   SHOW APP
+═══════════════════════════════════════ */
+function showApp(){
+  showScreen('app-screen');
+  // Update sidebar
+  const u=currentUser;
+  const initials=u?.initials||(u?.name||'?').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  const color=u?.color||'#3b82f6';
+  document.getElementById('sb-av').textContent=initials;
+  document.getElementById('sb-av').style.background=color;
+  document.getElementById('sb-uname').textContent=u?.name||'User';
+  document.getElementById('sb-urole').textContent=currentRole==='admin'?'Admin · Full Access':'Recruiter';
+  document.getElementById('tb-av').textContent=initials;
+  document.getElementById('tb-av').style.background=color;
+  // Admin-only: add user button
+  if(currentRole==='admin'){
+    document.getElementById('users-add-btn').innerHTML='<button class="btn btn-p btn-sm" onclick="openModal(\'adduser\')"><i class="ti ti-plus"></i>Add User</button>';
+  }
+  // Load AI key status
+  updateAIKeyUI(localStorage.getItem('hg_ai')||'');
+  // Load data after short delay to ensure DOM is ready
+  setTimeout(()=>{
+    navTo('dashboard');
+    renderReports();
+    renderIntegrations();
+    renderCalendar();
+  },50);
+  // Setup nav
+  document.querySelectorAll('.ni[data-p]').forEach(el=>el.addEventListener('click',()=>navTo(el.dataset.p)));
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ═══════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════ */
+const PAGE_LOADS={
+  dashboard:loadDashboard,candidates:loadCandidates,pipeline:loadPipeline,
+  jobs:loadJobs,companies:loadCompanies,invoices:loadInvoices,users:loadUsers,
+  reports:renderReports,integrations:renderIntegrations,calendar:renderCalendar,
+  hotlist:loadHotlist,vendors:loadVendors,consultants:loadConsultants,
+  settings:()=>updateAIKeyUI(localStorage.getItem('hg_ai')||'')
+};
+
+function navTo(p){
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  const ni=document.querySelector(`.ni[data-p="${p}"]`);if(ni)ni.classList.add('active');
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  const page=document.getElementById('page-'+p);if(page)page.classList.add('active');
+  const labels={dashboard:'Dashboard',candidates:'Candidates',pipeline:'Pipeline',jobs:'Jobs',companies:'Companies',vendors:'Vendors',consultants:'Consultants',invoices:'Invoices',users:'Users',reports:'Reports',calendar:'Calendar',hotlist:'Hot List',integrations:'Integrations',settings:'Settings'};
+  document.getElementById('tb-title').textContent=labels[p]||p;
+  if(PAGE_LOADS[p])PAGE_LOADS[p]();
+}
+
+/* ═══════════════════════════════════════
+   DASHBOARD — LIVE FROM DB
+═══════════════════════════════════════ */
+async function loadDashboard(){
+  try{
+    // Parallel loads
+    const cands=DB.get('hp_candidates');
+    const jobs=DB.get('hp_jobs');
+    const invs=DB.get('hp_invoices');
+    const cosList=DB.get('hp_companies');
+    allJobs=jobs;allCandidates=cands;
+    const candsRes={data:cands,count:cands.length};
+    const cosRes={data:cosList};
+
+    // KPIs
+    const hired=cands.filter(c=>c.status==='Hired').length;
+    const openJobs=jobs.filter(j=>j.status==='Open').length;
+    const totalCands=candsRes.count||cands.length;
+    const paidRev=invs.filter(i=>i.status==='Paid').reduce((s,i)=>s+(i.total_amount||0),0);
+    document.getElementById('kv-hired').textContent=hired;
+    document.getElementById('kv-jobs').textContent=openJobs;
+    document.getElementById('kv-cands').textContent=totalCands.toLocaleString('en-IN');
+    document.getElementById('kv-inv').textContent='₹'+fa(paidRev);
+    document.getElementById('nb-jobs').textContent=openJobs||'';
+
+    // Hired by company
+    const hiredCands=cands.filter(c=>c.status==='Hired');
+    const coByCo={};hiredCands.forEach(c=>{if(c.company){coByCo[c.company]=(coByCo[c.company]||0)+1;}});
+    const coEntries=Object.entries(coByCo).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    document.getElementById('ds-hired-co').innerHTML=coEntries.length?coEntries.map(e=>`<tr><td>${e[0]}</td><td class="link">${e[1]}</td><td>—</td></tr>`).join(''):'<tr><td colspan="3" style="text-align:center;color:var(--ink5);padding:12px">No hires yet</td></tr>';
+
+    // Job activity
+    const jWithAct=jobs.filter(j=>j.submitted>0||j.hired>0).length;
+    const jNoAct=jobs.filter(j=>j.submitted===0&&j.hired===0).length;
+    const jSub=jobs.filter(j=>j.submitted>0).length;
+    const jPlaced=jobs.filter(j=>j.hired>0).length;
+    document.getElementById('ds-jact-with').textContent=jWithAct;
+    document.getElementById('ds-jact-without').textContent=jNoAct;
+    document.getElementById('ds-jact-sub').textContent=jSub;
+    document.getElementById('ds-jact-placed').textContent=jPlaced;
+
+    // Open jobs by age
+    const now=Date.now();
+    const ageGroups=[{l:'0–3 days',min:0,max:3},{l:'4–6 days',min:3,max:6},{l:'7–10 days',min:6,max:10},{l:'10+ days',min:10,max:9999}];
+    const openJs=jobs.filter(j=>j.status==='Open');
+    document.getElementById('ds-age').innerHTML=ageGroups.map(g=>{
+      const cnt=openJs.filter(j=>{const d=(now-new Date(j.created_at).getTime())/864e5;return d>=g.min&&d<g.max;}).length;
+      const max=openJs.length||1;
+      const col=g.min>=10?'var(--red)':g.min>=6?'var(--gold)':'var(--grn)';
+      return`<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span style="color:var(--ink4)">${g.l}</span><span style="font-weight:700;color:${col}">${cnt}</span></div><div class="prog"><div class="prog-f" style="width:${Math.round(cnt/max*100)}%;background:${col}"></div></div></div>`;
+    }).join('');
+
+    // Hired by recruiter
+    const recMap={};
+    hiredCands.forEach(c=>{if(c.created_by){recMap[c.created_by]=(recMap[c.created_by]||0)+1;}});
+    const recEntries=Object.entries(recMap).sort((a,b)=>b[1]-a[1]);
+    document.getElementById('ds-rec').innerHTML=recEntries.length?recEntries.map(e=>`<tr><td>${e[0]}</td><td class="link">${e[1]}</td><td>—</td></tr>`).join(''):'<tr><td colspan="3" style="text-align:center;color:var(--ink5);padding:12px">No hires yet</td></tr>';
+    document.getElementById('ds-sub-rec').innerHTML='<tr><td colspan="2" style="text-align:center;color:var(--ink5);padding:12px">No submissions yet</td></tr>';
+
+    // Company activity
+    const cosWithJobs=new Set(jobs.map(j=>j.company).filter(Boolean)).size;
+    const totalCos=cosRes.data?.length||0;
+    document.getElementById('ds-co-withjobs').textContent=cosWithJobs;
+    document.getElementById('ds-co-nojobs').textContent=Math.max(0,totalCos-cosWithJobs);
+    document.getElementById('ds-co-sub').textContent=jSub;
+    document.getElementById('ds-co-placed').textContent=jPlaced;
+
+    // Hired by source donut
+    const srcMap={};hiredCands.forEach(c=>{if(c.source){srcMap[c.source]=(srcMap[c.source]||0)+1;}});
+    const srcColors=['#ef4444','#3b82f6','#10b981','#f59e0b','#8b5cf6'];
+    const srcEntries=Object.entries(srcMap);
+    drawDonut('donut1',srcEntries.map((e,i)=>({v:e[1],c:srcColors[i%srcColors.length],lbl:e[0]})));
+    document.getElementById('donut1-legend').innerHTML=srcEntries.length?srcEntries.map((e,i)=>`<div class="dl"><div class="dl-dot" style="background:${srcColors[i%srcColors.length]}"></div><div class="dl-lbl">${e[0]}</div><div class="dl-val">${e[1]}</div></div>`).join(''):'<div style="font-size:12px;color:var(--ink5)">No hires yet</div>';
+    drawDonut('donut2',[]);
+    document.getElementById('donut2-legend').innerHTML='<div style="font-size:12px;color:var(--ink5)">No submissions yet</div>';
+
+  }catch(e){console.error('Dashboard error:',e);}
+}
+
+function drawDonut(id,data){
+  const cv=document.getElementById(id);if(!cv)return;
+  const ctx=cv.getContext('2d');
+  const cx=55,cy=55,R=46,ir=28,tot=data.reduce((s,d)=>s+d.v,0)||1;
+  ctx.clearRect(0,0,110,110);
+  if(!data.length){ctx.beginPath();ctx.arc(cx,cy,R,0,2*Math.PI);ctx.fillStyle='#e2e8f0';ctx.fill();ctx.beginPath();ctx.arc(cx,cy,ir,0,2*Math.PI);ctx.fillStyle='#fff';ctx.fill();return;}
+  let angle=-Math.PI/2;
+  data.forEach(d=>{const sw=2*Math.PI*(d.v/tot);ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,angle,angle+sw);ctx.closePath();ctx.fillStyle=d.c;ctx.fill();angle+=sw;});
+  ctx.beginPath();ctx.arc(cx,cy,ir,0,2*Math.PI);ctx.fillStyle='#fff';ctx.fill();
+  ctx.fillStyle='#0f172a';ctx.font='bold 13px DM Sans';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(tot,cx,cy);
+}
+
+/* ═══════════════════════════════════════
+   CANDIDATES — LIVE DB
+═══════════════════════════════════════ */
+async function loadCandidates(){
+  // Show AI key banner if not configured
+  const banner=document.getElementById('ai-key-banner');
+  if(banner)banner.style.display=localStorage.getItem('hg_ai')?'none':'flex';
+
+  const cont=document.getElementById('cand-container');
+  cont.innerHTML='<div class="empty"><i class="ti ti-users"></i><p>No candidates yet — click Add Candidate</p></div>';
+  try{
+    const raw_c=DB.get('hp_candidates');const data=raw_c.slice().reverse();const count=raw_c.length;const error=null;
+    if(error)throw error;
+    allCandidates=data||[];
+    document.getElementById('cand-cnt').textContent=`(${count||allCandidates.length}) Total`;
+    renderCandidates(allCandidates);
+  }catch(e){cont.innerHTML='<div class="empty"><i class="ti ti-alert-circle"></i><p>Could not load candidates</p></div>';console.error(e);}
+}
+
+function renderCandidates(cands){
+  const cont=document.getElementById('cand-container');
+  if(!cands.length){cont.innerHTML='<div class="empty"><i class="ti ti-users"></i><p>No candidates yet</p><small>Click Add Candidate to get started</small></div>';return;}
+  if(candView==='grid'){
+    cont.innerHTML=`<div class="cands-grid">${cands.map(c=>candCard(c)).join('')}</div>`;
+  }else{
+    const sb2={Sourced:'b-gray',Screening:'b-gold',Interview:'b-pur',Offered:'b-grn',Hired:'b-grn',Rejected:'b-red'};
+    cont.innerHTML=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th><input type="checkbox" class="cb"></th><th>#</th><th></th><th>Name</th><th>Title @ Company</th><th>CTC</th><th>Exp</th><th>Location</th><th>Email</th><th>Source</th><th>Status</th></tr></thead><tbody>${cands.map((c,i)=>`<tr><td><input type="checkbox" class="cb"></td><td style="color:var(--ink5)">${i+1}</td><td><span class="bino"><i class="ti ti-binoculars"></i></span></td><td class="tlink" style="font-weight:600">${c.first_name} ${c.last_name}</td><td style="color:var(--ink4)">${c.title||'—'} @ ${c.company||'—'}</td><td>${c.current_ctc?'₹'+c.current_ctc:'—'}</td><td>${c.experience_years||0}yr</td><td>${c.location||'—'}</td><td>${c.email}</td><td><span class="badge b-gray">${c.source||'—'}</span></td><td><span class="badge ${sb2[c.status]||'b-gray'}">${c.status||'Sourced'}</span></td></tr>`).join('')}</tbody></table></div>`;
+  }
+}
+
+function candCard(c){
+  const sColor=STAGE_COLS[c.status]||'#94a3b8';
+  const initials=((c.first_name||'?')[0]+(c.last_name||'?')[0]).toUpperCase();
+  const colIdx=(c.first_name||'A').charCodeAt(0)%AVCOLS.length;
+  return`<div class="ccard">
+    <div class="ccard-top">
+      <div class="ccard-actions">
+        <div class="ca-btn" title="Quick view"><i class="ti ti-eye"></i></div>
+        <div class="ca-btn" title="More"><i class="ti ti-dots-vertical"></i></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+        <div style="width:34px;height:34px;border-radius:50%;background:${AVCOLS[colIdx]};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">${initials}</div>
+        <div><div class="ccard-name">${c.first_name} ${c.last_name}</div><div class="ccard-role">${c.title||'N/A'} @ ${c.company||'N/A'}</div></div>
+      </div>
+      <div class="ccard-meta"><span>₹ ${c.current_ctc||'0'}</span><span style="color:var(--border2)">|</span><span>${c.experience_years||0} years</span></div>
+    </div>
+    <hr class="ccard-div">
+    <div class="ccard-body">
+      <div class="crow"><i class="ti ti-map-pin"></i>${c.location||'N/A'}</div>
+      <div class="crow"><i class="ti ti-mail"></i>${c.email}</div>
+      <div class="crow"><i class="ti ti-phone"></i>${c.phone||'N/A'}</div>
+    </div>
+    <div class="ccard-foot">
+      <div class="src-tag"><i class="ti ti-briefcase" style="font-size:12px"></i>${c.source||'Other'}</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        ${c.resume_name?`<span style="font-size:10.5px;color:var(--acc);cursor:pointer;display:flex;align-items:center;gap:3px" onclick="downloadResume('${c.id}','resumes/${c.id}.${(c.resume_name||'').split('.').pop()}')"><i class="ti ti-file-text" style="font-size:13px"></i>Resume</span>`:''}
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:8px;height:8px;border-radius:50%;background:${sColor}"></div><span style="font-size:11px;font-weight:600;color:${sColor}">${c.status||'Sourced'}</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function setCandView(v){candView=v;document.getElementById('vt-g').classList.toggle('active',v==='grid');document.getElementById('vt-l').classList.toggle('active',v==='list');renderCandidates(allCandidates);}
+function filterCands(q){const f=q.toLowerCase();renderCandidates(allCandidates.filter(c=>(`${c.first_name} ${c.last_name} ${c.email} ${c.company} ${c.title}`).toLowerCase().includes(f)));}
+
+/* ═══════════════════════════════════════
+   PIPELINE — LIVE DB
+═══════════════════════════════════════ */
+async function loadPipeline(){
+  try{
+    const data=DB.get('hp_candidates').slice().reverse();
+    allCandidates=data||[];
+    // Populate job selector
+    const jobs=DB.get('hp_jobs').slice().reverse();
+    const sel=document.getElementById('pipe-job-sel');
+    sel.innerHTML='<option value="">All Jobs</option>'+(jobs||[]).map(j=>`<option value="${j.id}">${j.job_num?j.job_num+' - ':''}${j.title}</option>`).join('');
+    renderPipeline();
+  }catch(e){console.error('Pipeline error:',e);}
+}
+
+function renderPipeline(){
+  // Summary
+  const summary=document.getElementById('pipe-summary');
+  const stageCounts={};STAGES.forEach(s=>stageCounts[s]=allCandidates.filter(c=>c.status===s).length);
+  summary.innerHTML=STAGES.map(s=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:${STAGE_COLS[s]}14;border:1px solid ${STAGE_COLS[s]}30;border-radius:var(--r);white-space:nowrap"><div style="width:8px;height:8px;border-radius:50%;background:${STAGE_COLS[s]}"></div><span style="font-size:12px;font-weight:600;color:${STAGE_COLS[s]}">${s}</span><span style="font-size:12px;font-weight:700;color:var(--ink)">${stageCounts[s]}</span></div>`).join('');
+  // Kanban
+  const kb=document.getElementById('kanban');
+  kb.innerHTML=STAGES.map(stage=>{
+    const cards=allCandidates.filter(c=>c.status===stage);
+    const col=STAGE_COLS[stage];
+    return`<div class="kcol">
+      <div class="kcol-hd" style="border-top:3px solid ${col}"><span class="kcol-name" style="color:${col}">${stage}</span><span class="kcol-cnt">${cards.length}</span></div>
+      <div class="kcards">
+        ${!cards.length?`<div style="padding:12px;text-align:center;font-size:11.5px;color:var(--ink6)">Empty</div>`:''}
+        ${cards.map(c=>`<div class="kcard">
+          <div class="kcard-stripe" style="background:${col}"></div>
+          <div class="kcard-hover-actions">
+            <div class="kha" title="Move to next stage" onclick="moveStage('${c.id}','${stage}')"><i class="ti ti-arrow-right"></i></div>
+            <div class="kha" title="More"><i class="ti ti-dots-vertical"></i></div>
+          </div>
+          <div class="kcard-name">${c.first_name} ${c.last_name}</div>
+          <div class="kcard-role">${c.title||'—'}</div>
+          <div class="kcard-ft"><span style="font-size:10px;color:var(--ink5)">${c.source||'—'} · ${c.experience_years||0}yr</span><span style="font-size:10.5px;font-weight:700;padding:1.5px 6px;border-radius:4px;background:${col}20;color:${col}">${c.location?c.location.split('-')[0].trim():''}</span></div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function moveStage(candId,currentStage){
+  const nextIdx=STAGES.indexOf(currentStage)+1;
+  if(nextIdx>=STAGES.length)return;
+  const nextStage=STAGES[nextIdx];
+  DB.update('hp_candidates',candId,{status:nextStage});const error=null;
+  if(!error){toast(`Moved to ${nextStage}!`,'success');await loadPipeline();}
+}
+
+/* ═══════════════════════════════════════
+   JOBS — LIVE DB
+═══════════════════════════════════════ */
+async function loadJobs(){
+  try{
+    const raw_j=DB.get('hp_jobs');const data=raw_j.slice().reverse();const count=raw_j.length;
+    allJobs=data||[];
+    document.getElementById('jobs-cnt').textContent=`(${count||allJobs.length}) Total`;
+    // Update tabs with counts
+    const tabs=document.querySelectorAll('#jobs-tabs .tab');
+    const statuses=['Open','On Hold','Cancelled','Closed-Lost','Closed-Won'];
+    statuses.forEach((s,i)=>{const cnt=allJobs.filter(j=>j.status===s).length;if(tabs[i])tabs[i].textContent=`${s} (${cnt})`;});
+    renderJobsTable();
+    document.getElementById('nb-jobs').textContent=allJobs.filter(j=>j.status==='Open').length||'';
+  }catch(e){console.error('Jobs error:',e);}
+}
+
+function renderJobsTable(){
+  const filtered=allJobs.filter(j=>j.status===jobStatus);
+  const tbody=document.getElementById('jobs-tbody');
+  if(!filtered.length){tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--ink5)">No ${jobStatus} jobs yet</td></tr>`;return;}
+  tbody.innerHTML=filtered.map((j,i)=>`<tr>
+    <td><input type="checkbox" class="cb"></td>
+    <td style="color:var(--ink5)">${i+1}</td>
+    <td><span class="dotm"><i class="ti ti-dots-vertical"></i></span></td>
+    <td><span class="tlink" style="font-weight:600">${j.job_num?j.job_num+' - ':''}${j.title}</span></td>
+    <td style="color:var(--ink4)">${j.company||'—'}</td>
+    <td style="color:var(--ink5);font-size:12px">${j.location||'—'}</td>
+    <td><span class="badge b-gray">${j.employment_type||'Full Time'}</span></td>
+    <td style="font-size:12px;color:var(--ink4)">${j.hiring_lead||'—'}</td>
+    <td style="text-align:center;font-weight:600">${j.openings||1}</td>
+    <td style="text-align:center;color:var(--acc);font-weight:500">${j.submitted||0}</td>
+    <td style="text-align:center;color:var(--grn);font-weight:500">${j.hired||0}</td>
+    <td style="text-align:center;font-weight:600">${(j.openings||1)-(j.hired||0)}</td>
+    <td><div style="font-size:12px">${fdate(j.created_at)}</div><div style="font-size:11px;color:var(--ink5)">${daysOld(j.created_at)}</div></td>
+  </tr>`).join('');
+  document.getElementById('jobs-pg').innerHTML=buildPg(1,Math.max(1,Math.ceil(filtered.length/30)));
+}
+
+function setJobTab(el,status){document.querySelectorAll('#jobs-tabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');jobStatus=status;renderJobsTable();}
+
+/* ═══════════════════════════════════════
+   COMPANIES — LIVE DB
+═══════════════════════════════════════ */
+async function loadCompanies(){
+  try{
+    const raw_co=DB.get('hp_companies');const data=raw_co.slice().reverse();const count=raw_co.length;
+    const cos=data||[];
+    document.getElementById('cos-cnt').textContent=`(${count||cos.length}) Total`;
+    const tbody=document.getElementById('cos-tbody');
+    if(!cos.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--ink5)">No companies yet. Click Add Company to get started.</td></tr>';return;}
+    tbody.innerHTML=cos.map((c,i)=>{
+      const openJobs=allJobs.filter(j=>j.company===c.name&&j.status==='Open').length;
+      return`<tr>
+        <td style="color:var(--ink5)">${i+1}</td>
+        <td class="tlink" style="font-weight:600">${c.name}</td>
+        <td>${c.industry||'—'}</td>
+        <td>${c.city||'—'}</td>
+        <td>${c.contact_person||'—'}</td>
+        <td style="color:var(--ink5);font-size:12px">${c.contact_email||'—'}</td>
+        <td><span class="badge ${openJobs>0?'b-grn':'b-gray'}">${openJobs}</span></td>
+        <td style="color:var(--ink5);font-size:12px">${fdate(c.created_at)}</td>
+      </tr>`;
+    }).join('');
+  }catch(e){console.error('Companies error:',e);}
+}
+
+/* ═══════════════════════════════════════
+   INVOICES — LIVE DB
+═══════════════════════════════════════ */
+async function loadInvoices(){
+  try{
+    const raw_inv=DB.get('hp_invoices');const data=raw_inv.slice().reverse();const count=raw_inv.length;
+    const invs=data||[];
+    document.getElementById('inv-cnt').textContent=`(${count||invs.length}) Total`;
+    const stBadge={Draft:'b-gray',Sent:'b-blue',Paid:'b-grn',Overdue:'b-red'};
+    const tbody=document.getElementById('inv-tbody');
+    if(!invs.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--ink5)">No invoices yet</td></tr>';return;}
+    tbody.innerHTML=invs.map((inv,i)=>`<tr>
+      <td style="color:var(--ink5)">${i+1}</td>
+      <td class="tlink" style="font-weight:600">${inv.invoice_number}</td>
+      <td style="font-weight:500">${inv.company}</td>
+      <td style="color:var(--ink5)">${inv.sales_person||'N/A'}</td>
+      <td style="font-weight:500">₹${fa(inv.gross_amount||0)}</td>
+      <td style="font-weight:600">₹${fa(inv.total_amount||0)}</td>
+      <td style="color:var(--ink5);font-size:12px">${inv.invoice_date||'—'}</td>
+      <td style="color:var(--ink5);font-size:12px">${inv.due_date||'—'}</td>
+      <td><span class="badge ${stBadge[inv.status]||'b-gray'}">${inv.status}</span></td>
+    </tr>`).join('');
+    document.getElementById('inv-pg').innerHTML=buildPg(1,Math.max(1,Math.ceil(invs.length/30)));
+  }catch(e){console.error('Invoices error:',e);}
+}
+
+/* ═══════════════════════════════════════
+   USERS — LIVE DB
+═══════════════════════════════════════ */
+async function loadUsers(){
+  try{
+    const authUsers=null;
+    // Show team from TEAM constant + DB
+    document.getElementById('users-tbody').innerHTML=TEAM.map((u,i)=>`<tr>
+      <td style="color:var(--ink5)">${i+1}</td>
+      <td style="font-weight:600">${u.name}</td>
+      <td style="color:var(--ink5);font-size:12px">${u.email}</td>
+      <td>—</td>
+      <td><span class="badge ${u.role==='admin'?'b-pur':'b-blue'}">${u.role==='admin'?'Admin':'Recruiter'}</span></td>
+      <td style="color:var(--ink5);font-size:12px">2024</td>
+    </tr>`).join('');
+  }catch(e){console.error(e);}
+}
+
+/* ═══════════════════════════════════════
+   SKILLS TAG INPUT
+═══════════════════════════════════════ */
+function pfSkillKeydown(e){
+  if(e.key==='Enter'||e.key===','){e.preventDefault();pfAddSkill();}
+}
+
+function pfAddSkill(){
+  const inp=document.getElementById('pf-skills-inp');
+  if(!inp)return;
+  const val=inp.value.trim().replace(/,$/,'');
+  if(!val)return;
+  // Split by comma in case they paste multiple
+  val.split(',').map(s=>s.trim()).filter(Boolean).forEach(skill=>pfAddTag(skill));
+  inp.value='';
+  pfSyncSkills();
+}
+
+function pfAddTag(skill){
+  const container=document.getElementById('pf-skills-tags');
+  if(!container)return;
+  // Check duplicate
+  const existing=[...container.querySelectorAll('.skill-tag span')].map(s=>s.textContent.toLowerCase());
+  if(existing.includes(skill.toLowerCase()))return;
+  const tag=document.createElement('div');
+  tag.className='skill-tag';
+  tag.innerHTML=`<span>${skill}</span><span class="st-x" onclick="pfRemoveTag(this,'${skill.replace(/'/g,"\\'")}')">×</span>`;
+  container.appendChild(tag);
+}
+
+function pfRemoveTag(el,skill){
+  el.parentElement?.remove();
+  pfSyncSkills();
+}
+
+function pfSyncSkills(){
+  // Sync tags back to hidden input
+  const container=document.getElementById('pf-skills-tags');
+  const hidden=document.getElementById('pf-skills');
+  if(!container||!hidden)return;
+  const skills=[...container.querySelectorAll('.skill-tag span:first-child')].map(s=>s.textContent);
+  hidden.value=skills.join(', ');
+}
+
+function pfSetSkills(skillsStr){
+  // Called when AI fills skills — clear and repopulate
+  const container=document.getElementById('pf-skills-tags');
+  if(container)container.innerHTML='';
+  if(!skillsStr)return;
+  skillsStr.split(',').map(s=>s.trim()).filter(Boolean).forEach(s=>pfAddTag(s));
+  pfSyncSkills();
+}
+
+/* ═══════════════════════════════════════
+   BULK RESUME UPLOAD — AI AUTO-FILL
+═══════════════════════════════════════ */
+let brFiles=[];let brResults=[];let brImporting=false;
+
+function brDrag(e){e.preventDefault();const dz=document.getElementById('br-dropzone');if(dz){dz.style.borderColor='var(--acc)';dz.style.background='var(--acc3)';}}
+function brOff(){const dz=document.getElementById('br-dropzone');if(dz){dz.style.borderColor='var(--border2)';dz.style.background='var(--bg3)';}}
+function brDrop(e){e.preventDefault();brOff();const files=Array.from(e.dataTransfer?.files||[]);if(files.length)brSetFiles(files);}
+function brFilesSelected(e){const files=Array.from(e.target?.files||[]);if(files.length)brSetFiles(files);}
+
+function brSetFiles(files){
+  // Filter valid files
+  const valid=files.filter(f=>{
+    const ext=f.name.split('.').pop().toLowerCase();
+    return ['pdf','doc','docx'].includes(ext)&&f.size<=5*1024*1024;
+  });
+  if(!valid.length){toast('No valid resume files found. Use PDF, DOC or DOCX under 5MB.','');return;}
+  brFiles=valid;
+  brResults=valid.map(f=>({file:f,status:'pending',data:null,error:null}));
+
+  // Check AI key
+  const aiKey=localStorage.getItem('hg_ai')||'';
+  const badge=document.getElementById('br-ai-badge');
+  if(badge){badge.textContent=aiKey?'✓ AI Active':'No AI — Basic Extraction';badge.style.background=aiKey?'#d1fae5':'#fef3c7';badge.style.color=aiKey?'#065f46':'#92400e';}
+
+  // Show file cards
+  document.getElementById('br-list-container').style.display='block';
+  const statsDiv=document.getElementById('br-stats');
+  if(statsDiv)statsDiv.style.display='flex';
+  document.getElementById('br-total').textContent=valid.length;
+  document.getElementById('br-done').textContent='0';
+  document.getElementById('br-processing').textContent='0';
+  document.getElementById('br-failed').textContent='0';
+  document.getElementById('br-overall-bar').style.width='0%';
+  document.getElementById('br-overall-pct').textContent='0%';
+
+  // Render file cards
+  const cards=document.getElementById('br-file-cards');
+  cards.innerHTML=brResults.map((r,i)=>`
+    <div id="brcard-${i}" style="display:flex;align-items:center;gap:10px;padding:10px 13px;background:#fff;border:1px solid var(--border);border-radius:var(--r)">
+      <i class="ti ti-file-text" style="font-size:20px;color:var(--ink5);flex-shrink:0"></i>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.file.name}</div>
+        <div style="font-size:11.5px;color:var(--ink5)">${fsz(r.file.size)}</div>
+      </div>
+      <div id="brcard-status-${i}" style="font-size:11.5px;font-weight:600;color:var(--ink5);white-space:nowrap">Pending</div>
+      <div id="brcard-icon-${i}"><i class="ti ti-clock" style="color:var(--ink5);font-size:16px"></i></div>
+    </div>`).join('');
+
+  document.getElementById('br-start-btn').style.display='flex';
+  document.getElementById('br-done-btn').style.display='none';
+
+  // Update dropzone
+  const dz=document.getElementById('br-dropzone');
+  if(dz){
+    dz.style.padding='16px 20px';
+    const input=dz.querySelector('input');
+    dz.innerHTML=`<div style="display:flex;align-items:center;gap:10px;justify-content:center">
+      <i class="ti ti-check-circle" style="font-size:24px;color:var(--grn)"></i>
+      <div><div style="font-size:14px;font-weight:700;color:var(--ink)">${valid.length} resume${valid.length>1?'s':''} selected</div>
+      <div style="font-size:12px;color:var(--ink5)">Click "Start AI Import" to process all</div></div>
+      <label style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:12px;color:var(--ink4)">
+        <input type="file" accept=".pdf,.doc,.docx" multiple style="display:none" onchange="brFilesSelected(event)">Add more files
+      </label>
+    </div>`;
+  }
+}
+
+async function startBulkResumeImport(){
+  if(brImporting)return;
+  brImporting=true;
+  const btn=document.getElementById('br-start-btn');
+  btn.disabled=true;btn.innerHTML='<div class="spinner" style="border-top-color:#fff;border-color:rgba(255,255,255,.3)"></div>Processing…';
+
+  const aiKey=localStorage.getItem('hg_ai')||'';
+  let done=0,failed=0;
+
+  for(let i=0;i<brResults.length;i++){
+    const r=brResults[i];
+    updateBRCard(i,'processing','Processing…','ti-loader-2',`color:var(--gold)`);
+    document.getElementById('br-processing').textContent='1';
+
+    try{
+      // Parse resume
+      let parsed=null;
+      const ext=r.file.name.split('.').pop().toLowerCase();
+
+      if(ext==='pdf'){
+        // Try PDF.js first
+        let pdfText='';
+        try{
+          await loadPDFJS();
+          pdfText=await extractPDFText(r.file);
+        }catch(e){console.warn('PDF.js failed:',e.message);}
+
+        if(aiKey&&pdfText.length>30){
+          try{parsed=await parseTextWithAI(pdfText.slice(0,6000),aiKey);}
+          catch(e){parsed=basicExtract(pdfText);}
+        }else if(pdfText.length>30){
+          parsed=basicExtract(pdfText);
+        }else if(aiKey){
+          const b64=await fileToBase64(r.file);
+          try{parsed=await parseWithAI(b64,r.file.type,ext,aiKey);}
+          catch(e){parsed=extractFromFileName(r.file.name);}
+        }else{
+          parsed=extractFromFileName(r.file.name);
+        }
+      }else{
+        // DOCX/DOC
+        let text='';
+        try{
+          await loadMammoth();
+          const ab=await r.file.arrayBuffer();
+          const res=await mammoth.extractRawText({arrayBuffer:ab});
+          text=res.value||'';
+        }catch(e){
+          text=await readFileAsText(r.file);
+          text=text.split('').filter(function(c){var n=c.charCodeAt(0);return n>=32&&n<=126||n===10||n===13||n===9;}).join('').replace(/  +/g,' ').trim();
+        }
+        if(aiKey&&text.length>30){
+          try{parsed=await parseTextWithAI(text.slice(0,6000),aiKey);}
+          catch(e){parsed=basicExtract(text);}
+        }else if(text.length>30){
+          parsed=basicExtract(text);
+        }else{
+          parsed=extractFromFileName(r.file.name);
+        }
+      }
+
+      if(!parsed)parsed={};
+
+      // Build candidate record
+      const fn=parsed.first_name||parsed.firstName||parsed.name?.split(' ')[0]||'';
+      const ln=parsed.last_name||parsed.lastName||parsed.name?.split(' ').slice(1).join(' ')||'';
+      const em=parsed.email||'';
+
+      if(!fn&&!em){
+        throw new Error('Could not extract name or email');
+      }
+
+      const skillsRaw=Array.isArray(parsed.skills)?parsed.skills.join(', '):(parsed.skills||'');
+      const skills=skillsRaw.split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+
+      const{error}=DB.insert('hp_candidates',{
+        first_name:fn,last_name:ln,email:em,
+        phone:parsed.phone||parsed.mobile||'',
+        title:parsed.current_title||parsed.title||parsed.designation||'',
+        company:parsed.current_company||parsed.company||'',
+        experience_years:parseFloat(parsed.total_experience_years||parsed.experience_years||0)||0,
+        current_ctc:parsed.current_ctc||parsed.ctc||'',
+        location:parsed.location||parsed.city||'',
+        source:parsed.source||'Other',
+        skills,
+        notes:parsed.summary||'',
+        status:'Sourced',
+        created_by:currentUser?.name||'Admin',
+      });
+      if(error)throw new Error(error?.message||'');
+
+      done++;
+      r.status='done';
+      r.data=parsed;
+      updateBRCard(i,'done',`${fn} ${ln}`.trim()||'Saved','ti-check-circle',`color:var(--grn)`);
+
+    }catch(e){
+      failed++;
+      r.status='failed';
+      r.error=e.message;
+      updateBRCard(i,'failed','Failed: '+e.message.slice(0,40),'ti-x-circle',`color:var(--red)`);
+      console.error('Resume',i,'error:',e.message);
+    }
+
+    // Update counters
+    document.getElementById('br-done').textContent=done;
+    document.getElementById('br-failed').textContent=failed;
+    document.getElementById('br-processing').textContent='0';
+    const pct=Math.round(((i+1)/brResults.length)*100);
+    document.getElementById('br-overall-bar').style.width=pct+'%';
+    document.getElementById('br-overall-pct').textContent=pct+'%';
+
+    // Small delay between files
+    if(i<brResults.length-1)await new Promise(r=>setTimeout(r,300));
+  }
+
+  brImporting=false;
+  btn.style.display='none';
+  document.getElementById('br-done-btn').style.display='flex';
+  toast(`✓ ${done} candidates imported!${failed>0?' '+failed+' failed':''}`, 'success');
+}
+
+function updateBRCard(i,status,msg,icon,iconStyle){
+  const statusEl=document.getElementById('brcard-status-'+i);
+  const iconEl=document.getElementById('brcard-icon-'+i);
+  const card=document.getElementById('brcard-'+i);
+  const colors={pending:'var(--ink5)',processing:'var(--gold)',done:'var(--grn)',failed:'var(--red)'};
+  if(statusEl){statusEl.textContent=msg;statusEl.style.color=colors[status]||'var(--ink5)';}
+  if(iconEl)iconEl.innerHTML=`<i class="ti ${icon}" style="font-size:16px;${iconStyle}"></i>`;
+  if(card&&status==='done')card.style.background='#f0fdf4';
+  if(card&&status==='failed')card.style.background='#fef2f2';
+}
+
+function resetBulkResume(){
+  brFiles=[];brResults=[];brImporting=false;
+  const cards=document.getElementById('br-file-cards');if(cards)cards.innerHTML='';
+  const lc=document.getElementById('br-list-container');if(lc)lc.style.display='none';
+  const stats=document.getElementById('br-stats');if(stats)stats.style.display='none';
+  const startBtn=document.getElementById('br-start-btn');
+  if(startBtn){startBtn.style.display='none';startBtn.disabled=false;startBtn.innerHTML='<i class="ti ti-rocket"></i>Start AI Import';}
+  const doneBtn=document.getElementById('br-done-btn');if(doneBtn)doneBtn.style.display='none';
+  // Reset dropzone
+  const dz=document.getElementById('br-dropzone');
+  if(dz){
+    dz.style.padding='28px 20px';
+    dz.innerHTML=`<input type="file" id="br-file" accept=".pdf,.doc,.docx" multiple style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="brFilesSelected(event)">
+      <i class="ti ti-file-upload" style="font-size:44px;color:var(--ink6);display:block;margin-bottom:10px"></i>
+      <div style="font-size:15px;font-weight:700;color:var(--ink2)">Drop multiple resumes here or click to browse</div>
+      <div style="font-size:12.5px;color:var(--ink5);margin-top:5px">Select multiple PDF, DOC or DOCX files at once</div>
+      <div style="margin-top:12px;display:inline-flex;gap:8px">
+        <span style="padding:3px 9px;background:var(--bg4);border-radius:4px;font-size:12px;color:var(--ink4);font-weight:600">PDF</span>
+        <span style="padding:3px 9px;background:var(--bg4);border-radius:4px;font-size:12px;color:var(--ink4);font-weight:600">DOC</span>
+        <span style="padding:3px 9px;background:var(--bg4);border-radius:4px;font-size:12px;color:var(--ink4);font-weight:600">DOCX</span>
+      </div>`;
+  }
+}
+
+// Keep CSV bulk import as separate download template function
+function downloadTemplate(){
+  const headers=['First Name*','Last Name','Email*','Phone','Current Title','Current Company','Experience (Years)','Current CTC','Location','Source','Skills','Industry','Functional Area','Notes'];
+  const sample=[
+    ['Rahul','Sharma','rahul@email.com','+91 98765 43210','Sales Manager','ABC Corp','5','600000','Mumbai','Naukri','Sales, B2B, CRM','FMCG','Sales & Business Development','Good candidate'],
+    ['Priya','Verma','priya@email.com','+91 98765 11111','HR Executive','XYZ Ltd','3','450000','Delhi','LinkedIn','HR, Recruitment','Manufacturing','Human Resources',''],
+  ];
+  const csv=[[...headers],...sample].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='ZYROHR_Template.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+let selectedResumeFile=null;
+let currentTab='resume';
+
+/* ── TAB SWITCHING ── */
+function switchCandTab(tab){
+  currentTab=tab;
+  const isR=tab==='resume';
+  const rt=document.getElementById('ctab-resume');const mt=document.getElementById('ctab-manual');
+  if(rt){rt.style.color=isR?'var(--acc)':'var(--ink4)';rt.style.borderBottomColor=isR?'var(--acc)':'transparent';}
+  if(mt){mt.style.color=!isR?'var(--acc)':'var(--ink4)';mt.style.borderBottomColor=!isR?'var(--acc)':'transparent';}
+  const rp=document.getElementById('ctp-resume');const mp=document.getElementById('ctp-manual');
+  if(rp)rp.style.display=isR?'block':'none';
+  if(mp)mp.style.display=!isR?'block':'none';
+}
+
+/* ── SKILLS TAG SYSTEM ── */
+function pfAddSkillFromInput(){
+  const inp=document.getElementById('pf-skills-inp');
+  if(!inp)return;
+  inp.value.split(',').map(s=>s.trim()).filter(Boolean).forEach(s=>addSkillTag('pf',s));
+  inp.value='';syncSkills('pf');
+}
+function afAddSkillFromInput(){
+  const inp=document.getElementById('af-skills-inp');
+  if(!inp)return;
+  inp.value.split(',').map(s=>s.trim()).filter(Boolean).forEach(s=>addSkillTag('af',s));
+  inp.value='';syncSkills('af');
+}
+function addSkillTag(prefix,skill){
+  const container=document.getElementById(prefix+'-skills-tags');
+  if(!container||!skill)return;
+  const existing=[...container.querySelectorAll('.st-label')].map(s=>s.textContent.toLowerCase());
+  if(existing.includes(skill.toLowerCase()))return;
+  const tag=document.createElement('span');
+  tag.style.cssText='display:inline-flex;align-items:center;gap:3px;padding:3px 9px;background:var(--acc3);border:1px solid #93c5fd;border-radius:20px;font-size:12px;font-weight:500;color:var(--acc4)';
+  tag.innerHTML=`<span class="st-label">${skill}</span><span onclick="removeSkillTag(this,'${prefix}')" style="cursor:pointer;font-size:15px;color:var(--acc);opacity:.7;line-height:1;margin-left:2px" onmouseover="this.style.opacity=1;this.style.color='red'" onmouseout="this.style.opacity=.7;this.style.color='var(--acc)'">×</span>`;
+  container.appendChild(tag);
+}
+function removeSkillTag(el,prefix){el.parentElement?.remove();syncSkills(prefix);}
+function syncSkills(prefix){
+  const container=document.getElementById(prefix+'-skills-tags');
+  const hidden=document.getElementById(prefix+'-skills');
+  if(!container||!hidden)return;
+  hidden.value=[...container.querySelectorAll('.st-label')].map(s=>s.textContent).join(', ');
+}
+function setSkillTags(prefix,skillsStr){
+  const container=document.getElementById(prefix+'-skills-tags');
+  if(container)container.innerHTML='';
+  if(!skillsStr)return;
+  skillsStr.split(',').map(s=>s.trim()).filter(Boolean).forEach(s=>addSkillTag(prefix,s));
+  syncSkills(prefix);
+}
+function getSkillsValue(prefix){
+  const hidden=document.getElementById(prefix+'-skills');
+  return hidden?hidden.value:'';
+}
+
+/* ── PARSE ZONE ── */
+function parseDrag(e){e.preventDefault();const d=document.getElementById('parse-dz');if(d){d.style.borderColor='var(--acc)';d.style.background='var(--acc3)';}}
+function parseOff(){const d=document.getElementById('parse-dz');if(d){d.style.borderColor='var(--border2)';d.style.background='var(--bg3)';}}
+function parseDrop(e){e.preventDefault();parseOff();const f=e.dataTransfer?.files?.[0];if(f)runResumeParser(f);}
+function startParse(e){const f=e.target?.files?.[0];if(f)runResumeParser(f);}
+
+function setParseProgress(pct,msg,bar,lbl){
+  if(bar)bar.style.width=pct+'%';
+  if(lbl)lbl.textContent=msg;
+}
+async function fileToBase64(file){
+  return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result.split(',')[1]);r.onerror=reject;r.readAsDataURL(file);});
+}
+async function readFileAsText(file){
+  return new Promise((resolve)=>{const r=new FileReader();r.onload=()=>resolve(r.result||'');r.onerror=()=>resolve('');r.readAsText(file);});
+}
+
+/* ── MAIN PARSER ── */
+async function runResumeParser(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(!['pdf','doc','docx'].includes(ext)){alert('Only PDF, DOC and DOCX files supported.');return;}
+  if(file.size>5*1024*1024){alert('File too large. Max 5MB.');return;}
+  selectedResumeFile=file;
+  const prog=document.getElementById('parse-progress');
+  const bar=document.getElementById('parse-prog-bar');
+  const lbl=document.getElementById('parse-prog-lbl');
+  if(prog)prog.style.display='block';
+  setParseProgress(10,'Reading file…',bar,lbl);
+  const aiKey=localStorage.getItem('hg_ai')||'';
+  try{
+    let parsed=null;
+    if(ext==='pdf'){
+      setParseProgress(30,'Extracting PDF text…',bar,lbl);
+      let txt='';
+      try{await loadPDFJS();txt=await extractPDFText(file);}catch(e){console.warn('PDF.js:',e.message);}
+      setParseProgress(60,'Analysing…',bar,lbl);
+      if(aiKey&&txt.length>30){try{parsed=await parseTextWithAI(txt.slice(0,6000),aiKey);}catch(e){parsed=basicExtract(txt);}}
+      else if(txt.length>30){parsed=basicExtract(txt);}
+      else if(aiKey){try{const b64=await fileToBase64(file);parsed=await parseWithAI(b64,file.type,ext,aiKey);}catch(e){parsed=extractFromFileName(file.name);}}
+      else{parsed=extractFromFileName(file.name);}
+    }else{
+      setParseProgress(30,'Extracting Word text…',bar,lbl);
+      let txt='';
+      try{await loadMammoth();const ab=await file.arrayBuffer();const r=await mammoth.extractRawText({arrayBuffer:ab});txt=r.value||'';}
+      catch(e){txt=await readFileAsText(file);txt=txt.split('').filter(function(c){var n=c.charCodeAt(0);return n>=32&&n<=126||n===10||n===13;}).join('').replace(/  +/g,' ').trim();}
+      setParseProgress(60,'Analysing…',bar,lbl);
+      if(aiKey&&txt.length>30){try{parsed=await parseTextWithAI(txt.slice(0,6000),aiKey);}catch(e){parsed=basicExtract(txt);}}
+      else if(txt.length>30){parsed=basicExtract(txt);}
+      else{parsed=extractFromFileName(file.name);}
+    }
+    setParseProgress(100,'Done!',bar,lbl);
+    await new Promise(r=>setTimeout(r,300));
+    fillParsedFields(parsed||{},file);
+  }catch(err){
+    console.error('Parse error:',err);
+    if(prog)prog.style.display='none';
+    fillParsedFields({},file);
+    toast('Could not read resume — fill manually','');
+  }
+}
+
+/* ── FILL FIELDS ── */
+function fillParsedFields(d,file){
+  console.log('Parsed data:',JSON.stringify(d));
+  const s1=document.getElementById('parse-step1');
+  const s2=document.getElementById('parse-step2');
+  const prog=document.getElementById('parse-progress');
+  if(s1)s1.style.display='none';
+  if(s2)s2.style.display='block';
+  if(prog)prog.style.display='none';
+
+  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
+  set('pf-fn',d.first_name||d.firstName||'');
+  set('pf-ln',d.last_name||d.lastName||d.surname||'');
+  set('pf-em',d.email||'');
+  set('pf-ph',d.phone||d.mobile||'');
+  set('pf-title',d.current_title||d.title||d.designation||'');
+  set('pf-co',d.current_company||d.company||'');
+  set('pf-exp',d.total_experience_years||d.experience_years||'');
+  set('pf-ctc',d.current_ctc||d.ctc||d.salary||'');
+  set('pf-loc',d.location||d.city||'');
+  set('pf-edu',d.education||d.qualification||'');
+  set('pf-notes',d.summary||d.objective||'');
+
+  // Skills as tags
+  const skillsVal=Array.isArray(d.skills)?d.skills.join(', '):(d.skills||d.key_skills||'');
+  setSkillTags('pf',skillsVal);
+
+  // Source
+  const src=document.getElementById('pf-src');
+  if(src&&d.source){const opt=[...src.options].find(o=>o.text===d.source);if(opt)src.value=opt.value;}
+
+  // File info
+  const pfn=document.getElementById('parse-file-name');if(pfn)pfn.textContent=file.name;
+  const pfname=document.getElementById('pf-fname');if(pfname)pfname.textContent=file.name;
+  const pfsize=document.getElementById('pf-fsize');if(pfsize)pfsize.textContent=fsz(file.size)+' — will upload on save';
+
+  // Count & highlight
+  const filled=['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp'].filter(id=>{const el=document.getElementById(id);return el&&el.value.trim();}).length;
+  ['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp','pf-ctc','pf-loc'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&el.value){el.style.background='#f0fdf4';el.style.borderColor='#10b981';setTimeout(()=>{el.style.background='';el.style.borderColor='';},3000);}
+  });
+  if(filled>0)toast(filled+' fields auto-filled ✓','success');
+  else toast('Resume uploaded — fill fields manually','');
+}
+
+/* ── RESET PARSER ── */
+function resetParser(){
+  selectedResumeFile=null;
+  const s1=document.getElementById('parse-step1');const s2=document.getElementById('parse-step2');
+  const prog=document.getElementById('parse-progress');const fi=document.getElementById('parse-file');
+  if(s1)s1.style.display='block';if(s2)s2.style.display='none';if(prog)prog.style.display='none';if(fi)fi.value='';
+  ['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp','pf-ctc','pf-loc','pf-edu','pf-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  setSkillTags('pf','');
+}
+
+/* ── MANUAL TAB RESUME ── */
+function rzDrag(e){e.preventDefault();const d=document.getElementById('resume-dz');if(d){d.style.borderColor='var(--acc)';d.style.background='var(--acc3)';}}
+function rzOff(){const d=document.getElementById('resume-dz');if(d){d.style.borderColor='var(--border2)';d.style.background='var(--bg3)';}}
+function rzDrop(e){e.preventDefault();rzOff();const f=e.dataTransfer?.files?.[0];if(f)applyResumeFile(f);}
+function resumeFileSelected(e){const f=e.target?.files?.[0];if(f)applyResumeFile(f);}
+function applyResumeFile(f){
+  selectedResumeFile=f;
+  const dz=document.getElementById('resume-dz');
+  if(dz){dz.style.borderStyle='solid';dz.style.borderColor='var(--grn)';dz.style.background='var(--grn2)';}
+  const lbl=document.getElementById('resume-dz-lbl');if(lbl)lbl.textContent='✓ '+f.name;
+  const pill=document.getElementById('resume-pill');if(pill)pill.style.display='flex';
+  const pn=document.getElementById('resume-pill-name');if(pn)pn.textContent=f.name;
+}
+function clearResume(){
+  selectedResumeFile=null;
+  const fi=document.getElementById('af-resume');if(fi)fi.value='';
+  const dz=document.getElementById('resume-dz');
+  if(dz){dz.style.borderStyle='dashed';dz.style.borderColor='var(--border2)';dz.style.background='var(--bg3)';}
+  const lbl=document.getElementById('resume-dz-lbl');if(lbl)lbl.textContent='Click to attach resume';
+  const pill=document.getElementById('resume-pill');if(pill)pill.style.display='none';
+}
+function fsz(b){if(b<1048576)return Math.round(b/1024)+'KB';return(b/1048576).toFixed(1)+'MB';}
+function extractFromFileName(filename){
+  const result={source:'Other'};
+  const name=filename.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ').trim();
+  const parts=name.split(/\s+/).filter(p=>p.length>1&&!/\d{4}/.test(p));
+  if(parts.length>=2){result.first_name=parts[0];result.last_name=parts.slice(1,3).join(' ');}
+  else if(parts.length===1){result.first_name=parts[0];}
+  return result;
+}
+
+function switchCandTab(tab){
+  currentTab=tab;
+  const isResume=tab==='resume';
+  // Tab styles
+  const rTab=document.getElementById('ctab-resume');
+  const mTab=document.getElementById('ctab-manual');
+  if(rTab){rTab.style.color=isResume?'var(--acc)':'var(--ink4)';rTab.style.borderBottomColor=isResume?'var(--acc)':'transparent';}
+  if(mTab){mTab.style.color=!isResume?'var(--acc)':'var(--ink4)';mTab.style.borderBottomColor=!isResume?'var(--acc)':'transparent';}
+  // Show/hide panels
+  const rp=document.getElementById('ctp-resume');
+  const mp=document.getElementById('ctp-manual');
+  if(rp)rp.style.display=isResume?'block':'none';
+  if(mp)mp.style.display=!isResume?'block':'none';
+}
+
+// Drag events for parse zone
+function parseDrag(e){
+  e.preventDefault();
+  const dz=document.getElementById('parse-dz');
+  if(dz){dz.style.borderColor='var(--acc)';dz.style.background='var(--acc3)';}
+}
+function parseOff(){
+  const dz=document.getElementById('parse-dz');
+  if(dz){dz.style.borderColor='var(--border2)';dz.style.background='var(--bg3)';}
+}
+function parseDrop(e){
+  e.preventDefault();parseOff();
+  const f=e.dataTransfer?.files?.[0];
+  if(f)runResumeParser(f);
+}
+
+function startParse(e){
+  const f=e.target?.files?.[0];
+  if(f)runResumeParser(f);
+}
+
+// Called from drag drop
+function parseDrop(e){
+  e.preventDefault();parseOff();
+  const f=e.dataTransfer?.files?.[0];
+  if(f)runResumeParser(f);
+}
+
+async function runResumeParser(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(!['pdf','doc','docx'].includes(ext)){alert('Only PDF, DOC and DOCX files are supported.');return;}
+  if(file.size>5*1024*1024){alert('File too large. Maximum 5MB allowed.');return;}
+  selectedResumeFile=file;
+
+  const prog=document.getElementById('parse-progress');
+  const bar=document.getElementById('parse-prog-bar');
+  const lbl=document.getElementById('parse-prog-lbl');
+  if(prog)prog.style.display='block';
+  setParseProgress(10,'Reading file…',bar,lbl);
+
+  const aiKey=localStorage.getItem('hg_ai')||'';
+
+  try{
+    let parsed=null;
+
+    if(ext==='pdf'){
+      // Extract text from PDF using PDF.js (no AI needed)
+      setParseProgress(30,'Extracting text from PDF…',bar,lbl);
+      let pdfText='';
+      try{
+        await loadPDFJS();
+        pdfText=await extractPDFText(file);
+        console.log('PDF text extracted, length:',pdfText.length,'preview:',pdfText.slice(0,300));
+      }catch(e){
+        console.warn('PDF.js error:',e.message);
+        pdfText='';
+      }
+
+      if(aiKey&&pdfText.length>30){
+        // Use AI with extracted text for better results
+        setParseProgress(60,'AI reading PDF text…',bar,lbl);
+        try{parsed=await parseTextWithAI(pdfText.slice(0,6000),aiKey);}
+        catch(e){
+          console.warn('AI error, using basic extract:',e.message);
+          parsed=basicExtract(pdfText);
+        }
+      }else if(pdfText.length>30){
+        // No AI — use basic regex extraction on PDF text
+        setParseProgress(60,'Extracting details…',bar,lbl);
+        parsed=basicExtract(pdfText);
+        await new Promise(r=>setTimeout(r,500));
+      }else{
+        // PDF text extraction failed — try AI with base64 if key available
+        if(aiKey){
+          setParseProgress(50,'Sending PDF to AI…',bar,lbl);
+          const base64=await fileToBase64(file);
+          try{parsed=await parseWithAI(base64,file.type,ext,aiKey);}
+          catch(e){parsed=extractFromFileName(file.name);}
+        }else{
+          parsed=extractFromFileName(file.name);
+          toast('Could not extract text from this PDF — try a different file or fill manually','');
+        }
+      }
+    }else{
+      // DOCX/DOC — use mammoth to extract clean text, then send to AI
+      setParseProgress(30,'Extracting text from Word file…',bar,lbl);
+      let text='';
+      try{
+        await loadMammoth();
+        const ab=await file.arrayBuffer();
+        const r=await mammoth.extractRawText({arrayBuffer:ab});
+        text=r.value||'';
+        console.log('Extracted text length:',text.length,'preview:',text.slice(0,200));
+      }catch(e){
+        console.warn('Mammoth error:',e.message);
+        text=await readFileAsText(file);
+        text=text.split('').filter(function(c){var n=c.charCodeAt(0);return n>=32&&n<=126||n===10||n===13||n===9;}).join('').replace(/  +/g,' ').trim();
+      }
+      setParseProgress(60,'Sending to AI…',bar,lbl);
+      if(aiKey&&text.length>30){
+        try{parsed=await parseTextWithAI(text.slice(0,6000),aiKey);}
+        catch(e){console.error('Word AI error:',e);parsed=basicExtract(text);}
+      }else if(text.length>30){
+        parsed=basicExtract(text);
+      }else{
+        parsed=extractFromFileName(file.name);
+        toast('Could not extract Word content — please fill manually','');
+      }
+    }
+
+    setParseProgress(100,'Done!',bar,lbl);
+    await new Promise(r=>setTimeout(r,300));
+    fillParsedFields(parsed||{},file);
+
+  }catch(err){
+    console.error('Parse error:',err);
+    if(prog)prog.style.display='none';
+    fillParsedFields({},file);
+    toast('Could not read resume — please fill fields manually','');
+  }
+}
+
+// Extract basic info from just the filename e.g. "Amit Sharma - Sales Manager.pdf"
+function extractFromFileName(filename){
+  const result={source:'Other'};
+  const name=filename.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ').trim();
+  const parts=name.split(/\s+/).filter(p=>p.length>1&&!/\d{4}/.test(p));
+  if(parts.length>=2){result.first_name=parts[0];result.last_name=parts.slice(1,3).join(' ');}
+  else if(parts.length===1){result.first_name=parts[0];}
+  return result;
+}
+
+function setParseProgress(pct,msg,bar,lbl){
+  if(bar)bar.style.width=pct+'%';
+  if(lbl)lbl.textContent=msg;
+}
+
+async function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result.split(',')[1]);
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function readFileAsText(file){
+  return new Promise((resolve)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result||'');
+    reader.onerror=()=>resolve('');
+    reader.readAsText(file);
+  });
+}
+
+// Load PDF.js for PDF text extraction (no AI needed)
+function loadPDFJS(){
+  return new Promise((resolve,reject)=>{
+    if(window.pdfjsLib){resolve();return;}
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+    s.onload=()=>{
+      // Set worker
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+      resolve();
+    };
+    s.onerror=()=>reject(new Error('Could not load PDF.js'));
+    document.head.appendChild(s);
+  });
+}
+
+async function extractPDFText(file){
+  const arrayBuffer=await file.arrayBuffer();
+  const pdf=await window.pdfjsLib.getDocument({data:arrayBuffer}).promise;
+  let fullText='';
+  for(let i=1;i<=pdf.numPages;i++){
+    const page=await pdf.getPage(i);
+    const content=await page.getTextContent();
+    const pageText=content.items.map(item=>item.str).join(' ');
+    fullText+=pageText+'\n';
+  }
+  return fullText.replace(/\s+/g,' ').trim();
+}
+
+// Load mammoth.js for Word file text extraction
+function loadMammoth(){
+  return new Promise((resolve,reject)=>{
+    if(window.mammoth){resolve();return;}
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js';
+    s.onload=resolve;
+    s.onerror=()=>reject(new Error('Could not load mammoth'));
+    document.head.appendChild(s);
+  });
+}
+
+// Parse plain text with AI (for Word files)
+/* ── AI PROVIDER — supports Gemini (free) + Anthropic ── */
+function detectProvider(key){
+  if(!key)return null;
+  if(key.startsWith('AIza'))return 'gemini';
+  if(key.startsWith('gsk_'))return 'groq';
+  return 'anthropic';
+}
+
+async function callAI(prompt,apiKey,pdfBase64){
+  const p=detectProvider(apiKey);
+  if(p==='gemini')return await callGemini(prompt,apiKey,pdfBase64);
+  return await callAnthropic(prompt,apiKey,pdfBase64);
+}
+
+async function callGemini(prompt,apiKey,pdfBase64){
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const parts=pdfBase64
+    ?[{inlineData:{mimeType:'application/pdf',data:pdfBase64}},{text:prompt}]
+    :[{text:prompt}];
+  const resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts}],generationConfig:{maxOutputTokens:1000,temperature:0.1}})});
+  if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||'Gemini error '+resp.status);}
+  const d=await resp.json();
+  return d.candidates?.[0]?.content?.parts?.[0]?.text||'{}';
+}
+
+async function callAnthropic(prompt,apiKey,pdfBase64){
+  const content=pdfBase64
+    ?[{type:'document',source:{type:'base64',media_type:'application/pdf',data:pdfBase64}},{type:'text',text:prompt}]
+    :[{type:'text',text:prompt}];
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1000,messages:[{role:'user',content}]})});
+  if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||'Anthropic error '+resp.status);}
+  const d=await resp.json();
+  return d.content?.[0]?.text||'{}';
+}
+
+function parseAIJson(txt){
+  txt=(txt||'{}').replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
+  const m=txt.match(/\{[\s\S]*\}/);
+  try{return m?JSON.parse(m[0]):{};}catch(e){return {};}
+}
+
+async function parseTextWithAI(text,apiKey){
+  const prompt=`Resume parser. Extract from this resume and return ONLY JSON:
+{"first_name":"","last_name":"","email":"","phone":"","current_title":"","current_company":"","total_experience_years":0,"current_ctc":"","location":"","skills":"","education":"","source":"Other","summary":""}
+Rules: total_experience_years=number. skills=comma separated. ONLY JSON no other text.
+Resume:
+${text}`;
+  const txt=await callAI(prompt,apiKey);
+  const result=parseAIJson(txt);
+  console.log('Parsed:',JSON.stringify(result));
+  return result;
+}
+
+async function parseWithAIText(filename,apiKey){
+  return extractFromFileName(filename);
+}
+
+async function parseWithAI(base64,mimeType,ext,apiKey){
+  const isPDF=ext==='pdf';
+  const prompt=`Resume parser for Indian recruitment firm. Extract ALL details and return ONLY this JSON:
+{"first_name":"","last_name":"","email":"","phone":"","current_title":"","current_company":"","total_experience_years":0,"current_ctc":"","location":"","skills":"","education":"","source":"Other","summary":""}
+Rules: total_experience_years=number. skills=comma separated. source=Naukri/LinkedIn/Other. ONLY JSON.`;
+  const txt=await callAI(prompt,apiKey,isPDF?base64:null);
+  const result=parseAIJson(txt);
+  console.log('PDF parsed:',JSON.stringify(result));
+  return result;
+}
+
+/* ════ REPORTS ════ */
+function renderReports(){
+  const grid=document.getElementById('rep-grid');if(!grid)return;
+  const cats=[
+    {title:'Candidate Reports',color:'#6366f1',bg:'#eef2ff',icon:'ti-users',items:['Candidates By Source','Hired Candidates','Hired by Source','Upcoming Interviews','Text Report','Candidates By Recruiter','Candidate Activity']},
+    {title:'Job Reports',color:'#f59e0b',bg:'#fef3c7',icon:'ti-briefcase',items:['Job Activity Report','Job Performance','Open Jobs by Age','Jobs without Activity','Job Timeline']},
+    {title:'Company Reports',color:'#10b981',bg:'#d1fae5',icon:'ti-building',items:['Hired by Company','Revenue By Client','Submissions by Company','Closed Jobs by Company','New Jobs by Company']},
+    {title:'Recruiter Reports',color:'#8b5cf6',bg:'#ede9fe',icon:'ti-user-star',items:['Hired by Recruiter','Submission by Recruiter','Hired by Sales Person','Daywise Login','Activity Summary']},
+  ];
+  grid.innerHTML=cats.map(cat=>`<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px 18px;margin-bottom:14px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:700;font-size:13.5px;color:var(--ink)"><div style="width:30px;height:30px;border-radius:8px;background:${cat.bg};display:flex;align-items:center;justify-content:center"><i class="ti ${cat.icon}" style="color:${cat.color};font-size:15px"></i></div>${cat.title}</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px">${cat.items.map(r=>`<div onclick="toast('${r} — coming soon','')" style="display:flex;align-items:center;gap:8px;padding:9px 11px;background:var(--bg3);border-radius:8px;border:1px solid var(--border);cursor:pointer" onmouseover="this.style.borderColor='${cat.color}'" onmouseout="this.style.borderColor='var(--border)'"><i class="ti ti-file-analytics" style="color:${cat.color};font-size:14px;flex-shrink:0"></i><span style="font-size:12px;font-weight:500;color:var(--ink)">${r}</span></div>`).join('')}</div></div>`).join('');
+}
+
+/* ════ INTEGRATIONS ════ */
+function renderIntegrations(){
+  const body=document.getElementById('int-body');if(!body)return;
+  const cats=[
+    {title:'Email Apps',icon:'ti-mail',color:'#6366f1',items:[{n:'SMTP Integration',d:'Email sending',on:true},{n:'IMAP',d:'Email receiving',on:true},{n:'Outlook 365',d:'Microsoft email',on:false}]},
+    {title:'Google Apps',icon:'ti-brand-google',color:'#4285f4',items:[{n:'Chrome Extension',d:'Browser sourcing',on:true},{n:'Google Calendar',d:'Interview sync',on:false},{n:'Google Drive',d:'Resume storage',on:false}]},
+    {title:'Job Boards',icon:'ti-briefcase',color:'#10b981',items:[{n:'LinkedIn',d:'Social sourcing',on:true},{n:'Indeed',d:'Job portal',on:true},{n:'Naukri.com',d:'Indian portal',on:false},{n:'Monster',d:'Job portal',on:false}]},
+    {title:'Communication',icon:'ti-message',color:'#f59e0b',items:[{n:'Slack',d:'Team notifications',on:false},{n:'WhatsApp Business',d:'Candidate messaging',on:false},{n:'Twilio SMS',d:'SMS alerts',on:false}]},
+  ];
+  body.innerHTML=cats.map(cat=>`<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px 18px;margin-bottom:14px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:700;font-size:13.5px;color:var(--ink)"><i class="ti ${cat.icon}" style="color:${cat.color};font-size:18px"></i>${cat.title}</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px">${cat.items.map(item=>`<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)"><i class="ti ti-plug" style="color:${cat.color};font-size:15px;flex-shrink:0"></i><div style="flex:1"><div style="font-size:12.5px;font-weight:600;color:var(--ink)">${item.n}</div><div style="font-size:11.5px;color:var(--ink5)">${item.d}</div></div>${item.on?'<span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:#d1fae5;color:#065f46">Installed</span>':`<button onclick="toast('${item.n} coming soon','')" style="padding:3px 9px;background:#fff;border:1px solid var(--border);border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--ink4)">Connect</button>`}</div>`).join('')}</div></div>`).join('');
+}
+
+/* ════ CALENDAR ════ */
+if(typeof calYear==='undefined')window.calYear=new Date().getFullYear();
+if(typeof calMonth==='undefined')window.calMonth=new Date().getMonth();
+function renderCalendar(){
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const lbl=document.getElementById('cal-lbl');if(lbl)lbl.textContent=months[calMonth]+' '+calYear;
+  const grid=document.getElementById('cal-grid');if(!grid)return;
+  const today=new Date();
+  const firstDay=new Date(calYear,calMonth,1).getDay();
+  const dim=new Date(calYear,calMonth+1,0).getDate();
+  const evs=JSON.parse(localStorage.getItem('z_events')||'[]');
+  const evc={Interview:'#dbeafe',Meeting:'#ede9fe','Follow-up':'#fef9c3',Deadline:'#fee2e2',Other:'#f0fdf4'};
+  const evt={Interview:'#1d4ed8',Meeting:'#6d28d9','Follow-up':'#b45309',Deadline:'#b91c1c',Other:'#065f46'};
+  let h='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:8px;overflow:hidden">';
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d=>{h+=`<div style="background:var(--bg3);text-align:center;padding:6px;font-size:11px;font-weight:700;color:var(--ink4)">${d}</div>`;});
+  for(let i=0;i<firstDay;i++)h+=`<div style="background:#fff;min-height:68px"></div>`;
+  for(let d=1;d<=dim;d++){
+    const isT=d===today.getDate()&&calMonth===today.getMonth()&&calYear===today.getFullYear();
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const de=evs.filter(e=>e.date===ds);
+    h+=`<div style="background:#fff;min-height:68px;padding:5px 6px;${isT?'background:#eef2ff;':''}" onclick="addCalEvent('${ds}')"><div style="font-size:12px;font-weight:700;${isT?'color:var(--acc);':'color:var(--ink);'} margin-bottom:3px">${d}</div>${de.slice(0,2).map(e=>`<div style="padding:1px 5px;border-radius:3px;font-size:10px;font-weight:500;background:${evc[e.type]||'#f0fdf4'};color:${evt[e.type]||'#065f46'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px">${e.title}</div>`).join('')}${de.length>2?`<div style="font-size:10px;color:var(--ink5)">+${de.length-2}</div>`:''}</div>`;
+  }
+  h+='</div>';grid.innerHTML=h;
+}
+function calNav(dir){
+  calMonth+=dir;
+  if(calMonth>11){calMonth=0;calYear++;}
+  if(calMonth<0){calMonth=11;calYear--;}
+  renderCalendar();
+}
+function addCalEvent(date){
+  const title=prompt('Event title (e.g. Interview with Rahul):');if(!title)return;
+  const type=prompt('Type: Interview / Meeting / Follow-up / Deadline / Other','Interview')||'Other';
+  const evs=JSON.parse(localStorage.getItem('z_events')||'[]');
+  evs.push({title,date,type});
+  localStorage.setItem('z_events',JSON.stringify(evs));
+  renderCalendar();toast('Event added!','success');
+}
+
+/* ════ SAVE CANDIDATE ════ */
+async function saveCandidate(){
+  const isR=currentTab==='resume';
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  const fn=isR?g('pf-fn'):g('af-fn');
+  const ln=isR?g('pf-ln'):g('af-ln');
+  const em=isR?g('pf-em'):g('af-em');
+  if(!fn&&!em){alert('Please enter at least First Name or Email.');return;}
+  const btn=document.getElementById('save-cand-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  if(isR)syncSkills('pf');else syncSkills('af');
+  const skillsRaw=isR?g('pf-skills'):g('af-skills');
+  const skills=skillsRaw.split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+  try{
+    DB.insert('hp_candidates',{
+      first_name:fn,last_name:ln,email:em,
+      phone:isR?g('pf-ph'):g('af-ph'),
+      title:isR?g('pf-title'):g('af-title'),
+      company:isR?g('pf-co'):g('af-co'),
+      experience_years:parseFloat(isR?g('pf-exp'):g('af-exp'))||0,
+      current_ctc:isR?g('pf-ctc'):g('af-ctc'),
+      location:isR?g('pf-loc'):g('af-loc'),
+      source:document.getElementById(isR?'pf-src':'af-src')?.value||'Other',
+      skills,notes:isR?g('pf-notes'):g('af-notes'),
+      industry:document.getElementById(isR?'pf-industry':'af-industry')?.value||'',
+      functional_area:document.getElementById(isR?'pf-funcarea':'af-funcarea')?.value||'',
+      status:'Sourced',created_by:currentUser?.name||'Admin',
+    });
+    closeModal('addcand');
+    toast(`${fn} ${ln} saved!`.trim()||'Candidate saved!','success');
+    await loadCandidates();await loadDashboard();
+  }catch(e){alert('Error: '+e.message);}
+  finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i>Save Candidate';}}
+}
+
+/* ════ SAVE JOB ════ */
+async function saveJob(){
+  const title=document.getElementById('jf-title')?.value.trim();
+  if(!title){alert('Job title is required');return;}
+  const btn=document.getElementById('save-job-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const skills=(document.getElementById('jf-skills')?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  DB.insert('hp_jobs',{
+    title,company:document.getElementById('jf-co')?.value||'',
+    location:document.getElementById('jf-loc')?.value||'',
+    employment_type:document.getElementById('jf-type')?.value||'Full Time',
+    openings:parseInt(document.getElementById('jf-open')?.value)||1,
+    hiring_lead:document.getElementById('jf-lead')?.value||'',
+    industry:document.getElementById('jf-ind')?.value||'',
+    skills,description:document.getElementById('jf-desc')?.value||'',
+    status:'Open',submitted:0,hired:0,created_by:currentUser?.name||'Admin',
+  });
+  closeModal('addjob');toast(title+' posted!','success');
+  if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i>Post Job';}
+  await loadJobs();await loadDashboard();
+}
+
+/* ════ SAVE COMPANY ════ */
+async function saveCompany(){
+  const name=document.getElementById('cf-name')?.value.trim();
+  if(!name){alert('Company name is required');return;}
+  DB.insert('hp_companies',{
+    name,industry:document.getElementById('cf-ind')?.value||'',
+    gst_number:(document.getElementById('cf-gst')?.value||'').toUpperCase(),
+    contact_person:document.getElementById('cf-ct')?.value||'',
+    designation:document.getElementById('cf-desig')?.value||'',
+    contact_email:document.getElementById('cf-em')?.value||'',
+    phone:document.getElementById('cf-ph')?.value||'',
+    city:document.getElementById('cf-city')?.value||'',
+    state:document.getElementById('cf-state')?.value||'',
+    notes:document.getElementById('cf-notes')?.value||'',
+  });
+  closeModal('addco');toast(name+' saved!','success');
+  await loadCompanies();
+}
+
+/* ════ SAVE INVOICE ════ */
+async function saveInvoice(){
+  const co=document.getElementById('inv-co')?.value.trim();
+  const amt=parseFloat(document.getElementById('inv-amt')?.value)||0;
+  if(!co){alert('Please select a company');return;}
+  if(!amt){alert('Please enter an amount');return;}
+  const gst=parseFloat(document.getElementById('inv-gst')?.value)||18;
+  const total=amt+(amt*gst/100);
+  DB.insert('hp_invoices',{
+    invoice_number:DB.nextInv(),company:co,
+    sales_person:document.getElementById('inv-sp')?.value||'',
+    gross_amount:amt,gst_percent:gst,total_amount:total,
+    invoice_date:document.getElementById('inv-date')?.value||'',
+    due_date:document.getElementById('inv-due')?.value||'',
+    description:document.getElementById('inv-desc')?.value||'',
+    status:'Draft',
+  });
+  closeModal('addinv');toast('Invoice created!','success');
+  await loadInvoices();await loadDashboard();
+}
+function calcInvTotal(){
+  const amt=parseFloat(document.getElementById('inv-amt')?.value)||0;
+  const gst=parseFloat(document.getElementById('inv-gst')?.value)||18;
+  const el=document.getElementById('inv-total-disp');
+  if(el)el.textContent='₹'+(amt+(amt*gst/100)).toLocaleString('en-IN');
+}
+
+
+/* ════════════════════════════════════
+   CORE UTILITY FUNCTIONS
+════════════════════════════════════ */
+
+function openModal(id){
+  const m=document.getElementById('modal-'+id);
+  if(m){m.classList.add('open');}
+  // Load companies into job dropdown when posting job
+  if(id==='addjob'){
+    const sel=document.getElementById('jf-co');
+    if(sel){
+      const cos=DB.get('hp_companies');
+      sel.innerHTML='<option value="">-- Select Company --</option>'+cos.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+    }
+  }
+  // Load companies into invoice dropdown
+  if(id==='addinv'){
+    const sel=document.getElementById('inv-co');
+    if(sel){
+      const cos=DB.get('hp_companies');
+      sel.innerHTML='<option value="">-- Select Company --</option>'+cos.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+    }
+    // Set today's date
+    const dt=document.getElementById('inv-date');
+    if(dt&&!dt.value)dt.value=new Date().toISOString().slice(0,10);
+  }
+  // Reset add candidate form
+  if(id==='addcand'){
+    setTimeout(()=>{
+      ['pf-fn','pf-ln','pf-em','pf-ph','pf-title','pf-co','pf-exp','pf-ctc','pf-loc','pf-notes','af-fn','af-ln','af-em','af-ph','af-title','af-co','af-exp','af-ctc','af-loc','af-notes'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+      ['pf-skills-tags','af-skills-tags'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+      resetParser();
+    },10);
+  }
+}
+
+function closeModal(id){
+  const m=document.getElementById('modal-'+id);
+  if(m)m.classList.remove('open');
+}
+
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  if(!t)return;
+  t.textContent=msg;
+  t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// Format number helper (used in dashboard)
+function fa(n){
+  if(n>=1e7)return(n/1e7).toFixed(1)+'Cr';
+  if(n>=1e5)return(n/1e5).toFixed(1)+'L';
+  if(n>=1e3)return(n/1e3).toFixed(1)+'K';
+  return n.toLocaleString('en-IN');
+}
+
+// Toggle filter panels
+function toggleFP(name){
+  const fp=document.getElementById('fp-'+name);
+  if(fp)fp.classList.toggle('open');
+}
+
+// Settings tabs
+function setSTab(el){
+  document.querySelectorAll('.sn-item').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// AI Key
+function saveAIKey(){
+  const key=document.getElementById('ai-key-input')?.value.trim();
+  if(!key){alert('Please enter an API key');return;}
+  localStorage.setItem('hg_ai',key);
+  updateAIKeyUI(key);
+  toast('AI key saved!','success');
+}
+
+function updateAIKeyUI(key){
+  const badge=document.getElementById('ai-status-badge');
+  const testSec=document.getElementById('ai-test-section');
+  if(!key){
+    if(badge){badge.textContent='Not Configured';badge.style.background='#fee2e2';badge.style.color='#991b1b';}
+    if(testSec)testSec.style.display='none';
+  }else{
+    const provider=key.startsWith('AIza')?'Gemini':key.startsWith('gsk_')?'Groq':'Anthropic';
+    if(badge){badge.textContent='✓ '+provider+' Active';badge.style.background='#d1fae5';badge.style.color='#065f46';}
+    if(testSec)testSec.style.display='block';
+  }
+}
+
+// Hotlist
+function loadHotlist(){
+  const cont=document.getElementById('hl-container');
+  if(!cont)return;
+  const hot=allCandidates.filter(c=>c.status==='Hired');
+  if(!hot.length){
+    cont.innerHTML='<div style="text-align:center;padding:48px;color:var(--ink5)"><i class="ti ti-flame" style="font-size:44px;display:block;margin-bottom:10px;opacity:.25"></i><div style="font-weight:600;margin-bottom:6px">No candidates in Hot List yet</div><div style="font-size:13px">Hired candidates appear here automatically</div></div>';
+    return;
+  }
+  const COLORS=['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6'];
+  cont.innerHTML='<div style="display:flex;flex-direction:column;gap:10px">'+hot.map((c,i)=>`
+    <div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:14px 16px;display:flex;align-items:flex-start;gap:12px">
+      <div style="width:40px;height:40px;border-radius:12px;background:${COLORS[i%COLORS.length]};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">${((c.first_name||'?')[0]+(c.last_name||'?')[0]).toUpperCase()}</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13.5px">${c.first_name||''} ${c.last_name||''}</div>
+        <div style="font-size:12px;color:var(--ink4);margin-top:2px">${c.title||'—'}${c.company?' @ '+c.company:''}</div>
+        <div style="display:flex;gap:12px;margin-top:5px;font-size:12px;color:var(--ink5)">
+          ${c.experience_years?`<span>${c.experience_years}yr exp</span>`:''}
+          ${c.location?`<span>${c.location}</span>`:''}
+        </div>
+      </div>
+      <div style="text-align:right">
+        <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#d1fae5;color:#065f46">Hired</span>
+        ${c.phone?`<div style="font-size:11.5px;color:var(--ink5);margin-top:5px">${c.phone}</div>`:''}
+      </div>
+    </div>`).join('')+'</div>';
+}
+
+// Vendor + Consultant saves
+async function saveVendor(){
+  const name=document.getElementById('vf-name')?.value.trim();
+  if(!name){alert('Vendor name required');return;}
+  DB.insert('hp_vendors',{
+    name,contact_person:document.getElementById('vf-ct')?.value||'',
+    contact_email:document.getElementById('vf-em')?.value||'',
+    phone:document.getElementById('vf-ph')?.value||'',
+    city:document.getElementById('vf-city')?.value||'',
+    notes:document.getElementById('vf-notes')?.value||'',
+  });
+  closeModal('addvendor');toast(name+' saved!','success');
+  loadVendors();
+}
+async function loadVendors(){
+  const tbody=document.getElementById('vend-tbody');
+  if(!tbody)return;
+  const rows=DB.get('hp_vendors');
+  tbody.innerHTML=rows.length?rows.slice().reverse().map((v,i)=>`<tr><td>${i+1}</td><td style="font-weight:600">${v.name}</td><td>${v.contact_person||'—'}</td><td style="color:var(--ink5);font-size:12px">${v.contact_email||'—'}</td><td>${v.phone||'—'}</td><td>${v.city||'—'}</td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink5)">No vendors yet</td></tr>';
+}
+async function saveConsultant(){
+  const fn=document.getElementById('conf-fn')?.value.trim();
+  if(!fn){alert('First name required');return;}
+  DB.insert('hp_consultants',{
+    first_name:fn,last_name:document.getElementById('conf-ln')?.value||'',
+    specialisation:document.getElementById('conf-spec')?.value||'',
+    company:document.getElementById('conf-co')?.value||'',
+    contact_email:document.getElementById('conf-em')?.value||'',
+    phone:document.getElementById('conf-ph')?.value||'',
+  });
+  closeModal('addconsultant');toast(fn+' saved!','success');
+  loadConsultants();
+}
+async function loadConsultants(){
+  const tbody=document.getElementById('cons-tbody');
+  if(!tbody)return;
+  const rows=DB.get('hp_consultants');
+  tbody.innerHTML=rows.length?rows.slice().reverse().map((c,i)=>`<tr><td>${i+1}</td><td style="font-weight:600">${c.first_name||''} ${c.last_name||''}</td><td>${c.specialisation||'—'}</td><td>${c.company||'—'}</td><td style="color:var(--ink5);font-size:12px">${c.contact_email||'—'}</td><td>${c.phone||'—'}</td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink5)">No consultants yet</td></tr>';
+}
+
+// hotlist/vendors/consultants handled in PAGE_LOADS below
+
+</script>
+</body>
+</html>
