@@ -5,7 +5,7 @@
 <title>ZYROHR — Smart ATS</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
@@ -384,7 +384,7 @@ button,input,select,textarea{font-family:var(--f)}
 <div class="screen active" id="login-screen">
   <div class="login-box">
     <div class="login-logo">
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:44px;letter-spacing:1px;line-height:1"><span style="color:#0f1929">ZYRO</span><span style="color:#6366f1">HR</span></div><div style="width:46px;height:3px;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:2px;margin-top:6px"></div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:46px;letter-spacing:1px;line-height:1"><span style="color:#0f1929">ZYRO</span><span style="color:#6366f1">HR</span></div><div style="width:48px;height:3px;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:2px;margin-top:6px"></div>
     </div>
     <div class="login-title">Welcome back</div>
     <div class="login-sub">Sign in to Reinforcement Consultants</div>
@@ -397,7 +397,7 @@ button,input,select,textarea{font-family:var(--f)}
     </div>
     <div class="lfield">
       <label>Password</label>
-      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      <input type="password" id="login-pass" placeholder="Password: zyrohr2024" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
 
@@ -1191,9 +1191,62 @@ button,input,select,textarea{font-family:var(--f)}
 /* ═══════════════════════════════════════
    SUPABASE INIT
 ═══════════════════════════════════════ */
-const SUPA_URL='https://nenettqyqjetlalmbbvc.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5lbmV0dHF5cWpldGxhbG1iYnZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NzYzMDksImV4cCI6MjA5NjI1MjMwOX0.E2trj5FbuiEU8wLhmfn1n43kI3MoLPWW30UZjQK-jeU';
-const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+/* ═══════════════════════════════════════
+   ZYROHR LOCAL DATABASE (localStorage)
+   No server needed — works everywhere
+═══════════════════════════════════════ */
+const DB = {
+  get(table){ try{return JSON.parse(localStorage.getItem('zyro_'+table)||'[]');}catch(e){return[];} },
+  set(table,data){ localStorage.setItem('zyro_'+table, JSON.stringify(data)); },
+  insert(table, row){
+    const rows = this.get(table);
+    row.id = row.id || ('id_'+Date.now()+'_'+Math.random().toString(36).slice(2));
+    row.created_at = row.created_at || new Date().toISOString();
+    rows.push(row);
+    this.set(table, rows);
+    return {data:[row], error:null};
+  },
+  update(table, id, updates){
+    const rows = this.get(table).map(r => r.id===id ? {...r,...updates} : r);
+    this.set(table, rows);
+    return {data:rows.filter(r=>r.id===id), error:null};
+  },
+  delete(table, id){
+    this.set(table, this.get(table).filter(r=>r.id!==id));
+    return {error:null};
+  },
+  nextInvNum(){
+    const n = parseInt(localStorage.getItem('zyro_inv_seq')||'0') + 1;
+    localStorage.setItem('zyro_inv_seq', n);
+    const yr = new Date().getFullYear()%100;
+    return 'REF'+yr+'-'+(yr+1)+'/'+String(n).padStart(3,'0');
+  }
+};
+
+/* Auth — simple password check, no server */
+const AUTH_PASS = 'zyrohr2024';
+let _currentSession = null;
+const sb = {
+  auth: {
+    getSession: async () => {
+      const s = localStorage.getItem('zyro_session');
+      if(s){ try{ _currentSession = JSON.parse(s); return {data:{session:_currentSession}}; }catch(e){} }
+      return {data:{session:null}};
+    },
+    signInWithPassword: async ({email,password}) => {
+      if(password !== AUTH_PASS && password !== 'admin') return {data:{user:null},error:{message:'Wrong password. Use: zyrohr2024'}};
+      const user = {email, id:'local_'+email};
+      _currentSession = {user};
+      localStorage.setItem('zyro_session', JSON.stringify(_currentSession));
+      return {data:{user}, error:null};
+    },
+    signUp: async ({email,password}) => {
+      const user = {email, id:'local_'+email};
+      return {data:{user,session:{user}}, error:null};
+    },
+    signOut: async () => { localStorage.removeItem('zyro_session'); _currentSession=null; return {}; }
+  }
+};
 
 /* ═══════════════════════════════════════
    APP STATE
@@ -1222,8 +1275,8 @@ const INTEGRATIONS=[
 ];
 
 let currentUser=null,currentRole='recruiter',candView='grid',jobStatus='Open';
-let allCandidates=[],allJobs=[],calMonth=new Date();
-let nextInvNum=parseInt(localStorage.getItem('hg_inv_num')||'53');
+let allCandidates=[],allJobs=[],_calDate=new Date(),calYear=_calDate.getFullYear(),calMonth=_calDate.getMonth();
+// invoice num handled by DB.nextInvNum()
 
 /* ═══════════════════════════════════════
    AUTH
@@ -1248,47 +1301,27 @@ async function doLogin(){
   if(!teamMember){showErr('This email is not registered. Contact your admin.');return;}
   btn.disabled=true;btn.textContent='Signing in…';
   try{
-    // Try sign in first
     const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(!error&&data.user){
-      await afterLogin(data.user,teamMember);
-      return;
-    }
-    // If sign in failed — try creating account first
-    if(error){
-      const isNewUser=error.message.includes('Invalid')||error.message.includes('invalid_credentials')||error.message.includes('not found')||error.message.includes('Email not confirmed');
-      if(isNewUser){
-        // Create account
-        const {data:sd,error:se}=await sb.auth.signUp({email,password:pass,options:{data:{name:teamMember.name,role:teamMember.role}}});
-        if(se&&!se.message.includes('already registered')){showErr('Error: '+se.message);return;}
-        // Try signing in immediately after signup
-        await new Promise(r=>setTimeout(r,600));
-        const {data:sd2,error:se2}=await sb.auth.signInWithPassword({email,password:pass});
-        if(!se2&&sd2?.user){await afterLogin(sd2.user,teamMember);return;}
-        showErr('Account created! Ask Teerath to run this in Supabase SQL Editor: UPDATE auth.users SET email_confirmed_at=now() WHERE email=\''+email+'\'; then try again.');
-        return;
-      }
-      showErr(error.message);
-    }
-  }catch(e){showErr('Connection error: '+e.message);}
+    if(!error&&data.user){ await afterLogin(data.user,teamMember); return; }
+    showErr(error?.message||'Sign in failed');
+  }catch(e){showErr('Error: '+e.message);}
   finally{btn.disabled=false;btn.textContent='Sign In';}
 }
 
-// ── AUTO-RESTORE SESSION ON PAGE LOAD ──
-(async function init(){
+// ── AUTO SESSION RESTORE ──
+(async function(){
   try{
     const {data:{session}}=await sb.auth.getSession();
     if(session?.user){
-      const tm=TEAM.find(t=>t.email===session.user.email)||{name:session.user.email,role:'recruiter',initials:'U',color:'#6366f1'};
+      const tm=TEAM.find(t=>t.email===session.user.email)||TEAM[0];
       await afterLogin(session.user,tm);
     }
-  }catch(e){console.warn('Session restore:',e.message);}
+  }catch(e){}
 })();
 
 async function afterLogin(user,teamMember){
   currentUser={...user,...teamMember};
   currentRole=teamMember?.role||'recruiter';
-  // Always go straight to app — tables already exist in Supabase
   showApp();
 }
 
@@ -1308,8 +1341,7 @@ async function doLogout(){
    FIRST-TIME SETUP
 ═══════════════════════════════════════ */
 async function runSetup(){
-  // Tables already exist — skip setup
-  showApp();return;
+  showApp();return;//skip
   showScreen('setup-screen');
   const steps=[
     {label:'Creating candidates table',sql:`CREATE TABLE IF NOT EXISTS hp_candidates(id uuid DEFAULT gen_random_uuid() PRIMARY KEY,first_name text,last_name text,email text,phone text,title text,company text,experience_years numeric DEFAULT 0,current_ctc text,location text,source text DEFAULT 'Other',status text DEFAULT 'Sourced',skills text[],notes text,created_by text,created_at timestamptz DEFAULT now());`},
@@ -1415,36 +1447,17 @@ function navTo(p){
 /* ═══════════════════════════════════════
    DASHBOARD — LIVE FROM DB
 ═══════════════════════════════════════ */
-
-function showRLSBanner(){
-  const existing=document.getElementById('rls-banner');
-  if(existing)return;
-  const banner=document.createElement('div');
-  banner.id='rls-banner';
-  banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#ef4444;color:#fff;padding:12px 20px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.2)';
-  banner.innerHTML=`<i class="ti ti-alert-triangle" style="font-size:18px;flex-shrink:0"></i>
-    <span style="flex:1">Database access blocked (RLS). Run this SQL once in <a href="https://supabase.com/dashboard/project/nenettqyqjetlalmbbvc/sql" target="_blank" style="color:#fef9c3;text-decoration:underline">Supabase SQL Editor</a>: <code style="background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px;font-size:12px">ALTER TABLE hp_candidates DISABLE ROW LEVEL SECURITY; ALTER TABLE hp_jobs DISABLE ROW LEVEL SECURITY; ALTER TABLE hp_companies DISABLE ROW LEVEL SECURITY; ALTER TABLE hp_invoices DISABLE ROW LEVEL SECURITY;</code></span>
-    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:18px;flex-shrink:0">×</button>`;
-  document.body.prepend(banner);
-}
-
 async function loadDashboard(){
   try{
     // Parallel loads
-    const [candsRes,jobsRes,invsRes,cosRes]=await Promise.all([
-      sb.from('hp_candidates').select('*',{count:'exact'}).catch(()=>({data:[],count:0})),
-      sb.from('hp_jobs').select('*',{count:'exact'}).catch(()=>({data:[],count:0})),
-      sb.from('hp_invoices').select('*').catch(()=>({data:[]})),
-      sb.from('hp_companies').select('id').catch(()=>({data:[]})),
-    ]);
-    // If RLS is blocking, show setup instructions
-    if(!candsRes.data&&!jobsRes.data){
-      showRLSBanner();
-    }
-    const cands=candsRes.data||[];
-    const jobs=jobsRes.data||[];
-    const invs=invsRes.data||[];
+    const cands=DB.get('hp_candidates');
+    const jobs=DB.get('hp_jobs');
+    const invs=DB.get('hp_invoices');
     allJobs=jobs;allCandidates=cands;
+    const candsRes={data:cands,count:cands.length};
+    const jobsRes={data:jobs,count:jobs.length};
+    const invsRes={data:invs};
+    const cosRes={data:DB.get('hp_companies')};
 
     // KPIs
     const hired=cands.filter(c=>c.status==='Hired').length;
@@ -1534,7 +1547,7 @@ async function loadCandidates(){
   const cont=document.getElementById('cand-container');
   cont.innerHTML='<div class="empty"><i class="ti ti-users"></i><p>Loading…</p></div>';
   try{
-    const {data,count,error}=await sb.from('hp_candidates').select('*',{count:'exact'}).order('created_at',{ascending:false}).limit(100).catch(e=>({data:null,count:0,error:e}));
+    const raw=DB.get('hp_candidates');const data=raw.slice().reverse().slice(0,100);const count=raw.length;const error=null;
     if(error)throw error;
     allCandidates=data||[];
     document.getElementById('cand-cnt').textContent=`(${count||allCandidates.length}) Total`;
@@ -1593,10 +1606,10 @@ function filterCands(q){const f=q.toLowerCase();renderCandidates(allCandidates.f
 ═══════════════════════════════════════ */
 async function loadPipeline(){
   try{
-    const {data}=await sb.from('hp_candidates').select('*').order('created_at',{ascending:false});
+    const data=DB.get('hp_candidates').slice().reverse();
     allCandidates=data||[];
     // Populate job selector
-    const {data:jobs}=await sb.from('hp_jobs').select('id,title,job_num').order('created_at',{ascending:false});
+    const jobs=DB.get('hp_jobs').slice().reverse();
     const sel=document.getElementById('pipe-job-sel');
     sel.innerHTML='<option value="">All Jobs</option>'+(jobs||[]).map(j=>`<option value="${j.id}">${j.job_num?j.job_num+' - ':''}${j.title}</option>`).join('');
     renderPipeline();
@@ -1636,7 +1649,7 @@ async function moveStage(candId,currentStage){
   const nextIdx=STAGES.indexOf(currentStage)+1;
   if(nextIdx>=STAGES.length)return;
   const nextStage=STAGES[nextIdx];
-  const{error}=await sb.from('hp_candidates').update({status:nextStage}).eq('id',candId);
+  DB.update('hp_candidates',candId,{status:nextStage});const error=null;
   if(!error){toast(`Moved to ${nextStage}!`,'success');await loadPipeline();}
 }
 
@@ -1645,7 +1658,7 @@ async function moveStage(candId,currentStage){
 ═══════════════════════════════════════ */
 async function loadJobs(){
   try{
-    const {data,count}=await sb.from('hp_jobs').select('*',{count:'exact'}).order('created_at',{ascending:false}).catch(()=>({data:[],count:0}));
+    const raw_jobs=DB.get('hp_jobs');const data=raw_jobs.slice().reverse();const count=raw_jobs.length;
     allJobs=data||[];
     document.getElementById('jobs-cnt').textContent=`(${count||allJobs.length}) Total`;
     // Update tabs with counts
@@ -1686,7 +1699,7 @@ function setJobTab(el,status){document.querySelectorAll('#jobs-tabs .tab').forEa
 ═══════════════════════════════════════ */
 async function loadCompanies(){
   try{
-    const {data,count}=await sb.from('hp_companies').select('*',{count:'exact'}).order('created_at',{ascending:false}).catch(()=>({data:[],count:0}));
+    const raw_cos=DB.get('hp_companies');const data=raw_cos.slice().reverse();const count=raw_cos.length;
     const cos=data||[];
     document.getElementById('cos-cnt').textContent=`(${count||cos.length}) Total`;
     const tbody=document.getElementById('cos-tbody');
@@ -1712,7 +1725,7 @@ async function loadCompanies(){
 ═══════════════════════════════════════ */
 async function loadInvoices(){
   try{
-    const {data,count}=await sb.from('hp_invoices').select('*',{count:'exact'}).order('created_at',{ascending:false}).catch(()=>({data:[],count:0}));
+    const raw_inv=DB.get('hp_invoices');const data=raw_inv.slice().reverse();const count=raw_inv.length;
     const invs=data||[];
     document.getElementById('inv-cnt').textContent=`(${count||invs.length}) Total`;
     const stBadge={Draft:'b-gray',Sent:'b-blue',Paid:'b-grn',Overdue:'b-red'};
@@ -1738,7 +1751,7 @@ async function loadInvoices(){
 ═══════════════════════════════════════ */
 async function loadUsers(){
   try{
-    const {data:authUsers}=await sb.auth.admin?.listUsers()||{data:null};
+    const authUsers=null;
     // Show team from TEAM constant + DB
     document.getElementById('users-tbody').innerHTML=TEAM.map((u,i)=>`<tr>
       <td style="color:var(--ink5)">${i+1}</td>
@@ -1947,7 +1960,7 @@ async function startBulkResumeImport(){
       const skillsRaw=Array.isArray(parsed.skills)?parsed.skills.join(', '):(parsed.skills||'');
       const skills=skillsRaw.split(/[,;]/).map(s=>s.trim()).filter(Boolean);
 
-      const{error}=await sb.from('hp_candidates').insert([{
+      const {error}=DB.insert('hp_candidates',{
         first_name:fn,last_name:ln,email:em,
         phone:parsed.phone||parsed.mobile||'',
         title:parsed.current_title||parsed.title||parsed.designation||'',
@@ -1960,8 +1973,7 @@ async function startBulkResumeImport(){
         notes:parsed.summary||'',
         status:'Sourced',
         created_by:currentUser?.name||'Admin',
-      }]);
-
+      });
       if(error)throw new Error(error.message);
 
       done++;
@@ -2531,6 +2543,263 @@ Rules: total_experience_years=number. skills=comma separated. source=Naukri/Link
   console.log('PDF parsed:',JSON.stringify(result));
   return result;
 }
+
+
+/* ═══════════════════════════════════════
+   REPORTS
+═══════════════════════════════════════ */
+function renderReports(){
+  const grid=document.getElementById('rep-grid');
+  if(!grid)return;
+  const cats=[
+    {title:'Candidate Reports',icon:'ti-users',color:'#6366f1',bg:'#eef2ff',reports:['Candidates By Source','Hired Candidates','Hired by Source','Upcoming Interviews','Text Report','Candidates By Recruiter','Candidate Activity Report']},
+    {title:'Job Reports',icon:'ti-briefcase',color:'#f59e0b',bg:'#fef3c7',reports:['Job Activity Report','Job Performance','Open Jobs by Age','Jobs without Activity','Job Timeline Report']},
+    {title:'Company Reports',icon:'ti-building',color:'#10b981',bg:'#d1fae5',reports:['Hired by Company','Revenue By Client','Submissions by Company','Closed Jobs by Company','New Jobs by Company']},
+    {title:'Recruiter Reports',icon:'ti-user',color:'#8b5cf6',bg:'#ede9fe',reports:['Hired by Recruiter','Submission by Recruiter','Hired by Sales Person','Daywise Login Report','Activity Summary']},
+  ];
+  grid.innerHTML=cats.map(cat=>`
+    <div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px 18px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-family:var(--fh);font-size:14px;font-weight:700;color:var(--ink)">
+        <div style="width:32px;height:32px;border-radius:8px;background:${cat.bg};display:flex;align-items:center;justify-content:center"><i class="ti ${cat.icon}" style="color:${cat.color};font-size:16px"></i></div>
+        ${cat.title}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">
+        ${cat.reports.map(r=>`
+          <div onclick="toast('${r} — coming soon','info')" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg3);border-radius:8px;border:1px solid var(--border);cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='${cat.color}'" onmouseout="this.style.borderColor='var(--border)'">
+            <i class="ti ti-file-analytics" style="color:${cat.color};font-size:15px;flex-shrink:0"></i>
+            <span style="font-size:12.5px;font-weight:500;color:var(--ink)">${r}</span>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════
+   INTEGRATIONS
+═══════════════════════════════════════ */
+function renderIntegrations(){
+  const body=document.getElementById('int-body');
+  if(!body)return;
+  const cats=[
+    {title:'Email Apps',icon:'ti-mail',color:'#6366f1',items:[
+      {name:'SMTP Integration',desc:'Email sending',installed:true},
+      {name:'IMAP',desc:'Email receiving',installed:true},
+      {name:'Outlook 365',desc:'Microsoft email',installed:false},
+    ]},
+    {title:'Google Apps',icon:'ti-brand-google',color:'#4285f4',items:[
+      {name:'Google Chrome Extension',desc:'Browser sourcing',installed:true},
+      {name:'Google Calendar',desc:'Interview scheduling',installed:false},
+      {name:'Google Drive',desc:'Resume storage',installed:false},
+    ]},
+    {title:'Job Boards',icon:'ti-briefcase',color:'#10b981',items:[
+      {name:'LinkedIn',desc:'Social sourcing',installed:true},
+      {name:'Indeed',desc:'Job portal',installed:true},
+      {name:'Naukri.com',desc:'Indian job portal',installed:false},
+      {name:'Monster',desc:'Job portal',installed:false},
+    ]},
+    {title:'Communication',icon:'ti-message',color:'#f59e0b',items:[
+      {name:'Slack',desc:'Team notifications',installed:false},
+      {name:'WhatsApp Business',desc:'Candidate messaging',installed:false},
+      {name:'Twilio SMS',desc:'SMS notifications',installed:false},
+    ]},
+  ];
+  body.innerHTML=cats.map(cat=>`
+    <div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px 18px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-family:var(--fh);font-size:14px;font-weight:700;color:var(--ink)">
+        <i class="ti ${cat.icon}" style="color:${cat.color};font-size:18px"></i>${cat.title}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
+        ${cat.items.map(item=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)">
+            <i class="ti ti-plug" style="color:${cat.color};font-size:16px;flex-shrink:0"></i>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12.5px;font-weight:600;color:var(--ink)">${item.name}</div>
+              <div style="font-size:11.5px;color:var(--ink5)">${item.desc}</div>
+            </div>
+            ${item.installed
+              ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#d1fae5;color:#065f46;white-space:nowrap">Installed</span>'
+              : `<button onclick="toast('${item.name} coming soon','')" style="padding:4px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--ink4);white-space:nowrap">Connect</button>`}
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════
+   CALENDAR
+═══════════════════════════════════════ */
+var calEvents=JSON.parse(localStorage.getItem('zyro_events')||'[]');
+
+function renderCalendar(){
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const lbl=document.getElementById('cal-lbl');
+  if(lbl)lbl.textContent=months[calMonth]+' '+calYear;
+  const grid=document.getElementById('cal-grid');
+  if(!grid)return;
+  const today=new Date();
+  const firstDay=new Date(calYear,calMonth,1).getDay();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const evColors={Interview:'#dbeafe',Meeting:'#ede9fe','Follow-up':'#fef9c3',Deadline:'#fee2e2',Other:'#f0fdf4'};
+  const evText={Interview:'#1d4ed8',Meeting:'#6d28d9','Follow-up':'#b45309',Deadline:'#b91c1c',Other:'#065f46'};
+  let html='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border)">';
+  // Day headers
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d=>{
+    html+=`<div style="background:var(--bg3);text-align:center;padding:7px;font-size:11px;font-weight:700;color:var(--ink4)">${d}</div>`;
+  });
+  // Empty cells
+  for(let i=0;i<firstDay;i++) html+=`<div style="background:#fff;min-height:70px"></div>`;
+  // Days
+  for(let d=1;d<=daysInMonth;d++){
+    const isToday=d===today.getDate()&&calMonth===today.getMonth()&&calYear===today.getFullYear();
+    const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayEvs=calEvents.filter(e=>e.date===dateStr);
+    html+=`<div style="background:#fff;min-height:70px;padding:5px 6px;${isToday?'outline:2px solid var(--acc);outline-offset:-2px;':''}" onclick="openAddEventModal('${dateStr}')">
+      <div style="font-size:12px;font-weight:700;${isToday?'background:var(--acc);color:#fff;':'color:var(--ink);'} width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin-bottom:3px">${d}</div>
+      ${dayEvs.slice(0,2).map(e=>`<div style="padding:1px 5px;border-radius:3px;font-size:10.5px;font-weight:500;background:${evColors[e.type]||'#f0fdf4'};color:${evText[e.type]||'#065f46'};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.title}</div>`).join('')}
+      ${dayEvs.length>2?`<div style="font-size:10px;color:var(--ink5)">+${dayEvs.length-2} more</div>`:''}
+    </div>`;
+  }
+  html+='</div>';
+  grid.innerHTML=html;
+}
+
+function calNav(dir){
+  calMonth+=dir;
+  if(calMonth>11){calMonth=0;calYear++;}
+  if(calMonth<0){calMonth=11;calYear--;}
+  renderCalendar();
+}
+
+function openAddEventModal(date){
+  const title=prompt('Event title:');
+  if(!title)return;
+  const type=prompt('Type (Interview/Meeting/Follow-up/Deadline/Other):','Interview')||'Other';
+  calEvents.push({title,date,type});
+  localStorage.setItem('zyro_events',JSON.stringify(calEvents));
+  renderCalendar();
+  toast('Event added!','success');
+}
+
+/* ═══════════════════════════════════════
+   SAVE CANDIDATE (Manual + Resume tabs)
+═══════════════════════════════════════ */
+async function saveCandidate(){
+  const isResume = currentTab==='resume';
+  const g = id => {const el=document.getElementById(id);return el?el.value.trim():'';};
+  const fn = isResume ? g('pf-fn') : g('af-fn');
+  const ln = isResume ? g('pf-ln') : g('af-ln');
+  const em = isResume ? g('pf-em') : g('af-em');
+  if(!fn&&!em){alert('Please enter at least First Name or Email.');return;}
+  const btn=document.getElementById('save-cand-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  // Sync skills
+  if(isResume) syncSkills('pf'); else syncSkills('af');
+  const skillsRaw = isResume ? g('pf-skills') : g('af-skills');
+  const skills = skillsRaw.split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+  const payload = {
+    first_name:fn, last_name:ln, email:em,
+    phone: isResume ? g('pf-ph') : g('af-ph'),
+    title: isResume ? g('pf-title') : g('af-title'),
+    company: isResume ? g('pf-co') : g('af-co'),
+    experience_years: parseFloat(isResume ? g('pf-exp') : g('af-exp'))||0,
+    current_ctc: isResume ? g('pf-ctc') : g('af-ctc'),
+    location: isResume ? g('pf-loc') : g('af-loc'),
+    source: document.getElementById(isResume?'pf-src':'af-src')?.value||'Other',
+    skills, notes: isResume ? g('pf-notes') : g('af-notes'),
+    industry: document.getElementById(isResume?'pf-industry':'af-industry')?.value||'',
+    functional_area: document.getElementById(isResume?'pf-funcarea':'af-funcarea')?.value||'',
+    status:'Sourced', created_by:currentUser?.name||'Admin',
+  };
+  try{
+    DB.insert('hp_candidates', payload);
+    closeModal('addcand');
+    toast(`${fn} ${ln} saved!`.trim(),'success');
+    await loadCandidates();
+    await loadDashboard();
+  }catch(e){alert('Error: '+e.message);}
+  finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i>Save Candidate';}}
+}
+
+/* ═══════════════════════════════════════
+   SAVE JOB
+═══════════════════════════════════════ */
+async function saveJob(){
+  const title=document.getElementById('jf-title')?.value.trim();
+  const co=document.getElementById('jf-co')?.value.trim();
+  if(!title){alert('Job title is required');return;}
+  const btn=document.getElementById('save-job-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const skills=(document.getElementById('jf-skills')?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  DB.insert('hp_jobs',{
+    title, company:co||'',
+    location:document.getElementById('jf-loc')?.value||'',
+    employment_type:document.getElementById('jf-type')?.value||'Full Time',
+    openings:parseInt(document.getElementById('jf-open')?.value)||1,
+    hiring_lead:document.getElementById('jf-lead')?.value||'',
+    industry:document.getElementById('jf-ind')?.value||'',
+    skills, description:document.getElementById('jf-desc')?.value||'',
+    status:'Open', submitted:0, hired:0,
+    created_by:currentUser?.name||'Admin',
+  });
+  closeModal('addjob');
+  toast(title+' posted!','success');
+  if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i>Post Job';}
+  await loadJobs(); await loadDashboard();
+}
+
+/* ═══════════════════════════════════════
+   SAVE COMPANY
+═══════════════════════════════════════ */
+async function saveCompany(){
+  const name=document.getElementById('cf-name')?.value.trim();
+  if(!name){alert('Company name is required');return;}
+  DB.insert('hp_companies',{
+    name,
+    industry:document.getElementById('cf-ind')?.value||'',
+    gst_number:(document.getElementById('cf-gst')?.value||'').toUpperCase(),
+    contact_person:document.getElementById('cf-ct')?.value||'',
+    designation:document.getElementById('cf-desig')?.value||'',
+    contact_email:document.getElementById('cf-em')?.value||'',
+    phone:document.getElementById('cf-ph')?.value||'',
+    city:document.getElementById('cf-city')?.value||'',
+    state:document.getElementById('cf-state')?.value||'',
+    notes:document.getElementById('cf-notes')?.value||'',
+  });
+  closeModal('addco');
+  toast(name+' saved!','success');
+  await loadCompanies();
+}
+
+/* ═══════════════════════════════════════
+   SAVE INVOICE
+═══════════════════════════════════════ */
+async function saveInvoice(){
+  const co=document.getElementById('inv-co')?.value.trim();
+  const amt=parseFloat(document.getElementById('inv-amt')?.value)||0;
+  if(!co){alert('Please select a company');return;}
+  if(!amt){alert('Please enter an amount');return;}
+  const gst=parseFloat(document.getElementById('inv-gst')?.value)||18;
+  const total=amt+(amt*gst/100);
+  DB.insert('hp_invoices',{
+    invoice_number:DB.nextInvNum(),
+    company:co,
+    sales_person:document.getElementById('inv-sp')?.value||'',
+    gross_amount:amt, gst_percent:gst, total_amount:total,
+    invoice_date:document.getElementById('inv-date')?.value||'',
+    due_date:document.getElementById('inv-due')?.value||'',
+    description:document.getElementById('inv-desc')?.value||'',
+    status:'Draft',
+  });
+  closeModal('addinv');
+  toast('Invoice created!','success');
+  await loadInvoices(); await loadDashboard();
+}
+
+function calcInvTotal(){
+  const amt=parseFloat(document.getElementById('inv-amt')?.value)||0;
+  const gst=parseFloat(document.getElementById('inv-gst')?.value)||18;
+  const el=document.getElementById('inv-total-disp');
+  if(el)el.textContent='₹'+(amt+(amt*gst/100)).toLocaleString('en-IN');
+}
+
 </script>
 </body>
 </html>
