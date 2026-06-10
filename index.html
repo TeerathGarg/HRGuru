@@ -384,8 +384,7 @@ button,input,select,textarea{font-family:var(--f)}
 <div class="screen active" id="login-screen">
   <div class="login-box">
     <div class="login-logo">
-      <div class="login-logo-icon"><i class="ti ti-bolt"></i></div>
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:42px;letter-spacing:1px;line-height:1"><span style="color:#0f1929">ZYRO</span><span style="color:#6366f1">HR</span></div><div style="width:44px;height:3px;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:2px;margin-top:5px"></div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:44px;letter-spacing:1px;line-height:1"><span style="color:#0f1929">ZYRO</span><span style="color:#6366f1">HR</span></div><div style="width:46px;height:3px;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:2px;margin-top:6px"></div>
     </div>
     <div class="login-title">Welcome back</div>
     <div class="login-sub">Sign in to Reinforcement Consultants</div>
@@ -431,7 +430,7 @@ button,input,select,textarea{font-family:var(--f)}
 <aside class="sb">
   <div class="sb-brand">
     <div class="sb-logo"><i class="ti ti-bolt"></i></div>
-    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:.5px"><span style="color:#fff">ZYRO</span><span style="color:#818cf8">HR</span></div>
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:19px;letter-spacing:.5px"><span style="color:#fff">ZYRO</span><span style="color:#818cf8">HR</span></div>
   </div>
   <nav class="sb-nav">
     <div class="sb-sec">Core</div>
@@ -1262,11 +1261,11 @@ async function doLogin(){
         // Create account
         const {data:sd,error:se}=await sb.auth.signUp({email,password:pass,options:{data:{name:teamMember.name,role:teamMember.role}}});
         if(se&&!se.message.includes('already registered')){showErr('Error: '+se.message);return;}
-        // Wait briefly then try signing in immediately
+        // Try signing in immediately after signup
         await new Promise(r=>setTimeout(r,600));
         const {data:sd2,error:se2}=await sb.auth.signInWithPassword({email,password:pass});
         if(!se2&&sd2?.user){await afterLogin(sd2.user,teamMember);return;}
-        showErr('Almost done! Ask admin to run this once in Supabase SQL Editor: UPDATE auth.users SET email_confirmed_at=now() WHERE email=\''+email+'\'; then try again.');
+        showErr('Account created! Ask Teerath to run this in Supabase SQL Editor: UPDATE auth.users SET email_confirmed_at=now() WHERE email=\''+email+'\'; then try again.');
         return;
       }
       showErr(error.message);
@@ -1283,20 +1282,14 @@ async function doLogin(){
       const tm=TEAM.find(t=>t.email===session.user.email)||{name:session.user.email,role:'recruiter',initials:'U',color:'#6366f1'};
       await afterLogin(session.user,tm);
     }
-  }catch(e){console.warn('Session restore failed:',e.message);}
+  }catch(e){console.warn('Session restore:',e.message);}
 })();
 
 async function afterLogin(user,teamMember){
   currentUser={...user,...teamMember};
   currentRole=teamMember?.role||'recruiter';
-  // Check if DB tables exist, setup if needed
-  const {data,error}=await sb.from('hp_candidates').select('id').limit(1);
-  if(error&&error.code==='42P01'){
-    // Tables don't exist — run setup
-    await runSetup();
-  }else{
-    showApp();
-  }
+  // Always go straight to app — tables already exist in Supabase
+  showApp();
 }
 
 function showErr(msg){
@@ -1315,10 +1308,8 @@ async function doLogout(){
    FIRST-TIME SETUP
 ═══════════════════════════════════════ */
 async function runSetup(){
-  // Tables already exist in Supabase — skip setup and go straight to app
-  showApp();
-  return;
-  // (Legacy setup code below — kept for reference)
+  // Tables already exist — skip setup
+  showApp();return;
   showScreen('setup-screen');
   const steps=[
     {label:'Creating candidates table',sql:`CREATE TABLE IF NOT EXISTS hp_candidates(id uuid DEFAULT gen_random_uuid() PRIMARY KEY,first_name text,last_name text,email text,phone text,title text,company text,experience_years numeric DEFAULT 0,current_ctc text,location text,source text DEFAULT 'Other',status text DEFAULT 'Sourced',skills text[],notes text,created_by text,created_at timestamptz DEFAULT now());`},
@@ -1424,15 +1415,32 @@ function navTo(p){
 /* ═══════════════════════════════════════
    DASHBOARD — LIVE FROM DB
 ═══════════════════════════════════════ */
+
+function showRLSBanner(){
+  const existing=document.getElementById('rls-banner');
+  if(existing)return;
+  const banner=document.createElement('div');
+  banner.id='rls-banner';
+  banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#ef4444;color:#fff;padding:12px 20px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.2)';
+  banner.innerHTML=`<i class="ti ti-alert-triangle" style="font-size:18px;flex-shrink:0"></i>
+    <span style="flex:1">Database access blocked (RLS). Run this SQL once in <a href="https://supabase.com/dashboard/project/nenettqyqjetlalmbbvc/sql" target="_blank" style="color:#fef9c3;text-decoration:underline">Supabase SQL Editor</a>: <code style="background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px;font-size:12px">ALTER TABLE hp_candidates DISABLE ROW LEVEL SECURITY; ALTER TABLE hp_jobs DISABLE ROW LEVEL SECURITY; ALTER TABLE hp_companies DISABLE ROW LEVEL SECURITY; ALTER TABLE hp_invoices DISABLE ROW LEVEL SECURITY;</code></span>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:18px;flex-shrink:0">×</button>`;
+  document.body.prepend(banner);
+}
+
 async function loadDashboard(){
   try{
     // Parallel loads
     const [candsRes,jobsRes,invsRes,cosRes]=await Promise.all([
-      sb.from('hp_candidates').select('*',{count:'exact'}),
-      sb.from('hp_jobs').select('*',{count:'exact'}),
-      sb.from('hp_invoices').select('*'),
-      sb.from('hp_companies').select('id'),
+      sb.from('hp_candidates').select('*',{count:'exact'}).catch(()=>({data:[],count:0})),
+      sb.from('hp_jobs').select('*',{count:'exact'}).catch(()=>({data:[],count:0})),
+      sb.from('hp_invoices').select('*').catch(()=>({data:[]})),
+      sb.from('hp_companies').select('id').catch(()=>({data:[]})),
     ]);
+    // If RLS is blocking, show setup instructions
+    if(!candsRes.data&&!jobsRes.data){
+      showRLSBanner();
+    }
     const cands=candsRes.data||[];
     const jobs=jobsRes.data||[];
     const invs=invsRes.data||[];
@@ -1526,7 +1534,7 @@ async function loadCandidates(){
   const cont=document.getElementById('cand-container');
   cont.innerHTML='<div class="empty"><i class="ti ti-users"></i><p>Loading…</p></div>';
   try{
-    const {data,count,error}=await sb.from('hp_candidates').select('*',{count:'exact'}).order('created_at',{ascending:false}).limit(50);
+    const {data,count,error}=await sb.from('hp_candidates').select('*',{count:'exact'}).order('created_at',{ascending:false}).limit(100).catch(e=>({data:null,count:0,error:e}));
     if(error)throw error;
     allCandidates=data||[];
     document.getElementById('cand-cnt').textContent=`(${count||allCandidates.length}) Total`;
@@ -1637,7 +1645,7 @@ async function moveStage(candId,currentStage){
 ═══════════════════════════════════════ */
 async function loadJobs(){
   try{
-    const {data,count}=await sb.from('hp_jobs').select('*',{count:'exact'}).order('created_at',{ascending:false});
+    const {data,count}=await sb.from('hp_jobs').select('*',{count:'exact'}).order('created_at',{ascending:false}).catch(()=>({data:[],count:0}));
     allJobs=data||[];
     document.getElementById('jobs-cnt').textContent=`(${count||allJobs.length}) Total`;
     // Update tabs with counts
@@ -1678,7 +1686,7 @@ function setJobTab(el,status){document.querySelectorAll('#jobs-tabs .tab').forEa
 ═══════════════════════════════════════ */
 async function loadCompanies(){
   try{
-    const {data,count}=await sb.from('hp_companies').select('*',{count:'exact'}).order('created_at',{ascending:false});
+    const {data,count}=await sb.from('hp_companies').select('*',{count:'exact'}).order('created_at',{ascending:false}).catch(()=>({data:[],count:0}));
     const cos=data||[];
     document.getElementById('cos-cnt').textContent=`(${count||cos.length}) Total`;
     const tbody=document.getElementById('cos-tbody');
@@ -1704,7 +1712,7 @@ async function loadCompanies(){
 ═══════════════════════════════════════ */
 async function loadInvoices(){
   try{
-    const {data,count}=await sb.from('hp_invoices').select('*',{count:'exact'}).order('created_at',{ascending:false});
+    const {data,count}=await sb.from('hp_invoices').select('*',{count:'exact'}).order('created_at',{ascending:false}).catch(()=>({data:[],count:0}));
     const invs=data||[];
     document.getElementById('inv-cnt').textContent=`(${count||invs.length}) Total`;
     const stBadge={Draft:'b-gray',Sent:'b-blue',Paid:'b-grn',Overdue:'b-red'};
