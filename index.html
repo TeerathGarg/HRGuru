@@ -2177,8 +2177,19 @@ function fillParsedFields(d,file){
   if(prog)prog.style.display='none';
 
   const set=(id,val)=>{const el=document.getElementById(id);if(el&&val)el.value=val;};
-  set('pf-fn',d.first_name||d.firstName||'');
-  set('pf-ln',d.last_name||d.lastName||d.surname||'');
+  // Name — with email fallback if regex missed it
+  let _fn=d.first_name||d.firstName||'';
+  let _ln=d.last_name||d.lastName||d.surname||'';
+  if(!_fn&&d.email){
+    let _ep=d.email.split('@')[0]
+      .replace(/[0-9]+/g,'').replace(/[._\-]+/g,' ')
+      .replace(/([a-z])([A-Z])/g,'$1 $2').trim();
+    const _parts=_ep.split(/\s+/).filter(w=>w.length>1);
+    if(_parts.length>=2){_fn=toTitleCase(_parts[0]);_ln=_parts.slice(1).map(toTitleCase).join(' ');}
+    else if(_parts.length===1){_fn=toTitleCase(_parts[0]);}
+  }
+  set('pf-fn',_fn);
+  set('pf-ln',_ln);
   set('pf-em',d.email||'');
   set('pf-ph',d.phone||d.mobile||d.contact||'');
   set('pf-title',d.current_title||d.title||d.designation||d.position||'');
@@ -2608,6 +2619,12 @@ async function parseWithAIText(filename,apiKey){
 }
 
 // ── SMART REGEX EXTRACTION (no AI key needed) ──
+function toTitleCase(str){
+  if(!str)return '';
+  if(str===str.toUpperCase()&&str.length>1)return str.charAt(0).toUpperCase()+str.slice(1).toLowerCase();
+  return str.charAt(0).toUpperCase()+str.slice(1);
+}
+
 function basicExtract(text){
   const r={source:'Other'};
   const t=text||'';
@@ -2621,23 +2638,65 @@ function basicExtract(text){
   const em=t.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
   if(em)r.email=em[0];
 
-  // ── PHONE — Indian formats ──
-  const ph=t.match(/(?:\+91[\s\-]?)?(?:\(?0?[6-9]\d{4}\)?[\s\-]?\d{5}|[6-9]\d{9})/);
-  if(ph)r.phone=ph[0].replace(/[\s\-()]/g,'').replace(/^(\+91|91)/,'').trim();
+  // ── PHONE — Indian formats (10 digits starting 6-9) ──
+  const allPhones=t.match(/(?:\+91[\s\-]?)?[6-9]\d{2}[\s\-]?\d{3}[\s\-]?\d{4}|[6-9]\d{9}/g)||[];
+  if(allPhones.length>0){
+    // Pick the first valid 10-digit number
+    for(const p of allPhones){
+      const clean=p.replace(/[\s\-+]/g,'').replace(/^91/,'');
+      if(clean.length===10){r.phone=clean;break;}
+    }
+  }
 
-  // ── NAME — from first few lines ──
+  // ── NAME — robust extraction (handles ALL CAPS, Title Case, mixed) ──
   const lines=t.split('\n').map(l=>l.trim()).filter(l=>l.length>1);
-  for(const line of lines.slice(0,10)){
-    if(line.includes('@')||/\d{5,}/.test(line)||/^https?:/i.test(line)) continue;
-    if(/^(resume|curriculum|cv|profile|contact|address|mobile|phone|email|objective|summary|about|dear)/i.test(line)) continue;
-    if(line.length>60||line.length<3) continue;
-    const clean=line.replace(/^(mr\.?|ms\.?|mrs\.?|dr\.?|prof\.?)\s*/i,'').trim();
-    const words=clean.split(/\s+/);
-    if(words.length>=1&&words.length<=5&&/^[A-Z]/.test(words[0])&&!/^\d/.test(words[0])&&
-       !/[^\w\s.'-]/.test(clean)){
-      r.first_name=words[0];
-      r.last_name=words.slice(1).join(' ')||'';
-      break;
+
+  // Strategy 1: Look for explicit "Name:" label
+  const nameLabelMatch=t.match(/(?:^|\n)\s*(?:name|candidate\s+name|full\s+name)\s*[:\-]\s*([A-Za-z][A-Za-z\s.'-]{2,40})/im);
+  if(nameLabelMatch){
+    const nm=nameLabelMatch[1].trim().replace(/\s+/g,' ');
+    const parts=nm.split(/\s+/);
+    r.first_name=parts[0];r.last_name=parts.slice(1).join(' ')||'';
+  }
+
+  // Strategy 2: Scan first 15 lines for a name-like line
+  if(!r.first_name){
+    for(const line of lines.slice(0,15)){
+      // Skip lines with obvious non-name content
+      if(line.includes('@')||/\d{4,}/.test(line)||/^https?:/i.test(line)) continue;
+      if(/^(resume|curriculum\s+vitae|cv|profile|contact|address|mobile|phone|email|objective|career|summary|about|dear|to|the|ref|page|date|place)/i.test(line)) continue;
+      if(/[<>{}[\]\/\\|]/.test(line)) continue;
+      if(line.length>50||line.length<3) continue;
+      // Remove titles
+      const clean=line.replace(/^(mr\.?|ms\.?|mrs\.?|dr\.?|prof\.?|er\.?)\s*/i,'').trim();
+      const words=clean.split(/\s+/).filter(w=>w.length>0);
+      // Accept: 1-4 words, starts with letter (any case), no digits
+      if(words.length>=1&&words.length<=4&&
+         /^[A-Za-z]/.test(words[0])&&
+         words.every(w=>/^[A-Za-z.'-]+$/.test(w))){
+        // Convert ALL CAPS to Title Case
+        r.first_name=toTitleCase(words[0]);
+        r.last_name=words.slice(1).map(toTitleCase).join(' ')||'';
+        break;
+      }
+    }
+  }
+
+  // Strategy 3: Extract from email (e.g. anchal.gupta@, anchal_gupta@, anchalgupta2711@)
+  if(!r.first_name&&r.email){
+    let ep=r.email.split('@')[0]
+      .replace(/[0-9]+/g,'')          // remove numbers
+      .replace(/[._\-]+/g,' ')         // dots/underscores → space
+      .replace(/([a-z])([A-Z])/g,'$1 $2') // camelCase → words
+      .trim();
+    const parts=ep.split(/\s+/).filter(w=>w.length>1);
+    if(parts.length>=2){
+      r.first_name=toTitleCase(parts[0]);
+      r.last_name=parts.slice(1).map(toTitleCase).join(' ');
+    } else if(parts.length===1&&parts[0].length>2){
+      // Single merged name like "anchalgupta" — just use as first name
+      r.first_name=toTitleCase(parts[0]);
+      r.last_name='';
     }
   }
 
